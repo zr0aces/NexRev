@@ -10,7 +10,7 @@ A practical, step-by-step guide to using NexRev as your daily sales operating sy
 
 ```bash
 cp .env.example .env
-# Set OLLAMA_BASE_URL and OLLAMA_MODEL in .env (needed for AI features)
+# Set OLLAMA_BASE_URL, OLLAMA_MODEL, and JWT_SECRET in .env
 docker compose up --build
 ```
 
@@ -62,7 +62,7 @@ After every call, meeting, or email exchange — open the relevant opportunity a
 **AI summarize (recommended for meetings):**
 1. Paste raw notes — bullet points, stream of consciousness, anything
 2. Click **✨ AI summarize**
-3. Claude returns a clean structure: key points, decisions, action items
+3. The AI returns a clean structure: key points, decisions, action items
 4. The current Kanban board state is automatically included as context
 5. The summary is saved to the activity history automatically
 
@@ -71,7 +71,7 @@ After every call, meeting, or email exchange — open the relevant opportunity a
 ### After logging: Update Salesforce
 
 1. After logging 1–3 recent activities, click **▪ SF update note**
-2. Claude generates a Salesforce-ready activity note (date, type, summary, next step)
+2. The AI generates a Salesforce-ready activity note (date, type, summary, next step)
 3. The current Kanban board is included as context — the note reflects your real deal state
 4. Copy and paste directly into Salesforce
 
@@ -125,7 +125,7 @@ Each opportunity has a three-column Kanban board in its detail panel:
 ### Removing cards
 - Hover over a card to reveal the **×** button, then click to remove
 
-**Kanban context in AI** — when you click **✨ AI summarize** or **▪ SF update note**, the full board state (all three columns) is passed to Claude as context. You get summaries and CRM notes that reflect your actual deal progress.
+**AI context** — when you click **✨ AI summarize** or **▪ SF update note**, the full board state (all three columns) is passed to the model as context. You get summaries and CRM notes that reflect your actual deal progress.
 
 ---
 
@@ -193,7 +193,7 @@ node backend/scripts/manage-users.mjs list
 node backend/scripts/manage-users.mjs delete <username>
 ```
 
-To run these commands against the Docker container:
+To run these commands against a running Docker container:
 
 ```bash
 docker compose exec backend node /app/scripts/manage-users.mjs list
@@ -207,11 +207,30 @@ JWT_SECRET=<64-char-random-string>
 
 ---
 
+## AI features
+
+AI summarization and Salesforce note generation use a local [Ollama](https://ollama.com) instance — no cloud API key required.
+
+```bash
+# 1. Install Ollama: https://ollama.com
+# 2. Pull a model
+ollama pull llama3.2
+
+# 3. Set in .env
+OLLAMA_BASE_URL=http://host.docker.internal:11434   # Docker on Linux/Mac
+# OLLAMA_BASE_URL=http://localhost:11434            # local dev (no Docker)
+OLLAMA_MODEL=llama3.2
+```
+
+Any model available in your Ollama instance works. Recommended: `llama3.2`, `mistral`, `qwen2.5`.
+
+---
+
 ## Obsidian integration
 
 The `.md` export is structured for Obsidian. Each opportunity exports with its stage, contact details, follow-up date, Kanban board state, and full activity log.
 
-**Option A — Daily snapshot:** Export each day as `sales/2026-04-27.md`, browse with the Calendar plugin.
+**Option A — Daily snapshot:** Export each day as `sales/YYYY-MM-DD.md`, browse with the Calendar plugin.
 
 **Option B — Single living file:** Export and overwrite `sales/pipeline.md` each day; query with Dataview.
 
@@ -236,11 +255,22 @@ Data lives in `data/*.md` — human-readable Markdown files you can inspect, edi
 
 ---
 
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd/Ctrl + K` | Add new opportunity |
+| `Escape` | Close modal |
+| `Enter` (Kanban input) | Commit new card |
+| `Escape` (Kanban input) | Cancel add |
+
+---
+
 ## Troubleshooting
 
 **Can't sign in / "Invalid credentials"**
-→ Default login is `admin` / `admin` on first start
-→ If you changed credentials and forgot them, use the manage-users.mjs CLI to reset the password
+→ Default login on first start is `admin` / `admin`
+→ If you changed credentials and forgot them, reset via CLI: `node backend/scripts/manage-users.mjs passwd admin <newpassword>`
 
 **Session expired / redirected to login unexpectedly**
 → JWT tokens expire after 24 hours — sign in again
@@ -256,12 +286,12 @@ Data lives in `data/*.md` — human-readable Markdown files you can inspect, edi
 → Check `docker compose ps` — all services should show "running"
 
 **Port already in use**
-→ Stop the conflicting service or change the port in `docker-compose.yml`
+→ Stop the conflicting service or change the host port in `docker-compose.yml`
 
 **Data not persisting**
 → Ensure the `data/` volume mount is intact in `docker-compose.yml`
 → Run `ls data/` to confirm Markdown files are being written
 
 **Development: frontend can't reach API**
-→ Ensure the backend is running on port 3001 (`cd backend && npm run dev`)
-→ The Vite proxy (`/api` → `localhost:3001`) only works when running `npm run dev` in the frontend
+→ Ensure the backend is running on port 3001: `cd backend && npm run dev`
+→ The Vite proxy (`/api` → `localhost:3001`) only works when running `npm run dev`

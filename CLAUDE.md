@@ -63,6 +63,7 @@ backend/src/
     manage-users.mjs        User management CLI (add/passwd/delete/list)
 
 data/                       One .md file per opportunity + secrets.yaml (gitignored)
+docs/                       Project documentation (guide, architecture, API reference)
 nginx/nginx.conf            /api/* → backend:3001, /* → frontend:3000
 docker-compose.yml
 ```

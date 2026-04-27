@@ -72,7 +72,9 @@ export async function readOpportunity(id: string): Promise<Opportunity> {
 export async function writeOpportunity(opp: Opportunity): Promise<void> {
   const { notes, ...frontmatter } = opp;
   frontmatter.updatedAt = new Date().toISOString();
-  const content = matter.stringify(notes ?? '', frontmatter);
+  // js-yaml (used by gray-matter) throws on `undefined` values — strip them via JSON round-trip
+  const clean = JSON.parse(JSON.stringify(frontmatter)) as typeof frontmatter;
+  const content = matter.stringify(notes ?? '', clean);
   await fs.writeFile(path.join(DATA_DIR, `${opp.id}.md`), content);
 }
 

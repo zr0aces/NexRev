@@ -22,3 +22,13 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Claude Code local settings
+.claude/
+
+# Legacy prototype (pre-Vite/Fastify)
+index.html
+server.py
+start.bat
+start.sh
+assets/

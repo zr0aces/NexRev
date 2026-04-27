@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Production (Docker)
 ```bash
-cp .env.example .env   # add ANTHROPIC_API_KEY and JWT_SECRET
+cp .env.example .env   # set OLLAMA_BASE_URL, OLLAMA_MODEL, and JWT_SECRET
 docker compose up --build
 # Open http://localhost:8088
 ```
@@ -27,7 +27,7 @@ cd frontend && npm install && npm run dev
 - **Backend:** Fastify 5, TypeScript, Node.js — data stored as Markdown files in `data/`
 - **Auth:** JWT (jsonwebtoken) + bcrypt (bcryptjs) — credentials in `data/secrets.yaml`
 - **Infrastructure:** Docker Compose, Nginx reverse proxy (port 8088)
-- **AI:** Anthropic Claude API called server-side; key set via `ANTHROPIC_API_KEY` env var
+- **AI:** Local Ollama instance called server-side; configured via `OLLAMA_BASE_URL` and `OLLAMA_MODEL` env vars
 
 ## Architecture
 
@@ -77,7 +77,7 @@ docker-compose.yml
 
 **Rendering** — React state in App.tsx holds the opportunity list. `api.ts` makes fetch calls to the Fastify backend. Mutations call `onRefresh()` which re-fetches the full list.
 
-**AI integration** — AI calls go through the backend (`/api/ai/*`). The API key is an env var, never sent to the browser.
+**AI integration** — AI calls go through the backend (`/api/ai/*`) to a local Ollama instance. `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are env vars; the browser never talks to Ollama directly.
 
 ## Keyboard Shortcuts
 

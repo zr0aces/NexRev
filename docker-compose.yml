@@ -7,8 +7,11 @@ services:
       - NODE_ENV=production
       - PORT=3001
       - DATA_DIR=/app/data
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2}
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/app/data
     restart: unless-stopped

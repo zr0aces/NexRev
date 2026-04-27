@@ -10,7 +10,7 @@ A practical, step-by-step guide to using NexRev as your daily sales operating sy
 
 ```bash
 cp .env.example .env
-# Add your ANTHROPIC_API_KEY to .env (needed for AI features)
+# Set OLLAMA_BASE_URL and OLLAMA_MODEL in .env (needed for AI features)
 docker compose up --build
 ```
 
@@ -247,7 +247,8 @@ Data lives in `data/*.md` — human-readable Markdown files you can inspect, edi
 → Ensure `JWT_SECRET` in `.env` hasn't changed between restarts (changing it invalidates all tokens)
 
 **AI buttons not working**
-→ Check that `ANTHROPIC_API_KEY` is set in `.env` and the backend was restarted after editing it
+→ Ensure Ollama is running and the model is pulled: `ollama list`
+→ Check `OLLAMA_BASE_URL` and `OLLAMA_MODEL` in `.env` and restart the backend
 → Look at backend logs: `docker compose logs backend`
 
 **"Failed to connect to backend" error**

@@ -23,13 +23,13 @@ A full-stack personal sales pipeline tool for daily account management. React + 
 
 ### Prerequisites
 - Docker + Docker Compose
-- An Anthropic API key (AI features are optional — the app works without one)
+- [Ollama](https://ollama.com) running locally with a model pulled (AI features are optional — the app works without it)
 
 ### 1 — Configure
 
 ```bash
 cp .env.example .env
-# Set ANTHROPIC_API_KEY and JWT_SECRET in .env
+# Set OLLAMA_BASE_URL, OLLAMA_MODEL, and JWT_SECRET in .env
 ```
 
 ### 2 — Start
@@ -98,19 +98,25 @@ JWT_SECRET=<64-char-random-string>
 
 ## AI features
 
-AI summarization and Salesforce note generation are powered by the Anthropic Claude API (`claude-sonnet-4-20250514`).
+AI summarization and Salesforce note generation are powered by a local [Ollama](https://ollama.com) instance — no cloud API key required.
 
-Set your key in `.env`:
+### Setup
 
+```bash
+# 1. Install Ollama: https://ollama.com
+# 2. Pull a model
+ollama pull llama3.2
+
+# 3. Set in .env
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=llama3.2
 ```
-ANTHROPIC_API_KEY=sk-ant-...
-```
 
-The key is used **server-side only** — it is never sent to the browser.
+When running via Docker Compose on Linux, `host.docker.internal` is resolved automatically via `extra_hosts`. For local dev (no Docker), use `http://localhost:11434`.
 
-**Kanban context** — when generating a summary or SF note, the current board state (To Do / Follow-ups / Done items) is automatically included in the prompt so Claude has full deal context.
+**Kanban context** — when generating a summary or SF note, the current board state (To Do / Follow-ups / Done items) is automatically included in the prompt so the model has full deal context.
 
-**Cost:** typically under $0.01 per request. See [Anthropic pricing](https://anthropic.com/pricing).
+**Model choice** — any model available in your Ollama instance works. Recommended: `llama3.2`, `mistral`, or `qwen2.5`.
 
 ---
 

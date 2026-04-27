@@ -1,4 +1,4 @@
-import type { Opportunity } from './types';
+import type { KanbanColumn, KanbanContext, Opportunity } from './types';
 
 const BASE = '/api';
 
@@ -63,24 +63,35 @@ export const api = {
   activities: {
     add: (id: string, data: { raw: string; summary?: string; ai: boolean }) =>
       request<Opportunity>(`/opportunities/${id}/activities`, { method: 'POST', body: JSON.stringify(data) }),
-    moveColumn: (id: string, index: number, column: string) =>
-      request<Opportunity>(`/opportunities/${id}/activities/${index}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ column }),
-      }),
   },
   steps: {
-    add: (id: string, text: string) =>
-      request<Opportunity>(`/opportunities/${id}/steps`, { method: 'POST', body: JSON.stringify({ text }) }),
-    toggle: (id: string, index: number, done: boolean) =>
-      request<Opportunity>(`/opportunities/${id}/steps/${index}`, { method: 'PATCH', body: JSON.stringify({ done }) }),
+    add: (id: string, text: string, column: KanbanColumn = 'todo') =>
+      request<Opportunity>(`/opportunities/${id}/steps`, {
+        method: 'POST',
+        body: JSON.stringify({ text, column }),
+      }),
+    update: (id: string, index: number, data: { done?: boolean; column?: KanbanColumn }) =>
+      request<Opportunity>(`/opportunities/${id}/steps/${index}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }),
     remove: (id: string, index: number) =>
       request<Opportunity>(`/opportunities/${id}/steps/${index}`, { method: 'DELETE' }),
   },
   ai: {
-    summarize: (raw: string) =>
-      request<{ summary: string }>('/ai/summarize', { method: 'POST', body: JSON.stringify({ raw }) }),
-    sfNote: (data: { oppName: string; stage: string; contact: string; recentActivities: string; nextStep: string }) =>
+    summarize: (raw: string, kanban?: KanbanContext) =>
+      request<{ summary: string }>('/ai/summarize', {
+        method: 'POST',
+        body: JSON.stringify({ raw, kanban }),
+      }),
+    sfNote: (data: {
+      oppName: string;
+      stage: string;
+      contact: string;
+      recentActivities: string;
+      nextStep: string;
+      kanban?: KanbanContext;
+    }) =>
       request<{ note: string }>('/ai/sf-note', { method: 'POST', body: JSON.stringify(data) }),
   },
 };

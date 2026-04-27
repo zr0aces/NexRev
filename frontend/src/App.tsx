@@ -4,22 +4,21 @@ import type { Opportunity } from './types';
 import Nav from './components/Nav';
 import TodayPanel from './components/TodayPanel';
 import PipelinePanel from './components/PipelinePanel';
-import KanbanPanel from './components/KanbanPanel';
+import ActivityLogPanel from './components/ActivityLogPanel';
 import OppModal from './components/OppModal';
 import LoginPage from './components/LoginPage';
 
-type Tab = 'today' | 'pipeline' | 'kanban';
-
+type Tab = 'today' | 'pipeline' | 'log';
 type ModalState = string | null;
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(() => !!getToken());
-  const [opps, setOpps] = useState<Opportunity[]>([]);
-  const [tab, setTab] = useState<Tab>('today');
+  const [opps, setOpps]         = useState<Opportunity[]>([]);
+  const [tab, setTab]           = useState<Tab>('today');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState<string | null>(null);
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthenticated(false));
@@ -78,15 +77,13 @@ export default function App() {
     setOpps([]);
   };
 
-  if (!authenticated) {
-    return <LoginPage onLogin={handleLogin} />;
-  }
+  if (!authenticated) return <LoginPage onLogin={handleLogin} />;
 
   if (loading) {
     return (
       <div id="app">
         <div className="empty-state" style={{ paddingTop: '6rem' }}>
-          <span className="spinner" />Loading...
+          <span className="spinner" />Loading…
         </div>
       </div>
     );
@@ -95,7 +92,7 @@ export default function App() {
   if (error) {
     return (
       <div id="app">
-        <div className="empty-state" style={{ paddingTop: '6rem', color: 'var(--red)' }}>
+        <div className="empty-state" style={{ paddingTop: '6rem', color: 'var(--red-mid)' }}>
           Failed to connect to backend: {error}
         </div>
       </div>
@@ -130,7 +127,7 @@ export default function App() {
             onRemove={removeOpp}
           />
         )}
-        {tab === 'kanban' && <KanbanPanel opps={opps} onUpdate={updateOpp} />}
+        {tab === 'log' && <ActivityLogPanel opps={opps} />}
       </div>
       {modalState !== null && (
         <OppModal

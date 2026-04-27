@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Sales Dashboard — user management
+ * NexRev — user management
  *
  * Usage (run from project root):
  *   node backend/scripts/manage-users.mjs add <username> <password>
@@ -102,7 +102,7 @@ switch (cmd) {
   }
 
   default:
-    console.log(`Sales Dashboard — user management
+    console.log(`NexRev — user management
 
 Commands:
   add <username> <password>     Add a new user

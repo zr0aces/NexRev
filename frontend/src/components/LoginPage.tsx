@@ -27,7 +27,13 @@ export default function LoginPage({ onLogin }: Props) {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-title">&#x25A0; Sales Dashboard</div>
+        <div className="login-brand">
+          <div className="login-brand-icon">S</div>
+          <div>
+            <div className="login-brand-name">NexRev</div>
+            <div className="login-brand-sub">Sign in to continue</div>
+          </div>
+        </div>
         <form onSubmit={submit}>
           <div className="form-group">
             <label>Username</label>
@@ -38,6 +44,7 @@ export default function LoginPage({ onLogin }: Props) {
               autoFocus
               autoComplete="username"
               disabled={loading}
+              placeholder="Enter your username"
             />
           </div>
           <div className="form-group">
@@ -48,16 +55,17 @@ export default function LoginPage({ onLogin }: Props) {
               onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"
               disabled={loading}
+              placeholder="Enter your password"
             />
           </div>
           {error && <div className="login-error">{error}</div>}
           <button
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: 12 }}
+            style={{ width: '100%', marginTop: 16, padding: '10px 16px', fontSize: 14 }}
             type="submit"
             disabled={loading || !username.trim() || !password}
           >
-            {loading ? 'Signing in…' : 'Sign in'}
+            {loading ? <><span className="spinner" />Signing in…</> : 'Sign in'}
           </button>
         </form>
       </div>

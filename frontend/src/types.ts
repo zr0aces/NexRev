@@ -23,6 +23,7 @@ export type KanbanColumn = 'todo' | 'followup' | 'done';
 export interface NextStep {
   text: string;
   done: boolean;
+  column: KanbanColumn;
 }
 
 export interface Activity {
@@ -30,7 +31,12 @@ export interface Activity {
   raw: string;
   summary?: string;
   ai: boolean;
-  column: KanbanColumn;
+}
+
+export interface KanbanContext {
+  todo: string[];
+  followup: string[];
+  done: string[];
 }
 
 export interface Opportunity {

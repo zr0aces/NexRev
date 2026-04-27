@@ -75,8 +75,17 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
         followup: item.followup ?? '',
         nextStep: item.nextStep ?? '',
         notes: item.notes ?? '',
-        nextSteps: item.nextSteps ?? [],
-        activities: (item.activities ?? []).map(a => ({ ...a, column: a.column ?? 'todo' })),
+        nextSteps: (item.nextSteps ?? []).map(s => ({
+          text: s.text ?? '',
+          done: s.done ?? false,
+          column: (s.column ?? (s.done ? 'done' : 'todo')) as KanbanColumn,
+        })),
+        activities: (item.activities ?? []).map(a => ({
+          date: a.date ?? '',
+          raw: a.raw ?? '',
+          summary: a.summary,
+          ai: a.ai ?? false,
+        })),
         createdAt: item.createdAt ?? now,
         updatedAt: item.updatedAt ?? now,
       }));
@@ -95,7 +104,6 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
         raw: req.body.raw,
         summary: req.body.summary,
         ai: req.body.ai,
-        column: 'todo',
       });
       await storage.writeOpportunity(opp);
       return opp;
@@ -104,30 +112,13 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.patch<{ Params: { id: string; index: string }; Body: { column: KanbanColumn } }>(
-    '/opportunities/:id/activities/:index',
-    async (req, reply) => {
-      try {
-        const opp = await storage.readOpportunity(req.params.id);
-        const idx = parseInt(req.params.index, 10);
-        if (idx < 0 || idx >= opp.activities.length) {
-          return reply.code(404).send({ error: 'Activity not found' });
-        }
-        opp.activities[idx].column = req.body.column ?? opp.activities[idx].column;
-        await storage.writeOpportunity(opp);
-        return opp;
-      } catch {
-        return reply.code(404).send({ error: 'Not found' });
-      }
-    }
-  );
-
-  fastify.post<{ Params: { id: string }; Body: { text: string } }>(
+  fastify.post<{ Params: { id: string }; Body: { text: string; column?: KanbanColumn } }>(
     '/opportunities/:id/steps',
     async (req, reply) => {
       try {
         const opp = await storage.readOpportunity(req.params.id);
-        opp.nextSteps.push({ text: req.body.text, done: false });
+        const col: KanbanColumn = req.body.column ?? 'todo';
+        opp.nextSteps.push({ text: req.body.text, done: col === 'done', column: col });
         await storage.writeOpportunity(opp);
         return opp;
       } catch {
@@ -136,14 +127,24 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
-  fastify.patch<{ Params: { id: string; index: string }; Body: { done: boolean } }>(
+  fastify.patch<{
+    Params: { id: string; index: string };
+    Body: { done?: boolean; column?: KanbanColumn };
+  }>(
     '/opportunities/:id/steps/:index',
     async (req, reply) => {
       try {
         const opp = await storage.readOpportunity(req.params.id);
         const idx = parseInt(req.params.index, 10);
         if (idx < 0 || idx >= opp.nextSteps.length) return reply.code(404).send({ error: 'Step not found' });
-        opp.nextSteps[idx].done = req.body.done;
+        const step = opp.nextSteps[idx];
+        if (req.body.column !== undefined) {
+          step.column = req.body.column;
+          step.done = req.body.column === 'done';
+        } else if (req.body.done !== undefined) {
+          step.done = req.body.done;
+          step.column = req.body.done ? 'done' : (step.column === 'done' ? 'todo' : step.column);
+        }
         await storage.writeOpportunity(opp);
         return opp;
       } catch {

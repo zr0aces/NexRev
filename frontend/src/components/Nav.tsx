@@ -3,7 +3,7 @@ import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
 
-type Tab = 'today' | 'pipeline' | 'kanban';
+type Tab = 'today' | 'pipeline' | 'log';
 
 interface Props {
   tab: Tab;
@@ -28,7 +28,7 @@ function exportMd(opps: Opportunity[]) {
   const active = opps.filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
   const isOverdue = (d: string) => !!d && d < t;
   const lines = [
-    '# Sales Dashboard', '',
+    '# NexRev', '',
     `_Exported: ${t}_`, '',
     '## Summary', '',
     `- Active opportunities: ${active.length}`,
@@ -40,18 +40,25 @@ function exportMd(opps: Opportunity[]) {
   opps.forEach(o => {
     lines.push(`### ${o.name}`, '');
     lines.push(`- **Stage:** ${o.stage}`);
-    if (o.contact) lines.push(`- **Contact:** ${o.contact}`);
+    if (o.contact)      lines.push(`- **Contact:** ${o.contact}`);
     if (o.contactTitle) lines.push(`- **Title:** ${o.contactTitle}`);
     if (o.contactEmail) lines.push(`- **Email:** ${o.contactEmail}`);
     if (o.contactMobile) lines.push(`- **Mobile:** ${o.contactMobile}`);
-    if (o.value) lines.push(`- **Value:** $${Number(o.value).toLocaleString()}`);
-    if (o.close) lines.push(`- **Close date:** ${fmtDate(o.close)}`);
-    if (o.followup) lines.push(`- **Follow-up:** ${fmtDate(o.followup)}${isOverdue(o.followup) ? ' ⚠️ OVERDUE' : ''}`);
-    if (o.nextStep) lines.push(`- **Next step:** ${o.nextStep}`);
-    if (o.notes) lines.push('', '**Notes:**', '', o.notes);
+    if (o.value)        lines.push(`- **Value:** $${Number(o.value).toLocaleString()}`);
+    if (o.close)        lines.push(`- **Close date:** ${fmtDate(o.close)}`);
+    if (o.followup)     lines.push(`- **Follow-up:** ${fmtDate(o.followup)}${isOverdue(o.followup) ? ' ⚠️ OVERDUE' : ''}`);
+    if (o.nextStep)     lines.push(`- **Next step:** ${o.nextStep}`);
+    if (o.notes)        lines.push('', '**Notes:**', '', o.notes);
     if (o.nextSteps?.length) {
-      lines.push('', '**Checklist:**', '');
-      o.nextSteps.forEach(s => lines.push(`- [${s.done ? 'x' : ' '}] ${s.text}`));
+      lines.push('', '**Board:**', '');
+      ['todo', 'followup', 'done'].forEach(col => {
+        const items = o.nextSteps.filter(s => (s.column ?? 'todo') === col);
+        if (items.length) {
+          const label = col === 'todo' ? 'To Do' : col === 'followup' ? 'Follow-ups' : 'Done';
+          lines.push(`*${label}:*`);
+          items.forEach(s => lines.push(`- ${s.text}`));
+        }
+      });
     }
     if (o.activities?.length) {
       lines.push('', '**Activity log:**', '');
@@ -61,7 +68,7 @@ function exportMd(opps: Opportunity[]) {
     }
     lines.push('---', '');
   });
-  downloadFile(`sales-dashboard-${t}.md`, lines.join('\n'), 'text/markdown');
+  downloadFile(`nexrev-${t}.md`, lines.join('\n'), 'text/markdown');
 }
 
 export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLogout }: Props) {
@@ -89,27 +96,32 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
 
   return (
     <nav className="nav">
-      <span className="nav-title">&#x25A0; Sales Dashboard</span>
+      <div className="nav-brand">
+        <div className="nav-brand-icon">S</div>
+        <span className="nav-title">NexRev</span>
+      </div>
+      <div className="nav-divider" />
       <div className="nav-tabs">
-        {(['today', 'pipeline', 'kanban'] as Tab[]).map(t => (
+        {(['today', 'pipeline', 'log'] as Tab[]).map(t => (
           <button
             key={t}
             className={`nav-tab${tab === t ? ' active' : ''}`}
             onClick={() => onTabChange(t)}
           >
-            {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : 'Kanban'}
+            {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : 'Activity Log'}
           </button>
         ))}
       </div>
       <div className="nav-actions">
-        <button className="btn btn-sm" onClick={() => exportMd(opps)}>Export .md</button>
-        <button className="btn btn-sm" onClick={() => downloadFile(`sales-dashboard-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
-          Backup JSON
+        <button className="btn btn-sm" onClick={() => exportMd(opps)}>Export</button>
+        <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
+          Backup
         </button>
-        <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import JSON</button>
+        <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import</button>
         <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+        <div className="nav-divider" />
         <button className="btn btn-sm btn-primary" onClick={onAddClick}>+ Add Opportunity</button>
-        <button className="btn btn-sm" onClick={onLogout} title="Sign out" style={{ color: 'var(--text-secondary)' }}>Sign out</button>
+        <button className="btn btn-sm" onClick={onLogout} title="Sign out">Sign out</button>
       </div>
     </nav>
   );

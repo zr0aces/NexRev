@@ -11,20 +11,20 @@ export default function MetricsRow({ opps }: { opps: Opportunity[] }) {
   return (
     <div className="metrics-row">
       <div className="metric-card">
-        <div className="metric-label">Active opportunities</div>
+        <div className="metric-label">Active</div>
         <div className="metric-val">{active.length}</div>
       </div>
-      <div className="metric-card">
-        <div className="metric-label">Pipeline value</div>
-        <div className="metric-val">${(totalVal / 1000).toFixed(0)}k</div>
+      <div className="metric-card metric-card--orange">
+        <div className="metric-label">Pipeline Value</div>
+        <div className="metric-val metric-val--orange">${(totalVal / 1000).toFixed(0)}k</div>
       </div>
-      <div className="metric-card">
-        <div className="metric-label">Overdue follow-ups</div>
-        <div className="metric-val" style={{ color: overdue > 0 ? 'var(--red)' : undefined }}>{overdue}</div>
+      <div className={`metric-card${overdue > 0 ? ' metric-card--red' : ''}`}>
+        <div className="metric-label">Overdue Follow-ups</div>
+        <div className={`metric-val${overdue > 0 ? ' metric-val--red' : ''}`}>{overdue}</div>
       </div>
-      <div className="metric-card">
-        <div className="metric-label">Closed won</div>
-        <div className="metric-val" style={{ color: 'var(--teal)' }}>{won}</div>
+      <div className="metric-card metric-card--green">
+        <div className="metric-label">Closed Won</div>
+        <div className="metric-val metric-val--green">{won}</div>
       </div>
     </div>
   );

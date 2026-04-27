@@ -1,4 +1,24 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
+
+# Environment — contains secrets, never commit
 .env
+
+# Data — user content, gitignored by design
 data/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

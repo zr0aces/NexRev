@@ -1,106 +1,80 @@
 # NexRev
 
-A full-stack personal sales pipeline tool for daily account management. React + TypeScript frontend, Fastify backend, Markdown-file storage, Docker Compose with Nginx.
+A high-performance, personal sales pipeline management system built for speed, privacy, and AI-assisted workflow.
+
+NexRev is designed for individual account executives and sales professionals who need a fast, always-dark, and distraction-free environment to manage their daily sales activities. It combines a robust Kanban board with AI-driven summarization and Salesforce integration.
 
 ---
 
-## What it does
+## 🚀 Key Features
 
 | Feature | Description |
 |---------|-------------|
-| **Today digest** | Daily view of pending follow-ups with urgency indicators (overdue / due today / due soon) |
-| **Pipeline** | Manage opportunities with search, stage filter, sort, and split-panel detail view |
-| **Per-opportunity Kanban** | Three-column board (To Do → Follow-ups → Done) with drag-and-drop and inline card creation |
-| **Activity log** | Meeting notes, raw or AI-summarised, per opportunity and across the full pipeline |
-| **AI summarization** | Paste raw notes → local Ollama model returns a structured summary with Kanban context |
-| **Salesforce note generator** | One-click CRM-ready activity note, enriched with the current board state |
-| **Authentication** | JWT-based login; credentials stored in `data/secrets.yaml`; user management CLI |
-| **Export / backup** | Obsidian-compatible `.md` export and portable JSON backup/restore |
+| **Redesigned Today View** | A 3-column grid of cards showing pending follow-ups with smart urgency indicators (Red = Overdue, Amber = Due soon). |
+| **Integrated Pipeline** | Manage your entire deal flow with search, stage filters, and instant navigation from the Today view. |
+| **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
+| **AI Task Extraction** | **[NEW]** Instantly scan your recent meeting notes to extract and populate Kanban tasks automatically. |
+| **SF Update Note** | Generate Salesforce-ready activity summaries that strictly reflect developments since your last sync. |
+| **One Opportunity Per Client** | Enforces a clean pipeline by mapping exactly one opportunity to each unique account. |
+| **Local-First Privacy** | All data is stored in human-readable Markdown files on your machine. No cloud database required. |
+| **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for summarization and CRM note generation. |
 
 ---
 
-## Quick start (Docker)
+## 🛠 Tech Stack
+
+- **Frontend**: React 18, TypeScript, Vite, Vanilla CSS (Premium Dark Theme).
+- **Backend**: Node.js, Fastify 5, TypeScript.
+- **Storage**: Markdown files with YAML frontmatter (via `gray-matter`).
+- **Authentication**: JWT-based secure login with bcrypt password hashing.
+- **AI Engine**: Ollama (Local LLM Integration).
+- **Deployment**: Docker Compose with Nginx reverse proxy.
+
+---
+
+## 🚦 Quick Start
 
 ### Prerequisites
-- Docker + Docker Compose
-- [Ollama](https://ollama.com) running locally with a model pulled (AI features are optional)
+- Docker & Docker Compose.
+- [Ollama](https://ollama.com) installed and running locally.
 
-### 1 — Configure
-
+### 1. Setup Environment
 ```bash
 cp .env.example .env
-# Edit .env — set OLLAMA_BASE_URL, OLLAMA_MODEL, and JWT_SECRET
+# Edit .env to set OLLAMA_BASE_URL, OLLAMA_MODEL, and JWT_SECRET
 ```
 
-### 2 — Pull an AI model (optional)
-
+### 2. Pull AI Model
 ```bash
 ollama pull llama3.2
 ```
 
-### 3 — Start
-
+### 3. Launch System
 ```bash
-docker compose up --build
+docker compose up -d --build
 ```
+Access the application at **http://localhost:8088**.
 
-Open **http://localhost:8088** in your browser.
-
-### 4 — First login
-
+### 4. Initial Credentials
 | Username | Password |
 |----------|----------|
 | `admin`  | `admin`  |
-
-Change the default password immediately — see [User management](docs/guide.md#user-management).
-
----
-
-## Local development (no Docker)
-
-```bash
-# Terminal 1 — backend
-cd backend && npm install && npm run dev   # Fastify on :3001
-
-# Terminal 2 — frontend
-cd frontend && npm install && npm run dev  # Vite on :5173
-```
-
-The Vite dev server proxies `/api` to `localhost:3001`. Use `OLLAMA_BASE_URL=http://localhost:11434` for local dev.
+*Note: Change your password immediately using the CLI tools or by editing `data/secrets.yaml` (hashed).*
 
 ---
 
-## Documentation
+## 📖 Documentation
 
-| Document | Description |
-|----------|-------------|
-| [docs/guide.md](docs/guide.md) | Daily usage guide — routine, Kanban, AI, Salesforce workflow, troubleshooting |
-| [docs/architecture.md](docs/architecture.md) | Stack, directory layout, data model, auth flow, AI integration |
-| [docs/api.md](docs/api.md) | Full API reference with request/response examples |
-
----
-
-## Environment variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `OLLAMA_BASE_URL` | `http://host.docker.internal:11434` | Ollama instance URL |
-| `OLLAMA_MODEL` | `llama3.2` | Model to use for AI features |
-| `JWT_SECRET` | *(required)* | Token signing secret — use a long random string |
-| `DATA_DIR` | `./data` | Directory for opportunity `.md` files |
-| `PORT` | `3001` | Backend listen port |
+- [**User Guide (English)**](docs/user_guide_en.md) - Simple steps to master your pipeline.
+- [**คู่มือการใช้งาน (Thai)**](docs/user_guide_th.md) - ขั้นตอนการใช้งานภาษาไทย.
+- [**Daily Usage Guide**](docs/guide.md) - Detailed workflow and best practices.
+- [**Architecture**](docs/architecture.md) - Deep dive into system design and data models.
+- [**API Reference**](docs/api.md) - Full documentation of available endpoints.
 
 ---
 
-## Backup and restore
-
-- **Export** (nav) — Obsidian-compatible `.md` snapshot of the full pipeline
-- **Backup** (nav) — portable JSON array of all opportunities
-- **Import** (nav) — merge from a backup file (existing IDs skipped)
-
-Raw data lives in `data/*.md` — human-readable, version-controllable, portable.
-
-**Moving to another machine:**
-1. Copy the `data/` directory
-2. Set the same `JWT_SECRET` in the new `.env`
-3. `docker compose up --build`
+## 💾 Backup & Portability
+NexRev uses a **Markdown-first** storage approach. Your data lives in `data/*.md`.
+- **Export**: Generate an Obsidian-compatible `.md` snapshot.
+- **Backup/Restore**: Save and load full JSON snapshots of your pipeline.
+- **Portability**: Simply copy the `data/` folder to a new machine to migrate your entire system.

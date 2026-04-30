@@ -31,6 +31,7 @@ export interface Activity {
   raw: string;
   summary?: string;
   ai: boolean;
+  sf?: boolean;
 }
 
 export interface KanbanContext {

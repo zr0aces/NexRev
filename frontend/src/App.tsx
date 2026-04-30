@@ -13,6 +13,7 @@ type ModalState = string | null;
 
 export default function App() {
   const [authenticated, setAuthenticated] = useState(() => !!getToken());
+  const [username, setUsername]           = useState(() => localStorage.getItem('auth_user') || '');
   const [opps, setOpps]         = useState<Opportunity[]>([]);
   const [tab, setTab]           = useState<Tab>('today');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -65,15 +66,19 @@ export default function App() {
   }, []);
 
   const handleLogin = async (username: string, password: string) => {
-    const { token } = await api.auth.login(username, password);
+    const { token, username: user } = await api.auth.login(username, password);
     setToken(token);
+    localStorage.setItem('auth_user', user);
+    setUsername(user);
     setAuthenticated(true);
     setLoading(true);
   };
 
   const handleLogout = () => {
     clearToken();
+    localStorage.removeItem('auth_user');
     setAuthenticated(false);
+    setUsername('');
     setOpps([]);
   };
 
@@ -112,10 +117,20 @@ export default function App() {
         opps={opps}
         onImport={reload}
         onLogout={handleLogout}
+        username={username}
       />
       <div>
         {tab === 'today' && (
-          <TodayPanel opps={opps} onView={(id) => { setSelectedId(id); setTab('pipeline'); }} />
+          <TodayPanel
+            opps={opps}
+            onSelect={(id) => {
+              setTab('pipeline');
+              setSelectedId(id);
+            }}
+            onEdit={(id) => setModalState(id)}
+            onUpdate={updateOpp}
+            onRemove={removeOpp}
+          />
         )}
         {tab === 'pipeline' && (
           <PipelinePanel
@@ -131,9 +146,15 @@ export default function App() {
       </div>
       {modalState !== null && (
         <OppModal
+          opps={opps}
           editOpp={editOpp}
           onClose={() => setModalState(null)}
           onSaved={async () => { setModalState(null); await reload(); }}
+          onSelectExisting={(id) => {
+            setModalState(null);
+            setTab('pipeline');
+            setSelectedId(id);
+          }}
         />
       )}
     </div>

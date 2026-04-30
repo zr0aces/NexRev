@@ -95,7 +95,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{
     Params: { id: string };
-    Body: { raw: string; summary?: string; ai: boolean };
+    Body: { raw: string; summary?: string; ai: boolean; sf?: boolean };
   }>('/opportunities/:id/activities', async (req, reply) => {
     try {
       const opp = await storage.readOpportunity(req.params.id);
@@ -104,6 +104,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
         raw: req.body.raw,
         summary: req.body.summary,
         ai: req.body.ai,
+        sf: req.body.sf,
       });
       await storage.writeOpportunity(opp);
       return opp;

@@ -12,6 +12,7 @@ interface Props {
   opps: Opportunity[];
   onImport: () => void;
   onLogout: () => void;
+  username?: string;
 }
 
 function downloadFile(filename: string, content: string, type: string) {
@@ -71,7 +72,7 @@ function exportMd(opps: Opportunity[]) {
   downloadFile(`nexrev-${t}.md`, lines.join('\n'), 'text/markdown');
 }
 
-export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLogout }: Props) {
+export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLogout, username }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,6 +122,11 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
         <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
         <div className="nav-divider" />
         <button className="btn btn-sm btn-primary" onClick={onAddClick}>+ Add Opportunity</button>
+        {username && (
+          <div className="nav-user">
+            <span className="nav-user-name">{username}</span>
+          </div>
+        )}
         <button className="btn btn-sm" onClick={onLogout} title="Sign out">Sign out</button>
       </div>
     </nav>

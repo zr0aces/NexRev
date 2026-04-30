@@ -52,8 +52,12 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   };
 
   const genSfNote = async () => {
-    const recentActs = (opp.activities ?? []).slice(-3).map(a => a.summary ?? a.raw).join('\n---\n');
-    if (!recentActs) { alert('Log some activities first before generating an SF note.'); return; }
+    const all = opp.activities ?? [];
+    const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
+    const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
+    const nonSf = sinceLastSf.filter(a => !a.sf);
+    if (!nonSf.length) { alert('No new activities since the last SF note.'); return; }
+    const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
     setAiLoading('Generating Salesforce note…');
     try {
       const { note } = await api.ai.sfNote({
@@ -65,8 +69,48 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
         kanban: buildKanbanContext(opp),
       });
       setAiOutput({ type: 'sf', text: note });
+      const updated = await api.activities.add(opp.id, { raw: note, summary: note, ai: true, sf: true });
+      onUpdate(updated);
     } catch (e) {
       setAiOutput({ type: 'sf', text: (e as Error).message });
+    } finally {
+      setAiLoading(null);
+    }
+  };
+
+  const extractTasks = async () => {
+    const all = opp.activities ?? [];
+    const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
+    const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
+    const nonSf = sinceLastSf.filter(a => !a.sf);
+    if (!nonSf.length) { alert('No new activities to extract tasks from.'); return; }
+    
+    const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
+    setAiLoading('Extracting tasks with AI…');
+    try {
+      const tasks = await api.ai.extractTasks(recentActs);
+      const updated = { ...opp };
+      // Add new tasks to existing board
+      tasks.todo.forEach(t => {
+        if (!updated.nextSteps.some(s => s.text === t)) {
+          updated.nextSteps.push({ text: t, done: false, column: 'todo' });
+        }
+      });
+      tasks.followup.forEach(t => {
+        if (!updated.nextSteps.some(s => s.text === t)) {
+          updated.nextSteps.push({ text: t, done: false, column: 'followup' });
+        }
+      });
+      tasks.done.forEach(t => {
+        if (!updated.nextSteps.some(s => s.text === t)) {
+          updated.nextSteps.push({ text: t, done: true, column: 'done' });
+        }
+      });
+      const res = await api.opportunities.update(opp.id, { nextSteps: updated.nextSteps });
+      onUpdate(res);
+      alert('Board updated with new tasks extracted from activities.');
+    } catch (e) {
+      alert('Extraction failed: ' + (e as Error).message);
     } finally {
       setAiLoading(null);
     }
@@ -154,6 +198,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()}>Log note</button>
           <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()}>✨ AI summarize</button>
           <button className="btn btn-sm" onClick={genSfNote}>▪ SF update note</button>
+          <button className="btn btn-sm" onClick={extractTasks}>📋 Extract tasks</button>
         </div>
         {aiLoading && (
           <div className="ai-box"><span className="spinner" />{aiLoading}</div>
@@ -182,10 +227,11 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           activities.map((a, i) => (
             <div key={i} className="activity-item">
               <div className="activity-meta">
-                {a.ai && <span className="badge badge-ai" style={{ fontSize: 10 }}>AI</span>}
+                {a.sf && <span className="badge badge-sf" style={{ fontSize: 10 }}>SF</span>}
+                {a.ai && !a.sf && <span className="badge badge-ai" style={{ fontSize: 10 }}>AI</span>}
                 <span style={{ fontSize: 12 }}>{a.summary ?? a.raw}</span>
               </div>
-              {a.summary && a.raw !== a.summary && (
+              {a.summary && !a.sf && a.raw !== a.summary && (
                 <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
                   Raw: {a.raw.slice(0, 80)}{a.raw.length > 80 ? '…' : ''}
                 </div>

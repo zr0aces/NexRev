@@ -78,4 +78,29 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     );
     return { note };
   });
+
+  fastify.post<{ Body: { activities: string } }>('/ai/extract-tasks', async (req) => {
+    const { activities } = req.body;
+    const prompt = `You are a sales assistant. Given recent sales activity notes, extract a list of specific action items or tasks for a Kanban board. 
+Organize them into:
+1) "todo" (tasks yet to be started)
+2) "followup" (actions pending external response or specific follow-up dates)
+3) "done" (tasks mentioned as completed)
+
+Return ONLY a JSON object in this exact format:
+{
+  "todo": ["task 1", "task 2"],
+  "followup": ["task 3"],
+  "done": ["task 4"]
+}
+If no tasks are found for a category, return an empty array. No other text.`;
+
+    const tasksJson = await chat(prompt, activities);
+    try {
+      const match = tasksJson.match(/\{[\s\S]*\}/);
+      return JSON.parse(match ? match[0] : tasksJson);
+    } catch (e) {
+      throw new Error('Failed to parse AI task extraction result: ' + (e as Error).message);
+    }
+  });
 };

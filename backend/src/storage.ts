@@ -40,6 +40,7 @@ function parseOpp(id: string, raw: string): Opportunity {
       raw: String(a.raw ?? ''),
       summary: a.summary ? String(a.summary) : undefined,
       ai: Boolean(a.ai),
+      sf: a.sf ? true : undefined,
     })),
     createdAt: normalizeDate(data.createdAt) || new Date().toISOString(),
     updatedAt: normalizeDate(data.updatedAt) || new Date().toISOString(),

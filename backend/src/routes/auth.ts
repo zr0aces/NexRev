@@ -13,7 +13,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       if (!ok) {
         return reply.code(401).send({ error: 'Invalid credentials' });
       }
-      return { token: signToken(username) };
+      return { token: signToken(username), username };
     }
   );
 };

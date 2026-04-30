@@ -45,7 +45,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 export const api = {
   auth: {
     login: (username: string, password: string) =>
-      request<{ token: string }>('/auth/login', {
+      request<{ token: string; username: string }>('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       }),
@@ -61,7 +61,7 @@ export const api = {
       request<{ imported: number }>('/import', { method: 'POST', body: JSON.stringify(data) }),
   },
   activities: {
-    add: (id: string, data: { raw: string; summary?: string; ai: boolean }) =>
+    add: (id: string, data: { raw: string; summary?: string; ai: boolean; sf?: boolean }) =>
       request<Opportunity>(`/opportunities/${id}/activities`, { method: 'POST', body: JSON.stringify(data) }),
   },
   steps: {
@@ -93,5 +93,10 @@ export const api = {
       kanban?: KanbanContext;
     }) =>
       request<{ note: string }>('/ai/sf-note', { method: 'POST', body: JSON.stringify(data) }),
+    extractTasks: (activities: string) =>
+      request<KanbanContext>('/ai/extract-tasks', {
+        method: 'POST',
+        body: JSON.stringify({ activities }),
+      }),
   },
 };

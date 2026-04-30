@@ -4,9 +4,11 @@ import { STAGES } from '../types';
 import { api } from '../api';
 
 interface Props {
+  opps: Opportunity[];
   editOpp?: Opportunity;
   onClose: () => void;
   onSaved: () => Promise<void>;
+  onSelectExisting: (id: string) => void;
 }
 
 interface FormData {
@@ -32,9 +34,10 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-export default function OppModal({ editOpp, onClose, onSaved }: Props) {
+export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExisting }: Props) {
   const [form, setForm] = useState<FormData>(empty);
   const [saving, setSaving] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     if (editOpp) {
@@ -59,6 +62,13 @@ export default function OppModal({ editOpp, onClose, onSaved }: Props) {
 
   const save = async () => {
     if (!form.name.trim()) { alert('Account name is required'); return; }
+    
+    // Check for duplicates if adding a new opportunity
+    if (!editOpp && opps.some(o => o.name.toLowerCase() === form.name.trim().toLowerCase())) {
+      alert(`An opportunity for "${form.name.trim()}" already exists. Each client can only have one opportunity.`);
+      return;
+    }
+
     if (!form.contactEmail.trim()) { alert('Contact email is required'); return; }
     if (!isValidEmail(form.contactEmail.trim())) { alert('Please enter a valid email address'); return; }
     if (!form.contactMobile.trim()) { alert('Contact mobile number is required'); return; }
@@ -101,9 +111,42 @@ export default function OppModal({ editOpp, onClose, onSaved }: Props) {
         </div>
 
         <div className="form-row">
-          <div className="form-group">
+          <div className="form-group" style={{ position: 'relative' }}>
             <label>Account name *</label>
-            <input type="text" value={form.name} placeholder="Acme Corp" onChange={e => set('name', e.target.value)} autoFocus />
+            <input 
+              type="text" 
+              value={form.name} 
+              placeholder="Acme Corp" 
+              onChange={e => {
+                set('name', e.target.value);
+                setShowSuggestions(true);
+              }} 
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              autoFocus 
+            />
+            {showSuggestions && form.name.trim().length > 0 && (
+              <div className="dropdown-list">
+                {Array.from(new Set(opps.map(o => o.name)))
+                  .filter(name => name.toLowerCase().includes(form.name.toLowerCase()))
+                  .slice(0, 5)
+                  .map(name => {
+                    const existing = opps.find(o => o.name === name);
+                    return (
+                      <div 
+                        key={name} 
+                        className="dropdown-item" 
+                        onClick={() => {
+                          if (existing) onSelectExisting(existing.id);
+                        }}
+                      >
+                        {name} (Go to Pipeline)
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            )}
           </div>
           <div className="form-group">
             <label>Contact name</label>

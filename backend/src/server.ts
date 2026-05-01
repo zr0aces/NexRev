@@ -1,3 +1,5 @@
+import fs from 'fs/promises';
+import path from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -47,7 +49,14 @@ await server.register(authRoutes, { prefix: '/api' });
 await server.register(opportunityRoutes, { prefix: '/api' });
 await server.register(aiRoutes, { prefix: '/api' });
 
-server.get('/health', async () => ({ status: 'ok' }));
+let appVersion = 'unknown';
+try {
+  appVersion = (await fs.readFile(path.join(process.cwd(), 'VERSION'), 'utf8')).trim();
+} catch (e) {
+  console.warn('Could not read VERSION file:', e);
+}
+
+server.get('/api/health', async () => ({ status: 'ok', version: appVersion }));
 
 await ensureDataDir();
 await initSecrets();

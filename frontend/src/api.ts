@@ -44,6 +44,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export const api = {
   auth: {
+    getHealth: () => request<{ status: string; version: string }>('/health'),
     login: (username: string, password: string) =>
       request<{ token: string; username: string }>('/auth/login', {
         method: 'POST',

@@ -20,6 +20,7 @@ export default function ProfilePanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [linking, setLinking] = useState(false);
+  const [version, setVersion] = useState('');
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -35,6 +36,10 @@ export default function ProfilePanel() {
       setTelegramChatId(data.telegram_chat_id ?? '');
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    api.auth.getHealth().then(data => {
+      setVersion(data.version);
+    }).catch(() => {});
   }, []);
 
   const handleSaveTelegram = async () => {
@@ -213,6 +218,12 @@ export default function ProfilePanel() {
             <BookOpen size={14} /> คู่มือการใช้งาน (Thai)
           </a>
         </div>
+      </div>
+
+      <div className="profile-section" style={{ marginTop: 30, textAlign: 'center', background: 'transparent', border: 'none', padding: 0 }}>
+        <p className="text-tertiary" style={{ fontSize: 12 }}>
+          NexRev System &bull; Version {version || '2026.4.1'}
+        </p>
       </div>
 
       {message && (

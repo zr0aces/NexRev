@@ -1,9 +1,16 @@
+# NexRev GHCR Deployment Sample
+# This file is intended as a reference for deploying NexRev using pre-built images from GitHub Container Registry.
+# 
+# Usage:
+# 1. Copy this file to the root of the project.
+# 2. Update the image tags if you want a specific version.
+# 3. Ensure your .env file is configured correctly.
+# 4. Run `docker compose up -d`
+
 services:
   backend:
+    image: ghcr.io/zr0aces/nexrev-backend:latest
     container_name: nexrev-backend
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
     environment:
       - NODE_ENV=production
       - PORT=3001
@@ -19,17 +26,15 @@ services:
     restart: unless-stopped
 
   frontend:
+    image: ghcr.io/zr0aces/nexrev-frontend:latest
     container_name: nexrev-frontend
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - backend
 
   nginx:
-    container_name: nexrev-nginx
     image: nginx:alpine
+    container_name: nexrev-nginx
     ports:
       - "8088:80"
     volumes:

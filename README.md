@@ -67,10 +67,11 @@ Access the application at **http://localhost:8088**.
 
 ## 📖 Documentation
 
-- [**User Guide (English)**](docs/user_guide_en.html) - The master guide for all features and routines.
-- [**คู่มือการใช้งาน (Thai)**](docs/user_guide_th.html) - คู่มือการใช้งานฉบับสมบูรณ์ภาษาไทย.
+- [**User Guide (English)**](frontend/public/docs/user_guide_en.html) - The master guide for all features and routines.
+- [**คู่มือการใช้งาน (Thai)**](frontend/public/docs/user_guide_th.html) - คู่มือการใช้งานฉบับสมบูรณ์ภาษาไทย.
 - [**Architecture**](docs/architecture.md) - Deep dive into system design and data models.
 - [**API Reference**](docs/api.md) - Documentation of available endpoints.
+- [**Docker Compose (GHCR)**](docs/docker-compose.yml) - Sample for deploying with pre-built images.
 
 ---
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Send, 
   Link as LinkIcon, 
@@ -21,6 +21,13 @@ export default function ProfilePanel() {
   const [saving, setSaving] = useState(false);
   const [linking, setLinking] = useState(false);
   const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current !== null) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     api.auth.getMe().then(data => {
@@ -59,10 +66,11 @@ export default function ProfilePanel() {
 
       // Start polling
       let attempts = 0;
-      const interval = setInterval(async () => {
+      pollIntervalRef.current = setInterval(async () => {
         attempts++;
         if (attempts > 30) { // 30s timeout
-          clearInterval(interval);
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
           setLinking(false);
           setMessage({ text: 'Linking timed out. Please try again.', type: 'error' });
           return;
@@ -70,7 +78,8 @@ export default function ProfilePanel() {
 
         const { chatId } = await api.auth.pollTelegramLink(token);
         if (chatId) {
-          clearInterval(interval);
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
           setTelegramChatId(chatId);
           await api.auth.updateTelegram(chatId);
           setLinking(false);
@@ -87,6 +96,10 @@ export default function ProfilePanel() {
   const handleUpdatePassword = async () => {
     if (!newPassword) {
       setMessage({ text: 'Please enter a new password.', type: 'error' });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setMessage({ text: 'Password must be at least 8 characters.', type: 'error' });
       return;
     }
     if (newPassword !== confirmPassword) {

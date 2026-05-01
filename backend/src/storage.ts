@@ -9,6 +9,19 @@ export async function ensureDataDir(): Promise<void> {
   await fs.mkdir(DATA_DIR, { recursive: true });
 }
 
+/**
+ * Resolve a safe absolute path for the given opportunity id.
+ * Throws if the resulting path would escape DATA_DIR (path traversal guard).
+ */
+function safeOppPath(id: string): string {
+  const resolved = path.resolve(DATA_DIR, `${id}.md`);
+  const base = path.resolve(DATA_DIR) + path.sep;
+  if (!resolved.startsWith(base)) {
+    throw new Error('Invalid opportunity ID');
+  }
+  return resolved;
+}
+
 function normalizeDate(d: unknown): string {
   if (!d) return '';
   if (d instanceof Date) return d.toISOString().split('T')[0];
@@ -66,7 +79,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
 }
 
 export async function readOpportunity(id: string): Promise<Opportunity> {
-  const content = await fs.readFile(path.join(DATA_DIR, `${id}.md`), 'utf8');
+  const content = await fs.readFile(safeOppPath(id), 'utf8');
   return parseOpp(id, content);
 }
 
@@ -76,9 +89,9 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
   // js-yaml (used by gray-matter) throws on `undefined` values — strip them via JSON round-trip
   const clean = JSON.parse(JSON.stringify(frontmatter)) as typeof frontmatter;
   const content = matter.stringify(notes ?? '', clean);
-  await fs.writeFile(path.join(DATA_DIR, `${opp.id}.md`), content);
+  await fs.writeFile(safeOppPath(opp.id), content);
 }
 
 export async function deleteOpportunity(id: string): Promise<void> {
-  await fs.unlink(path.join(DATA_DIR, `${id}.md`));
+  await fs.unlink(safeOppPath(id));
 }

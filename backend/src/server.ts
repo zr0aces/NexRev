@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import rateLimit from '@fastify/rate-limit';
 import { ensureDataDir } from './storage.js';
 import { opportunityRoutes } from './routes/opportunities.js';
 import { aiRoutes } from './routes/ai.js';
@@ -13,6 +14,14 @@ const server = Fastify({
 
 await server.register(cors, {
   origin: process.env.NODE_ENV !== 'production',
+});
+
+// Global rate limiting — individual routes may override via config.rateLimit
+await server.register(rateLimit, {
+  global: true,
+  max: 200,
+  timeWindow: '1 minute',
+  errorResponseBuilder: () => ({ error: 'Too many requests. Please try again later.' }),
 });
 
 server.addHook('onRequest', async (request, reply) => {

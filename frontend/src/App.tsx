@@ -15,11 +15,13 @@ import ActivityLogPanel from './components/ActivityLogPanel';
 import OppModal from './components/OppModal';
 import LoginPage from './components/LoginPage';
 import ProfilePanel from './components/ProfilePanel';
+import { useToast } from './context/ToastContext';
 
 type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 type ModalState = string | null;
 
 export default function App() {
+  const { addToast } = useToast();
   const [authenticated, setAuthenticated] = useState(() => !!getToken());
   const [username, setUsername]           = useState(() => localStorage.getItem('auth_user') || '');
   const [opps, setOpps]         = useState<Opportunity[]>([]);
@@ -27,7 +29,6 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>(null);
   const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState<string | null>(null);
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthenticated(false));
@@ -37,13 +38,12 @@ export default function App() {
     try {
       const list = await api.opportunities.list();
       setOpps(list);
-      setError(null);
     } catch (e) {
       if ((e as Error).message !== 'Session expired. Please log in again.') {
-        setError((e as Error).message);
+        addToast('Failed to connect to backend: ' + (e as Error).message, 'error');
       }
     }
-  }, []);
+  }, [addToast]);
 
   const updateOpp = useCallback((updated: Opportunity) => {
     setOpps(prev => prev.map(o => o.id === updated.id ? updated : o));
@@ -80,6 +80,7 @@ export default function App() {
     setUsername(user);
     setAuthenticated(true);
     setLoading(true);
+    addToast('Logged in as ' + user, 'success');
   };
 
   const handleLogout = () => {
@@ -88,6 +89,7 @@ export default function App() {
     setAuthenticated(false);
     setUsername('');
     setOpps([]);
+    addToast('Logged out.', 'info');
   };
 
   if (!authenticated) return <LoginPage onLogin={handleLogin} />;
@@ -97,16 +99,6 @@ export default function App() {
       <div id="app">
         <div className="empty-state" style={{ paddingTop: '6rem' }}>
           <span className="spinner" />Loading…
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div id="app">
-        <div className="empty-state" style={{ paddingTop: '6rem', color: 'var(--red-mid)' }}>
-          Failed to connect to backend: {error}
         </div>
       </div>
     );

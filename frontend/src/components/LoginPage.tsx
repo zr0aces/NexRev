@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
 import { Rocket, LogIn } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 interface Props {
   onLogin: (username: string, password: string) => Promise<void>;
 }
 
 export default function LoginPage({ onLogin }: Props) {
+  const { addToast } = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password) return;
     setLoading(true);
-    setError(null);
     try {
       await onLogin(username.trim(), password);
     } catch (err) {
-      setError((err as Error).message);
+      addToast((err as Error).message, 'error');
     } finally {
       setLoading(false);
     }
@@ -61,7 +61,6 @@ export default function LoginPage({ onLogin }: Props) {
               placeholder="Enter your password"
             />
           </div>
-          {error && <div className="login-error">{error}</div>}
           <button
             className="btn btn-primary"
             style={{ width: '100%', marginTop: 16, padding: '12px 16px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}

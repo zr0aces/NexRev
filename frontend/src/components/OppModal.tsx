@@ -3,6 +3,7 @@ import { X, Check } from 'lucide-react';
 import type { Opportunity, Stage } from '../types';
 import { STAGES } from '../types';
 import { api } from '../api';
+import { useToast } from '../context/ToastContext';
 
 interface Props {
   opps: Opportunity[];
@@ -36,6 +37,7 @@ function isValidEmail(email: string): boolean {
 }
 
 export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExisting }: Props) {
+  const { addToast } = useToast();
   const [form, setForm] = useState<FormData>(empty);
   const [saving, setSaving] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -62,18 +64,33 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
     setForm(f => ({ ...f, [field]: value }));
 
   const save = async () => {
-    if (!form.name.trim()) { alert('Account name is required'); return; }
+    if (!form.name.trim()) { 
+      addToast('Account name is required', 'error'); 
+      return; 
+    }
     
     // Check for duplicates if adding a new opportunity
     if (!editOpp && opps.some(o => o.name.toLowerCase() === form.name.trim().toLowerCase())) {
-      alert(`An opportunity for "${form.name.trim()}" already exists. Each client can only have one opportunity.`);
+      addToast(`An opportunity for "${form.name.trim()}" already exists.`, 'error');
       return;
     }
 
-    if (!form.contactEmail.trim()) { alert('Contact email is required'); return; }
-    if (!isValidEmail(form.contactEmail.trim())) { alert('Please enter a valid email address'); return; }
-    if (!form.contactMobile.trim()) { alert('Contact mobile number is required'); return; }
-    if (!form.contactTitle.trim()) { alert('Contact title / job title is required'); return; }
+    if (!form.contactEmail.trim()) { 
+      addToast('Contact email is required', 'error'); 
+      return; 
+    }
+    if (!isValidEmail(form.contactEmail.trim())) { 
+      addToast('Please enter a valid email address', 'error'); 
+      return; 
+    }
+    if (!form.contactMobile.trim()) { 
+      addToast('Contact mobile number is required', 'error'); 
+      return; 
+    }
+    if (!form.contactTitle.trim()) { 
+      addToast('Contact title / job title is required', 'error'); 
+      return; 
+    }
     setSaving(true);
     try {
       const payload = {
@@ -91,14 +108,19 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
       };
       if (editOpp) {
         await api.opportunities.update(editOpp.id, payload);
+        addToast('Opportunity updated.', 'success');
       } else {
         await api.opportunities.create(payload);
+        addToast('Opportunity created.', 'success');
       }
       await onSaved();
+    } catch (e) {
+      addToast('Failed to save: ' + (e as Error).message, 'error');
     } finally {
       setSaving(false);
     }
   };
+
 
   return (
     <div

@@ -18,6 +18,7 @@ import Badge from './Badge';
 import OppKanban from './OppKanban';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
+import { useToast } from '../context/ToastContext';
 
 interface Props {
   opp: Opportunity;
@@ -35,6 +36,7 @@ function buildKanbanContext(opp: Opportunity): KanbanContext {
 }
 
 export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props) {
+  const { addToast } = useToast();
   const [logInput,   setLogInput]   = useState('');
   const [aiOutput,   setAiOutput]   = useState<{ type: 'ai' | 'sf'; text: string } | null>(null);
   const [aiLoading,  setAiLoading]  = useState<string | null>(null);
@@ -42,10 +44,15 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   const logRaw = async () => {
     const raw = logInput.trim();
     if (!raw) return;
-    const updated = await api.activities.add(opp.id, { raw, ai: false });
-    setLogInput('');
-    setAiOutput(null);
-    onUpdate(updated);
+    try {
+      const updated = await api.activities.add(opp.id, { raw, ai: false });
+      setLogInput('');
+      setAiOutput(null);
+      onUpdate(updated);
+      addToast('Activity logged.', 'success');
+    } catch (e) {
+      addToast('Failed to log activity: ' + (e as Error).message, 'error');
+    }
   };
 
   const logWithAI = async () => {
@@ -58,7 +65,9 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
       setAiOutput({ type: 'ai', text: summary });
       setLogInput('');
       onUpdate(updated);
+      addToast('AI summary generated and logged.', 'success');
     } catch (e) {
+      addToast('AI summarization failed: ' + (e as Error).message, 'error');
       setAiOutput({ type: 'ai', text: (e as Error).message });
     } finally {
       setAiLoading(null);
@@ -70,7 +79,10 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
     const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
     const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
     const nonSf = sinceLastSf.filter(a => !a.sf);
-    if (!nonSf.length) { alert('No new activities since the last SF note.'); return; }
+    if (!nonSf.length) { 
+      addToast('No new activities since the last SF note.', 'info'); 
+      return; 
+    }
     const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
     setAiLoading('Generating Salesforce note…');
     try {
@@ -85,7 +97,9 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
       setAiOutput({ type: 'sf', text: note });
       const updated = await api.activities.add(opp.id, { raw: note, summary: note, ai: true, sf: true });
       onUpdate(updated);
+      addToast('Salesforce note generated.', 'success');
     } catch (e) {
+      addToast('Failed to generate SF note: ' + (e as Error).message, 'error');
       setAiOutput({ type: 'sf', text: (e as Error).message });
     } finally {
       setAiLoading(null);
@@ -97,7 +111,10 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
     const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
     const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
     const nonSf = sinceLastSf.filter(a => !a.sf);
-    if (!nonSf.length) { alert('No new activities to extract tasks from.'); return; }
+    if (!nonSf.length) { 
+      addToast('No new activities to extract tasks from.', 'info'); 
+      return; 
+    }
     
     const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
     setAiLoading('Extracting tasks with AI…');
@@ -122,18 +139,24 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
       });
       const res = await api.opportunities.update(opp.id, { nextSteps: updated.nextSteps });
       onUpdate(res);
-      alert('Board updated with new tasks extracted from activities.');
+      addToast('Board updated with new tasks extracted from activities.', 'success');
     } catch (e) {
-      alert('Extraction failed: ' + (e as Error).message);
+      addToast('Extraction failed: ' + (e as Error).message, 'error');
     } finally {
       setAiLoading(null);
     }
   };
 
+
   const deleteOpp = async () => {
     if (!confirm('Delete this opportunity? This cannot be undone.')) return;
-    await api.opportunities.delete(opp.id);
-    onDeleted();
+    try {
+      await api.opportunities.delete(opp.id);
+      addToast('Opportunity deleted.', 'info');
+      onDeleted();
+    } catch (e) {
+      addToast('Delete failed: ' + (e as Error).message, 'error');
+    }
   };
 
   const activities = [...(opp.activities ?? [])].reverse();

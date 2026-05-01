@@ -11,8 +11,10 @@ import {
   BookOpen
 } from 'lucide-react';
 import { api } from '../api';
+import { useToast } from '../context/ToastContext';
 
 export default function ProfilePanel() {
+  const { addToast } = useToast();
   const [username, setUsername] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -21,7 +23,6 @@ export default function ProfilePanel() {
   const [saving, setSaving] = useState(false);
   const [linking, setLinking] = useState(false);
   const [version, setVersion] = useState('');
-  const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -46,22 +47,21 @@ export default function ProfilePanel() {
     setSaving(true);
     try {
       await api.auth.updateTelegram(telegramChatId.trim() || null);
-      setMessage({ text: 'Telegram settings updated!', type: 'success' });
+      addToast('Telegram settings updated!', 'success');
     } catch (err) {
-      setMessage({ text: 'Failed to update Telegram settings.', type: 'error' });
+      addToast('Failed to update Telegram settings.', 'error');
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
   const handleAutoLink = async () => {
     setLinking(true);
-    setMessage({ text: 'Generating link… Please check Telegram.', type: 'success' });
+    addToast('Generating link… Please check Telegram.', 'info');
     try {
       const { token, botName } = await api.auth.getTelegramLinkToken();
       if (!botName) {
-        setMessage({ text: 'Telegram bot name not configured in backend.', type: 'error' });
+        addToast('Telegram bot name not configured in backend.', 'error');
         setLinking(false);
         return;
       }
@@ -77,7 +77,7 @@ export default function ProfilePanel() {
           clearInterval(pollIntervalRef.current!);
           pollIntervalRef.current = null;
           setLinking(false);
-          setMessage({ text: 'Linking timed out. Please try again.', type: 'error' });
+          addToast('Linking timed out. Please try again.', 'error');
           return;
         }
 
@@ -88,40 +88,38 @@ export default function ProfilePanel() {
           setTelegramChatId(chatId);
           await api.auth.updateTelegram(chatId);
           setLinking(false);
-          setMessage({ text: 'Telegram linked successfully!', type: 'success' });
-          setTimeout(() => setMessage(null), 3000);
+          addToast('Telegram linked successfully!', 'success');
         }
       }, 2000);
     } catch (err) {
       setLinking(false);
-      setMessage({ text: 'Failed to initiate linking.', type: 'error' });
+      addToast('Failed to initiate linking.', 'error');
     }
   };
 
   const handleUpdatePassword = async () => {
     if (!newPassword) {
-      setMessage({ text: 'Please enter a new password.', type: 'error' });
+      addToast('Please enter a new password.', 'error');
       return;
     }
     if (newPassword.length < 8) {
-      setMessage({ text: 'Password must be at least 8 characters.', type: 'error' });
+      addToast('Password must be at least 8 characters.', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setMessage({ text: 'Passwords do not match.', type: 'error' });
+      addToast('Passwords do not match.', 'error');
       return;
     }
     setSaving(true);
     try {
       await api.auth.updatePassword(newPassword);
-      setMessage({ text: 'Password updated successfully!', type: 'success' });
+      addToast('Password updated successfully!', 'success');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setMessage({ text: 'Failed to update password.', type: 'error' });
+      addToast('Failed to update password.', 'error');
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -225,13 +223,6 @@ export default function ProfilePanel() {
           NexRev System &bull; Version {version || '2026.4.1'}
         </p>
       </div>
-
-      {message && (
-        <div className={`message-toast message-toast--${message.type}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {message.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
-          {message.text}
-        </div>
-      )}
     </div>
   );
 }

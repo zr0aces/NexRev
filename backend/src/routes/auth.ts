@@ -100,12 +100,17 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     '/auth/telegram/link-token',
     { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
     async (req, reply) => {
-    const username = await requireAuth(req, reply);
-    if (!username) return;
+      try {
+        const username = await requireAuth(req, reply);
+        if (!username) return;
 
-    const token = createLinkToken();
-    return { token, botName: process.env.TELEGRAM_BOT_NAME };
-  });
+        const token = createLinkToken();
+        return { token, botName: process.env.TELEGRAM_BOT_NAME };
+      } catch (err) {
+        req.log.error(err);
+        return reply.code(500).send({ error: 'Internal Server Error' });
+      }
+    });
 
   fastify.get<{ Querystring: { token: string } }>(
     '/auth/telegram/poll-link',

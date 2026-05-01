@@ -11,6 +11,7 @@ import {
 import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
+import { useToast } from '../context/ToastContext';
 
 type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 
@@ -33,7 +34,7 @@ function downloadFile(filename: string, content: string, type: string) {
   URL.revokeObjectURL(a.href);
 }
 
-function exportMd(opps: Opportunity[]) {
+function exportMd(opps: Opportunity[], addToast: any) {
   const t = todayStr();
   const active = opps.filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
   const isOverdue = (d: string) => !!d && d < t;
@@ -79,9 +80,11 @@ function exportMd(opps: Opportunity[]) {
     lines.push('---', '');
   });
   downloadFile(`nexrev-${t}.md`, lines.join('\n'), 'text/markdown');
+  addToast('Exported to Markdown.', 'success');
 }
 
 export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLogout, username }: Props) {
+  const { addToast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,15 +97,16 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
         if (!Array.isArray(data)) throw new Error('Invalid format — expected a JSON array');
         if (!confirm(`Import ${data.length} opportunities? Existing IDs will be skipped.`)) return;
         const { imported } = await api.opportunities.import(data);
-        alert(`Imported ${imported} new opportunities.`);
+        addToast(`Imported ${imported} new opportunities.`, 'success');
         onImport();
       } catch (err) {
-        alert('Import failed: ' + (err as Error).message);
+        addToast('Import failed: ' + (err as Error).message, 'error');
       }
       e.target.value = '';
     };
     reader.readAsText(file);
   };
+
 
   return (
     <nav className="nav">
@@ -126,7 +130,7 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
       </div>
       <div className="nav-actions">
         <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm" onClick={() => exportMd(opps)}>
+          <button className="btn btn-sm" onClick={() => exportMd(opps, addToast)}>
             <FileUp size={14} /> Export
           </button>
           <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
@@ -153,7 +157,7 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
 
         <div className="show-mobile">
           <button className="btn btn-sm" onClick={() => {
-            if (confirm('Export to Markdown?')) exportMd(opps);
+            if (confirm('Export to Markdown?')) exportMd(opps, addToast);
           }} title="Export MD">
             <Share size={16} />
           </button>

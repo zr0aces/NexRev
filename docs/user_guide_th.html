@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>คู่มือการใช้งาน NexRev</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg: #ffffff;
+            --bg-muted: #f9fafb;
+            --border: #e5e7eb;
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Sarabun', 'Inter', sans-serif;
+            line-height: 1.8;
+            color: var(--text-main);
+            background-color: var(--bg-muted);
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg);
+            padding: 3rem;
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .lang-switcher {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .lang-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .lang-link.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+        .subtitle { font-size: 1.125rem; color: var(--text-muted); }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        h2::before {
+            content: "";
+            width: 4px;
+            height: 1.5rem;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        p { margin-bottom: 1.25rem; }
+        ul { list-style: none; margin-bottom: 1.5rem; }
+        li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        kbd {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-family: monospace;
+            font-size: 0.85em;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+        }
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+        }
+        @media (max-width: 640px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lang-switcher">
+        <a href="user_guide_en.html" class="lang-link">English</a>
+        <a href="user_guide_th.html" class="lang-link active">ไทย</a>
+    </div>
+
+    <main class="container">
+        <header>
+            <h1>คู่มือการใช้งาน NexRev Master Guide</h1>
+            <p class="subtitle">แหล่งข้อมูลหลักสำหรับการจัดการ Pipeline การขาย, กิจวัตรประจำวัน และการใช้งาน AI</p>
+        </header>
+
+        <section>
+            <h2>1. การเริ่มต้นใช้งาน</h2>
+            <ul>
+                <li><strong>การเข้าสู่ระบบ:</strong> ใช้ชื่อผู้ใช้และรหัสผ่าน (ค่าเริ่มต้น: <code>admin</code> / <code>admin</code>)</li>
+                <li><strong>การใช้งานบนคอมพิวเตอร์:</strong> สลับระหว่างหน้า <strong>Today</strong>, <strong>Pipeline</strong>, <strong>Activity Log</strong> และ <strong>Profile</strong></li>
+                <li><strong>การใช้งานบนมือถือ:</strong> ใช้ <strong>Bottom Nav</strong> และ <strong>ปุ่มลอย (+)</strong> เพื่อความรวดเร็ว</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>2. กิจวัตรประจำวันของคุณ</h2>
+            <ul>
+                <li><strong>วางแผน (เช้า):</strong> ตรวจสอบแดชบอร์ด <strong>Today</strong> รายการสีแดงคือเลยกำหนด สีส้มคือใกล้ครบกำหนด</li>
+                <li><strong>ดำเนินการ:</strong> บันทึกโน้ตการประชุมลงในส่วนกิจกรรมทันที บันทึกแบบดิบๆ แล้วให้ AI ช่วยจัดระเบียบภายหลัง</li>
+                <li><strong>อัตโนมัติ:</strong> ใช้ปุ่ม <strong>📋 Extract tasks</strong> เพื่อสร้างรายการงานใน Kanban จากโน้ตของคุณทันที</li>
+                <li><strong>ซิงค์ข้อมูล:</strong> สร้าง <strong>▪ SF update notes</strong> เพื่อสรุปกิจกรรมสำหรับอัปเดต Salesforce ได้อย่างรวดเร็ว</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. โปรไฟล์และการแจ้งเตือน Telegram</h2>
+            <ul>
+                <li><strong>การตั้งค่า Telegram:</strong> เชื่อมต่อบัญชีในแถบ <strong>Profile</strong> เพื่อรับสรุปรายวันเวลา <strong>8:30 น.</strong></li>
+                <li><strong>ความปลอดภัย:</strong> เปลี่ยนรหัสผ่านทันทีเพื่อให้ข้อมูล Markdown ส่วนตัวของคุณปลอดภัย</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>4. Pipeline และ Kanban</h2>
+            <ul>
+                <li><strong>การค้นหา:</strong> ค้นหาบัญชีลูกค้าได้ทันที โดยยึดหลัก <strong>1 ลูกค้า = 1 โอกาสการขาย</strong></li>
+                <li><strong>Kanban:</strong> ติดตามงานย่อยในรูปแบบ <strong>To Do → Follow-ups → Done</strong></li>
+                <li><strong>มุมมองบนมือถือ:</strong> แตะชื่อบัญชีเพื่อดูรายละเอียด แตะ "Back" เพื่อกลับไปที่รายการ</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. เครื่องมือเพิ่มประสิทธิภาพ AI</h2>
+            <ul>
+                <li><strong>✨ AI Summarize:</strong> เปลี่ยนโน้ตที่ยุ่งเหยิงให้เป็นหัวข้อสรุปที่เป็นมืออาชีพ</li>
+                <li><strong>📋 Task Extraction:</strong> สแกนบันทึกเพื่อหาหัวข้องานและสร้างการ์ด Kanban ให้โดยอัตโนมัติ</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>6. คีย์ลัด (สำหรับคอมพิวเตอร์)</h2>
+            <ul>
+                <li><kbd>Ctrl</kbd> + <kbd>K</kbd> : เพิ่มโอกาสการขายใหม่</li>
+                <li><kbd>Esc</kbd> : ปิดหน้าต่าง / ยกเลิกการค้นหา</li>
+                <li><kbd>Enter</kbd> : เพิ่มรายการใน Kanban อย่างรวดเร็ว</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>7. เคล็ดลับเพื่อความสำเร็จ</h2>
+            <ul>
+                <li><strong>จัดระเบียบหน้า Today:</strong> อัปเดตวันติดตามผลเสมอเพื่อให้หน้า <strong>Today</strong> แสดงเฉพาะงานปัจจุบัน</li>
+                <li><strong>Markdown-First:</strong> ข้อมูลของคุณถูกเก็บในรูปแบบ Markdown ที่อ่านง่าย การสำรองข้อมูลทำได้ง่ายๆ เพียงคัดลอกโฟลเดอร์ <code>data/</code></li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 NexRev CRM. สงวนลิขสิทธิ์</p>
+        </footer>
+    </main>
+</body>
+</html>

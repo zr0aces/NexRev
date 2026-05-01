@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexRev User Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg: #ffffff;
+            --bg-muted: #f9fafb;
+            --border: #e5e7eb;
+            --radius: 8px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+            background-color: var(--bg-muted);
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--bg);
+            padding: 3rem;
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .lang-switcher {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .lang-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .lang-link.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 2rem;
+            margin-bottom: 2.5rem;
+        }
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            color: #111827;
+            margin-bottom: 1rem;
+            letter-spacing: -0.025em;
+        }
+        .subtitle { font-size: 1.125rem; color: var(--text-muted); }
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        h2::before {
+            content: "";
+            width: 4px;
+            height: 1.5rem;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        p { margin-bottom: 1.25rem; }
+        ul { list-style: none; margin-bottom: 1.5rem; }
+        li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        kbd {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 0.1rem 0.4rem;
+            font-family: monospace;
+            font-size: 0.85em;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+        }
+        footer {
+            margin-top: 4rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+        }
+        @media (max-width: 640px) {
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="lang-switcher">
+        <a href="user_guide_en.html" class="lang-link active">English</a>
+        <a href="user_guide_th.html" class="lang-link">ไทย</a>
+    </div>
+
+    <main class="container">
+        <header>
+            <h1>NexRev Master Guide</h1>
+            <p class="subtitle">The definitive source for managing your sales pipeline, daily routines, and AI integrations.</p>
+        </header>
+
+        <section>
+            <h2>1. Getting Started</h2>
+            <ul>
+                <li><strong>Login:</strong> Sign in with your credentials (Default: <code>admin</code> / <code>admin</code>).</li>
+                <li><strong>Desktop Navigation:</strong> Switch between <strong>Today</strong>, <strong>Pipeline</strong>, <strong>Activity Log</strong>, and <strong>Profile</strong>.</li>
+                <li><strong>Mobile Navigation:</strong> Use the <strong>Bottom Nav</strong> and the <strong>Floating (+) Button</strong> for speed.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>2. Your Daily Routine</h2>
+            <ul>
+                <li><strong>Plan (Morning):</strong> Review your <strong>Today</strong> dashboard. Red cards are overdue; Amber are due soon.</li>
+                <li><strong>Execute:</strong> Log meeting notes directly in the activity area. Paste them raw; let AI clean them up.</li>
+                <li><strong>Automate:</strong> Use <strong>📋 Extract tasks</strong> to instantly populate your Kanban board from your notes.</li>
+                <li><strong>Sync:</strong> Generate <strong>▪ SF update notes</strong> to quickly update your CRM with the latest developments.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>3. Profile & Telegram Notifications</h2>
+            <ul>
+                <li><strong>Telegram Setup:</strong> Link your account via the <strong>Profile</strong> tab to receive daily digests at <strong>8:30 AM</strong>.</li>
+                <li><strong>Security:</strong> Change your password immediately to keep your private Markdown data secure.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>4. Pipeline & Kanban</h2>
+            <ul>
+                <li><strong>Search:</strong> Find any account instantly. Note: <strong>One client = One opportunity</strong>.</li>
+                <li><strong>Kanban:</strong> Track micro-tasks across <strong>To Do → Follow-ups → Done</strong>.</li>
+                <li><strong>Master-Detail (Mobile):</strong> Tap an account for details; tap "Back" to return to the list.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>5. AI Productivity Tools</h2>
+            <ul>
+                <li><strong>✨ AI Summarize:</strong> Turn messy notes into professional bullet points.</li>
+                <li><strong>📋 Task Extraction:</strong> Scan logs for action items and create Kanban cards automatically.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>6. Keyboard Shortcuts (Desktop)</h2>
+            <ul>
+                <li><kbd>Ctrl</kbd> + <kbd>K</kbd> : Add New Opportunity</li>
+                <li><kbd>Esc</kbd> : Close Modals / Cancel Search</li>
+                <li><kbd>Enter</kbd> : Quick-add card in Kanban input</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>7. Best Practices</h2>
+            <ul>
+                <li><strong>Clean Slate:</strong> Always update follow-up dates to keep your <strong>Today</strong> view focused on current tasks.</li>
+                <li><strong>Markdown-First:</strong> Your data is stored in human-readable Markdown. Backup is as simple as copying the <code>data/</code> folder.</li>
+            </ul>
+        </section>
+
+        <footer>
+            <p>&copy; 2026 NexRev CRM. All rights reserved.</p>
+        </footer>
+    </main>
+</body>
+</html>

@@ -7,7 +7,8 @@ import {
   Check, 
   AlertCircle,
   Bell,
-  Key
+  Key,
+  BookOpen
 } from 'lucide-react';
 import { api } from '../api';
 
@@ -182,6 +183,23 @@ export default function ProfilePanel() {
           {saving ? <RefreshCw size={14} className="spinner" /> : <Lock size={14} />}
           Update Password
         </button>
+      </div>
+
+      <div className="profile-section" style={{ marginTop: 30 }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <BookOpen size={18} /> Help & Documentation
+        </h3>
+        <p className="text-secondary" style={{ fontSize: 13, marginBottom: 15 }}>
+          Learn how to master your pipeline and use AI tools effectively.
+        </p>
+        <div className="profile-actions-row" style={{ gap: 12 }}>
+          <a href="/docs/user_guide_en.html" target="_blank" rel="noopener noreferrer" className="btn" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: 'var(--text-secondary)' }}>
+            <BookOpen size={14} /> User Guide (English)
+          </a>
+          <a href="/docs/user_guide_th.html" target="_blank" rel="noopener noreferrer" className="btn" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none', color: 'var(--text-secondary)' }}>
+            <BookOpen size={14} /> คู่มือการใช้งาน (Thai)
+          </a>
+        </div>
       </div>
 
       {message && (

@@ -1,4 +1,4 @@
-import type { KanbanColumn, KanbanContext, Opportunity } from './types';
+import type { ActivityContext, KanbanColumn, Opportunity } from './types';
 
 const BASE = '/api';
 
@@ -93,24 +93,20 @@ export const api = {
       request<Opportunity>(`/opportunities/${id}/steps/${index}`, { method: 'DELETE' }),
   },
   ai: {
-    summarize: (raw: string, kanban?: KanbanContext) =>
+    summarize: (raw: string, id: string) =>
       request<{ summary: string }>('/ai/summarize', {
         method: 'POST',
-        body: JSON.stringify({ raw, kanban }),
+        body: JSON.stringify({ raw, id }),
       }),
-    sfNote: (data: {
-      oppName: string;
-      stage: string;
-      contact: string;
-      recentActivities: string;
-      nextStep: string;
-      kanban?: KanbanContext;
-    }) =>
-      request<{ note: string }>('/ai/sf-note', { method: 'POST', body: JSON.stringify(data) }),
-    extractTasks: (activities: string) =>
-      request<KanbanContext>('/ai/extract-tasks', {
+    sfNote: (id: string, context?: ActivityContext) =>
+      request<{ note: string }>('/ai/sf-note', {
         method: 'POST',
-        body: JSON.stringify({ activities }),
+        body: JSON.stringify({ id, context }),
+      }),
+    extractTasks: (id: string, context?: ActivityContext) =>
+      request<Opportunity>('/ai/extract-tasks', {
+        method: 'POST',
+        body: JSON.stringify({ id, context }),
       }),
   },
 };

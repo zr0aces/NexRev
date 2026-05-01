@@ -40,6 +40,11 @@ export interface KanbanContext {
   done: string[];
 }
 
+export interface ActivityContext {
+  indices?: number[];
+  drafts?: Activity[];
+}
+
 export interface Opportunity {
   id: string;
   name: string;

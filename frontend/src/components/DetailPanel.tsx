@@ -13,7 +13,7 @@ import {
   User as UserIcon,
   Clock
 } from 'lucide-react';
-import type { KanbanContext, Opportunity } from '../types';
+import type { Opportunity } from '../types';
 import Badge from './Badge';
 import OppKanban from './OppKanban';
 import { api } from '../api';
@@ -27,13 +27,6 @@ interface Props {
   onUpdate: (opp: Opportunity) => void;
 }
 
-function buildKanbanContext(opp: Opportunity): KanbanContext {
-  return {
-    todo:     opp.nextSteps.filter(s => s.column === 'todo').map(s => s.text),
-    followup: opp.nextSteps.filter(s => s.column === 'followup').map(s => s.text),
-    done:     opp.nextSteps.filter(s => s.column === 'done').map(s => s.text),
-  };
-}
 
 export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props) {
   const { addToast } = useToast();
@@ -60,7 +53,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
     if (!raw) return;
     setAiLoading('Summarizing with AI…');
     try {
-      const { summary } = await api.ai.summarize(raw, buildKanbanContext(opp));
+      const { summary } = await api.ai.summarize(raw, opp.id);
       const updated = await api.activities.add(opp.id, { raw, summary, ai: true });
       setAiOutput({ type: 'ai', text: summary });
       setLogInput('');
@@ -75,25 +68,9 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   };
 
   const genSfNote = async () => {
-    const all = opp.activities ?? [];
-    const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
-    const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
-    const nonSf = sinceLastSf.filter(a => !a.sf);
-    if (!nonSf.length) { 
-      addToast('No new activities since the last SF note.', 'info'); 
-      return; 
-    }
-    const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
     setAiLoading('Generating Salesforce note…');
     try {
-      const { note } = await api.ai.sfNote({
-        oppName: opp.name,
-        stage: opp.stage,
-        contact: opp.contact,
-        recentActivities: recentActs,
-        nextStep: opp.nextStep,
-        kanban: buildKanbanContext(opp),
-      });
+      const { note } = await api.ai.sfNote(opp.id);
       setAiOutput({ type: 'sf', text: note });
       const updated = await api.activities.add(opp.id, { raw: note, summary: note, ai: true, sf: true });
       onUpdate(updated);
@@ -107,38 +84,10 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   };
 
   const extractTasks = async () => {
-    const all = opp.activities ?? [];
-    const lastSfIdx = all.reduce((acc, a, i) => (a.sf ? i : acc), -1);
-    const sinceLastSf = lastSfIdx >= 0 ? all.slice(lastSfIdx + 1) : all;
-    const nonSf = sinceLastSf.filter(a => !a.sf);
-    if (!nonSf.length) { 
-      addToast('No new activities to extract tasks from.', 'info'); 
-      return; 
-    }
-    
-    const recentActs = nonSf.map(a => a.summary ?? a.raw).join('\n---\n');
     setAiLoading('Extracting tasks with AI…');
     try {
-      const tasks = await api.ai.extractTasks(recentActs);
-      const updated = { ...opp };
-      // Add new tasks to existing board
-      tasks.todo.forEach(t => {
-        if (!updated.nextSteps.some(s => s.text === t)) {
-          updated.nextSteps.push({ text: t, done: false, column: 'todo' });
-        }
-      });
-      tasks.followup.forEach(t => {
-        if (!updated.nextSteps.some(s => s.text === t)) {
-          updated.nextSteps.push({ text: t, done: false, column: 'followup' });
-        }
-      });
-      tasks.done.forEach(t => {
-        if (!updated.nextSteps.some(s => s.text === t)) {
-          updated.nextSteps.push({ text: t, done: true, column: 'done' });
-        }
-      });
-      const res = await api.opportunities.update(opp.id, { nextSteps: updated.nextSteps });
-      onUpdate(res);
+      const updated = await api.ai.extractTasks(opp.id);
+      onUpdate(updated);
       addToast('Board updated with new tasks extracted from activities.', 'success');
     } catch (e) {
       addToast('Extraction failed: ' + (e as Error).message, 'error');

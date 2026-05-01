@@ -9,7 +9,7 @@ function notFound(reply: FastifyReply) {
 }
 
 export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/opportunities', async () => {
+  fastify.get('/opportunities', { config: { rateLimit: { max: 100, timeWindow: '1 minute' } } }, async () => {
     return store.list();
   });
 
@@ -91,8 +91,10 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
   }>(
     '/opportunities/:id/steps/:index',
     async (req, reply) => {
+      const index = parseInt(req.params.index, 10);
+      if (isNaN(index)) return notFound(reply);
       try {
-        return await store.upsertStep(req.params.id, parseInt(req.params.index, 10), req.body);
+        return await store.upsertStep(req.params.id, index, req.body);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;
@@ -103,8 +105,10 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete<{ Params: { id: string; index: string } }>(
     '/opportunities/:id/steps/:index',
     async (req, reply) => {
+      const index = parseInt(req.params.index, 10);
+      if (isNaN(index)) return notFound(reply);
       try {
-        return await store.removeStep(req.params.id, parseInt(req.params.index, 10));
+        return await store.removeStep(req.params.id, index);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;

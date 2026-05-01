@@ -9,6 +9,15 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const pendingLinks = new Map<string, string>();
 let lastUpdateId = 0;
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 async function sendTelegramMessage(chatId: string, text: string) {
   if (!TELEGRAM_BOT_TOKEN) return;
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
@@ -107,8 +116,8 @@ export function initNotifications() {
       if (dueToday.length > 0) {
         message += `<b>📅 Due Today:</b>\n`;
         dueToday.forEach(o => {
-          message += `• ${o.name} (${o.stage})\n`;
-          if (o.nextStep) message += `  <i>Next: ${o.nextStep}</i>\n`;
+          message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
+          if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
         });
         message += `\n`;
       }
@@ -117,7 +126,7 @@ export function initNotifications() {
         message += `<b>⚠️ Overdue:</b>\n`;
         overdue.forEach(o => {
           const days = Math.floor((new Date(today).getTime() - new Date(o.followup).getTime()) / (1000 * 60 * 60 * 24));
-          message += `• ${o.name} (${days}d overdue)\n`;
+          message += `• ${escapeHtml(o.name)} (${days}d overdue)\n`;
         });
       }
 

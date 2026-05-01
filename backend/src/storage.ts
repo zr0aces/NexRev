@@ -32,27 +32,11 @@ interface ActivityRow {
   sf: number;
 }
 
-function hydrateOpportunity(row: OpportunityRow): Opportunity {
-  const db = getDb();
-
-  const steps = db
-    .prepare(`
-      SELECT text, done, column_name
-      FROM next_steps
-      WHERE opportunity_id = ?
-      ORDER BY sort_order ASC
-    `)
-    .all(row.id) as NextStepRow[];
-
-  const activities = db
-    .prepare(`
-      SELECT activity_date, raw, summary, ai, sf
-      FROM activities
-      WHERE opportunity_id = ?
-      ORDER BY id ASC
-    `)
-    .all(row.id) as ActivityRow[];
-
+function buildOpportunity(
+  row: OpportunityRow,
+  steps: NextStepRow[],
+  activities: ActivityRow[]
+): Opportunity {
   return {
     id: row.id,
     name: row.name,
@@ -83,6 +67,30 @@ function hydrateOpportunity(row: OpportunityRow): Opportunity {
   };
 }
 
+function hydrateOpportunity(row: OpportunityRow): Opportunity {
+  const db = getDb();
+
+  const steps = db
+    .prepare(`
+      SELECT text, done, column_name
+      FROM next_steps
+      WHERE opportunity_id = ?
+      ORDER BY sort_order ASC
+    `)
+    .all(row.id) as NextStepRow[];
+
+  const activities = db
+    .prepare(`
+      SELECT activity_date, raw, summary, ai, sf
+      FROM activities
+      WHERE opportunity_id = ?
+      ORDER BY id ASC
+    `)
+    .all(row.id) as ActivityRow[];
+
+  return buildOpportunity(row, steps, activities);
+}
+
 export async function ensureDataDir(): Promise<void> {
   await initDatabase();
 }
@@ -106,7 +114,58 @@ export async function listOpportunities(): Promise<Opportunity[]> {
     `)
     .all() as OpportunityRow[];
 
-  return rows.map((row) => hydrateOpportunity(row));
+  if (!rows.length) return [];
+
+  const ids = rows.map((r) => r.id);
+
+  // Batch-fetch all steps and activities to avoid N+1 queries.
+  // Chunk IDs to stay within SQLite's per-statement variable limit.
+  const CHUNK = 900;
+  const allSteps: (NextStepRow & { opportunity_id: string })[] = [];
+  const allActivities: (ActivityRow & { opportunity_id: string })[] = [];
+
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const chunk = ids.slice(i, i + CHUNK);
+    const ph = chunk.map(() => '?').join(', ');
+
+    const steps = db
+      .prepare(
+        `SELECT opportunity_id, text, done, column_name
+         FROM next_steps
+         WHERE opportunity_id IN (${ph})
+         ORDER BY opportunity_id, sort_order ASC`
+      )
+      .all(...chunk) as (NextStepRow & { opportunity_id: string })[];
+    allSteps.push(...steps);
+
+    const activities = db
+      .prepare(
+        `SELECT opportunity_id, activity_date, raw, summary, ai, sf
+         FROM activities
+         WHERE opportunity_id IN (${ph})
+         ORDER BY opportunity_id, id ASC`
+      )
+      .all(...chunk) as (ActivityRow & { opportunity_id: string })[];
+    allActivities.push(...activities);
+  }
+
+  const stepsMap = new Map<string, NextStepRow[]>();
+  for (const step of allSteps) {
+    const arr = stepsMap.get(step.opportunity_id);
+    if (arr) arr.push(step);
+    else stepsMap.set(step.opportunity_id, [step]);
+  }
+
+  const activitiesMap = new Map<string, ActivityRow[]>();
+  for (const act of allActivities) {
+    const arr = activitiesMap.get(act.opportunity_id);
+    if (arr) arr.push(act);
+    else activitiesMap.set(act.opportunity_id, [act]);
+  }
+
+  return rows.map((row) =>
+    buildOpportunity(row, stepsMap.get(row.id) ?? [], activitiesMap.get(row.id) ?? [])
+  );
 }
 
 export async function readOpportunity(id: string): Promise<Opportunity> {

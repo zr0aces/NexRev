@@ -29,7 +29,7 @@ await server.register(rateLimit, {
 server.addHook('onRequest', async (request, reply) => {
   const url = request.raw.url ?? '';
   if (
-    url === '/health' ||
+    url === '/api/health' ||
     url.startsWith('/api/auth/') ||
     request.method === 'OPTIONS'
   ) return;

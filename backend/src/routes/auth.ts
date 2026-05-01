@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import { 
   verifyCredentials, 
   signToken, 
@@ -31,6 +32,13 @@ async function requireAuth(req: FastifyRequest, reply: FastifyReply): Promise<st
 }
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
+  // Strict rate limit for the login endpoint to prevent brute-force attacks
+  await fastify.register(rateLimit, {
+    max: 10,
+    timeWindow: '1 minute',
+    errorResponseBuilder: () => ({ error: 'Too many requests. Please try again later.' }),
+  });
+
   fastify.post<{ Body: { username: string; password: string } }>(
     '/auth/login',
     async (req, reply) => {

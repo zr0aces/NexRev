@@ -3,7 +3,7 @@ import path from 'path';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
-import { ensureDataDir } from './storage.js';
+import { initDatabase } from './db.js';
 import { opportunityRoutes } from './routes/opportunities.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
@@ -58,7 +58,15 @@ try {
 
 server.get('/api/health', async () => ({ status: 'ok', version: appVersion }));
 
-await ensureDataDir();
+const dbInit = await initDatabase();
+server.log.info(
+  {
+    schemaVersion: dbInit.schemaVersion,
+    opportunitiesImported: dbInit.legacyMigration.opportunitiesImported,
+    usersImported: dbInit.legacyMigration.usersImported,
+  },
+  'SQLite initialized'
+);
 await initSecrets();
 initNotifications();
 

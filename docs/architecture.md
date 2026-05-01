@@ -1,7 +1,7 @@
 # Architecture & System Design
 
 ## Core Principles
-1. **Local-First**: Data belongs to the user, stored in human-readable Markdown.
+1. **Local-First**: Data belongs to the user, stored in a local SQLite database file.
 2. **AI-Enhanced**: Uses local LLMs (Ollama) to reduce manual data entry and CRM reporting friction.
 3. **Speed**: Lightweight stack (React + Fastify) with no heavy UI libraries for instant responsiveness.
 
@@ -13,7 +13,7 @@
 |-------|------------|---------|
 | **Frontend** | React 18, Vite | TypeScript, Vanilla CSS (GitHub-Dark inspired theme). |
 | **Backend** | Fastify 5 | TypeScript, JWT Auth, bcrypt hashing. |
-| **Storage** | Markdown / YAML | Uses `gray-matter` to parse metadata from `.md` files in `/data`. |
+| **Storage** | SQLite | Uses `better-sqlite3`; primary file is `data/nexrev.sqlite3`. |
 | **AI** | Ollama | Integrates via REST API with `llama3.2` (default). |
 | **Proxy** | Nginx | Reverse proxy for routing and service orchestration. |
 
@@ -22,9 +22,25 @@
 ## Key Data Models
 
 ### Opportunity (`Opportunity` interface)
-Stored as a single Markdown file.
-- **Frontmatter**: Metadata like stage, value, contact info, and Kanban steps.
-- **Body**: Free-form initial notes or context.
+Stored as an aggregate across relational tables:
+- `opportunities`: core metadata (stage, value, contact fields, notes, dates)
+- `next_steps`: ordered Kanban tasks linked by `opportunity_id`
+- `activities`: activity feed linked by `opportunity_id`
+
+Key integrity rules:
+- `opportunities.id` is the primary key.
+- `next_steps` and `activities` have foreign keys with `ON DELETE CASCADE`.
+- `stage`, `column_name`, and boolean flags are constrained with `CHECK` rules.
+- Unique ordering per opportunity is enforced by `UNIQUE(opportunity_id, sort_order)`.
+
+Key indexes:
+- opportunities: stage, followup_date, updated_at, name
+- next_steps: (opportunity_id, sort_order), (opportunity_id, column_name, done)
+- activities: (opportunity_id, activity_date)
+
+Operational metadata:
+- `app_meta` stores schema metadata (currently `schema_version`).
+- Server startup logs schema version and legacy migration import counts.
 
 ### Kanban Steps (`NextStep` interface)
 - `text`: Description of the task.
@@ -49,7 +65,16 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
 ---
 
 ## Authentication Flow
-1. **Login**: User provides credentials. Backend verifies against `data/secrets.yaml`.
+1. **Login**: User provides credentials. Backend verifies against SQLite `users` table.
 2. **Token**: Returns a signed JWT containing the `username`.
 3. **Persistence**: Frontend stores the token and username in `localStorage`.
 4. **Authorized Requests**: All API calls (except `/health` and `/auth/login`) must include the Bearer token.
+
+## Legacy Import
+- Startup migration imports legacy Markdown/YAML data when SQLite tables are empty.
+- On-demand migration command: `cd backend && npm run migrate:legacy`
+
+## Backup and Restore
+- Backup command: `cd backend && npm run db:backup`
+- Restore command: `cd backend && npm run db:restore`
+- Backups are generated via SQLite `VACUUM INTO` for consistent snapshots.

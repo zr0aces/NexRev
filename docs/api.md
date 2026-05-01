@@ -2,6 +2,8 @@
 
 ## Authentication
 
+Authentication and profile metadata are persisted in SQLite `users`.
+
 ### POST `/api/auth/login`
 **Request**
 ```json
@@ -15,6 +17,8 @@
 ---
 
 ## Opportunities
+
+Opportunity aggregate data is persisted in SQLite across `opportunities`, `next_steps`, and `activities`.
 
 ### GET `/api/opportunities`
 Returns an array of all opportunity objects.
@@ -67,5 +71,5 @@ Extract Kanban tasks from activity logs.
 
 ## Utility
 
-### GET `/health`
+### GET `/api/health`
 Returns `200 OK`. Used for Docker health checks.

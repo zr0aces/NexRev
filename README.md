@@ -18,7 +18,7 @@ NexRev is designed for individual account executives and sales professionals who
 | **SF Update Note** | Generate Salesforce-ready activity summaries reflecting developments since your last sync. |
 | **Telegram Integration** | Receive daily reminders at 8:30 AM and link your account instantly with one click. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
-| **Local-First Privacy** | All data is stored in human-readable Markdown files on your machine. |
+| **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
 | **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for private, on-device intelligence. |
 
 ---
@@ -28,10 +28,29 @@ NexRev is designed for individual account executives and sales professionals who
 - **Frontend**: React 18, TypeScript, Vite, Vanilla CSS (Premium Dark Theme), Lucide Icons.
 - **Backend**: Node.js, Fastify 5, TypeScript.
 - **Reverse Proxy**: Nginx (handling both frontend and backend).
-- **Storage**: Markdown files with YAML frontmatter.
+- **Storage**: SQLite (single local database file).
 - **Authentication**: JWT-based secure login with bcrypt hashing.
 - **AI Engine**: Ollama (Local LLM Integration).
 - **Deployment**: Docker Compose.
+
+## 🗄 Data Storage
+
+- Primary datastore: `data/nexrev.sqlite3`
+- Legacy migration: legacy `data/*.md` opportunities and `data/secrets.yaml` users are auto-imported at startup when SQLite tables are empty.
+- On-demand re-import: run `cd backend && npm run migrate:legacy` to import any missing legacy records without duplicating existing IDs/usernames.
+
+Environment overrides:
+- `DATA_DIR` sets the base data directory.
+- `SQLITE_FILE` overrides the SQLite path directly.
+- `SECRETS_FILE` is only used as a legacy migration input path.
+
+Startup telemetry:
+- Backend logs the active SQLite schema version and legacy import counts at boot.
+
+Backup and restore:
+- Create backup: `cd backend && npm run db:backup`
+- Restore backup: `cd backend && npm run db:restore`
+- You can also run custom paths with: `node backend/scripts/db-backup-restore.mjs backup <file>` and `node backend/scripts/db-backup-restore.mjs restore <file>`
 
 ---
 
@@ -76,6 +95,14 @@ Access the application at **http://localhost:8088**.
 ---
 
 ## 💾 Backup & Portability
-NexRev uses a **Markdown-first** storage approach. Your data lives in `data/*.md`.
-- **Portability**: Simply copy the `data/` folder to a new machine to migrate your system.
-- **Human Readable**: You can open any data file in a text editor or Obsidian.
+NexRev uses a SQLite-first storage approach.
+- **Primary backup**: copy `data/nexrev.sqlite3`.
+- **Portability**: copy the `data/` folder to a new machine.
+
+## ✅ Backend Validation
+
+Run backend integration tests:
+```bash
+cd backend
+npm test
+```

@@ -1,97 +1,213 @@
-import fs from 'fs/promises';
-import path from 'path';
-import matter from 'gray-matter';
-import type { Opportunity } from './types.js';
+import { getDb, initDatabase } from './db.js';
+import type { Opportunity, Stage } from './types.js';
 
-const DATA_DIR = process.env.DATA_DIR ?? path.join(process.cwd(), 'data');
-
-export async function ensureDataDir(): Promise<void> {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+interface OpportunityRow {
+  id: string;
+  name: string;
+  contact: string;
+  contact_email: string;
+  contact_mobile: string;
+  contact_title: string;
+  value: number | null;
+  stage: Stage;
+  close_date: string;
+  followup_date: string;
+  next_step: string;
+  notes: string;
+  created_at: string;
+  updated_at: string;
 }
 
-/**
- * Resolve a safe absolute path for the given opportunity id.
- * Throws if the resulting path would escape DATA_DIR (path traversal guard).
- */
-function safeOppPath(id: string): string {
-  const resolved = path.resolve(DATA_DIR, `${id}.md`);
-  const base = path.resolve(DATA_DIR) + path.sep;
-  if (!resolved.startsWith(base)) {
-    throw new Error('Invalid opportunity ID');
-  }
-  return resolved;
+interface NextStepRow {
+  text: string;
+  done: number;
+  column_name: Opportunity['nextSteps'][number]['column'];
 }
 
-function normalizeDate(d: unknown): string {
-  if (!d) return '';
-  if (d instanceof Date) return d.toISOString().split('T')[0];
-  return String(d);
+interface ActivityRow {
+  activity_date: string;
+  raw: string;
+  summary: string | null;
+  ai: number;
+  sf: number;
 }
 
-function parseOpp(id: string, raw: string): Opportunity {
-  const { data, content: body } = matter(raw);
+function hydrateOpportunity(row: OpportunityRow): Opportunity {
+  const db = getDb();
+
+  const steps = db
+    .prepare(`
+      SELECT text, done, column_name
+      FROM next_steps
+      WHERE opportunity_id = ?
+      ORDER BY sort_order ASC
+    `)
+    .all(row.id) as NextStepRow[];
+
+  const activities = db
+    .prepare(`
+      SELECT activity_date, raw, summary, ai, sf
+      FROM activities
+      WHERE opportunity_id = ?
+      ORDER BY id ASC
+    `)
+    .all(row.id) as ActivityRow[];
+
   return {
-    id: String(data.id ?? id),
-    name: String(data.name ?? ''),
-    contact: String(data.contact ?? ''),
-    contactEmail: String(data.contactEmail ?? ''),
-    contactMobile: String(data.contactMobile ?? ''),
-    contactTitle: String(data.contactTitle ?? ''),
-    value: data.value != null ? Number(data.value) : null,
-    stage: data.stage ?? 'Prospecting',
-    close: normalizeDate(data.close),
-    followup: normalizeDate(data.followup),
-    nextStep: String(data.nextStep ?? ''),
-    notes: body.trim(),
-    nextSteps: ((data.nextSteps ?? []) as Opportunity['nextSteps']).map(s => ({
-      text: String(s.text ?? ''),
-      done: Boolean(s.done),
-      column: (s.column ?? (s.done ? 'done' : 'todo')) as Opportunity['nextSteps'][number]['column'],
+    id: row.id,
+    name: row.name,
+    contact: row.contact,
+    contactEmail: row.contact_email,
+    contactMobile: row.contact_mobile,
+    contactTitle: row.contact_title,
+    value: row.value,
+    stage: row.stage,
+    close: row.close_date,
+    followup: row.followup_date,
+    nextStep: row.next_step,
+    notes: row.notes,
+    nextSteps: steps.map((step) => ({
+      text: step.text,
+      done: Boolean(step.done),
+      column: step.column_name,
     })),
-    activities: ((data.activities ?? []) as Opportunity['activities']).map(a => ({
-      date: normalizeDate(a.date),
-      raw: String(a.raw ?? ''),
-      summary: a.summary ? String(a.summary) : undefined,
-      ai: Boolean(a.ai),
-      sf: a.sf ? true : undefined,
+    activities: activities.map((activity) => ({
+      date: activity.activity_date,
+      raw: activity.raw,
+      summary: activity.summary ?? undefined,
+      ai: Boolean(activity.ai),
+      sf: activity.sf ? true : undefined,
     })),
-    createdAt: normalizeDate(data.createdAt) || new Date().toISOString(),
-    updatedAt: normalizeDate(data.updatedAt) || new Date().toISOString(),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
+export async function ensureDataDir(): Promise<void> {
+  await initDatabase();
+}
+
 export async function listIds(): Promise<Set<string>> {
-  const files = await fs.readdir(DATA_DIR).catch(() => [] as string[]);
-  return new Set(files.filter(f => f.endsWith('.md')).map(f => f.slice(0, -3)));
+  const db = getDb();
+  const rows = db.prepare('SELECT id FROM opportunities').all() as Array<{ id: string }>;
+  return new Set(rows.map((row) => row.id));
 }
 
 export async function listOpportunities(): Promise<Opportunity[]> {
-  const files = await fs.readdir(DATA_DIR).catch(() => [] as string[]);
-  const mdFiles = files.filter(f => f.endsWith('.md'));
-  if (!mdFiles.length) return [];
-  const opps = await Promise.all(
-    mdFiles.map(async f => {
-      const content = await fs.readFile(path.join(DATA_DIR, f), 'utf8');
-      return parseOpp(path.basename(f, '.md'), content);
-    })
-  );
-  return opps.sort((a, b) => a.name.localeCompare(b.name));
+  const db = getDb();
+  const rows = db
+    .prepare(`
+      SELECT
+        id, name, contact, contact_email, contact_mobile, contact_title,
+        value, stage, close_date, followup_date, next_step, notes,
+        created_at, updated_at
+      FROM opportunities
+      ORDER BY name COLLATE NOCASE ASC
+    `)
+    .all() as OpportunityRow[];
+
+  return rows.map((row) => hydrateOpportunity(row));
 }
 
 export async function readOpportunity(id: string): Promise<Opportunity> {
-  const content = await fs.readFile(safeOppPath(id), 'utf8');
-  return parseOpp(id, content);
+  const db = getDb();
+  const row = db
+    .prepare(`
+      SELECT
+        id, name, contact, contact_email, contact_mobile, contact_title,
+        value, stage, close_date, followup_date, next_step, notes,
+        created_at, updated_at
+      FROM opportunities
+      WHERE id = ?
+    `)
+    .get(id) as OpportunityRow | undefined;
+
+  if (!row) throw new Error('Opportunity not found');
+  return hydrateOpportunity(row);
 }
 
 export async function writeOpportunity(opp: Opportunity): Promise<void> {
-  const { notes, ...frontmatter } = opp;
-  frontmatter.updatedAt = new Date().toISOString();
-  // js-yaml (used by gray-matter) throws on `undefined` values — strip them via JSON round-trip
-  const clean = JSON.parse(JSON.stringify(frontmatter)) as typeof frontmatter;
-  const content = matter.stringify(notes ?? '', clean);
-  await fs.writeFile(safeOppPath(opp.id), content);
+  const db = getDb();
+  const now = new Date().toISOString();
+  const updated: Opportunity = { ...opp, updatedAt: now };
+
+  const upsertOpportunity = db.prepare(`
+    INSERT INTO opportunities (
+      id, name, contact, contact_email, contact_mobile, contact_title,
+      value, stage, close_date, followup_date, next_step, notes,
+      created_at, updated_at
+    ) VALUES (
+      @id, @name, @contact, @contactEmail, @contactMobile, @contactTitle,
+      @value, @stage, @close, @followup, @nextStep, @notes,
+      @createdAt, @updatedAt
+    )
+    ON CONFLICT(id) DO UPDATE SET
+      name = excluded.name,
+      contact = excluded.contact,
+      contact_email = excluded.contact_email,
+      contact_mobile = excluded.contact_mobile,
+      contact_title = excluded.contact_title,
+      value = excluded.value,
+      stage = excluded.stage,
+      close_date = excluded.close_date,
+      followup_date = excluded.followup_date,
+      next_step = excluded.next_step,
+      notes = excluded.notes,
+      updated_at = excluded.updated_at
+  `);
+
+  const deleteSteps = db.prepare('DELETE FROM next_steps WHERE opportunity_id = ?');
+  const insertStep = db.prepare(`
+    INSERT INTO next_steps (
+      opportunity_id, sort_order, text, column_name, done, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const deleteActivities = db.prepare('DELETE FROM activities WHERE opportunity_id = ?');
+  const insertActivity = db.prepare(`
+    INSERT INTO activities (
+      opportunity_id, activity_date, raw, summary, ai, sf, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const tx = db.transaction((value: Opportunity) => {
+    upsertOpportunity.run(value);
+
+    deleteSteps.run(value.id);
+    value.nextSteps.forEach((step, index) => {
+      const done = step.column === 'done' ? 1 : 0;
+      insertStep.run(
+        value.id,
+        index,
+        step.text,
+        step.column,
+        done,
+        value.createdAt,
+        value.updatedAt
+      );
+    });
+
+    deleteActivities.run(value.id);
+    value.activities.forEach((activity) => {
+      insertActivity.run(
+        value.id,
+        activity.date,
+        activity.raw,
+        activity.summary ?? null,
+        activity.ai ? 1 : 0,
+        activity.sf ? 1 : 0,
+        value.updatedAt
+      );
+    });
+  });
+
+  tx(updated);
 }
 
 export async function deleteOpportunity(id: string): Promise<void> {
-  await fs.unlink(safeOppPath(id));
+  const db = getDb();
+  const result = db.prepare('DELETE FROM opportunities WHERE id = ?').run(id);
+  if (result.changes === 0) {
+    throw new Error('Opportunity not found');
+  }
 }

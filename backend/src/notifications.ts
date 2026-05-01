@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import { randomBytes } from 'crypto';
 import { listOpportunities } from './storage.js';
 import { getTelegramUsers } from './auth.js';
 
@@ -62,7 +63,7 @@ async function pollTelegramUpdates() {
 }
 
 export function createLinkToken(): string {
-  const token = Math.random().toString(36).substring(2, 10);
+  const token = randomBytes(16).toString('hex');
   pendingLinks.set(token, ''); // Empty string means waiting
   // Expire after 5 minutes
   setTimeout(() => pendingLinks.delete(token), 5 * 60 * 1000);
@@ -120,7 +121,7 @@ export function initNotifications() {
         });
       }
 
-      message += `\n<a href="http://localhost:8088">Open NexRev Dashboard</a>`;
+      message += `\n<a href="${process.env.APP_URL ?? 'http://localhost:8088'}">Open NexRev Dashboard</a>`;
 
       for (const user of users) {
         await sendTelegramMessage(user.telegram_chat_id, message);

@@ -10,6 +10,8 @@ const pendingLinks = new Map<string, string>();
 let lastUpdateId = 0;
 
 function escapeHtml(text: string): string {
+  // IMPORTANT: '&' must be replaced first to prevent double-escaping
+  // (e.g. '&lt;' would otherwise become '&amp;lt;').
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

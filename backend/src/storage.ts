@@ -119,7 +119,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
   const ids = rows.map((r) => r.id);
 
   // Batch-fetch all steps and activities to avoid N+1 queries.
-  // Chunk IDs to stay within SQLite's per-statement variable limit.
+  // Chunk IDs to stay within SQLite's default 999-variable limit per statement.
   const CHUNK = 900;
   const allSteps: (NextStepRow & { opportunity_id: string })[] = [];
   const allActivities: (ActivityRow & { opportunity_id: string })[] = [];

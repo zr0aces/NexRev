@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Rocket, LogIn } from 'lucide-react';
 
 interface Props {
   onLogin: (username: string, password: string) => Promise<void>;
@@ -28,7 +29,9 @@ export default function LoginPage({ onLogin }: Props) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <div className="login-brand-icon">S</div>
+          <div className="login-brand-icon">
+            <Rocket size={24} />
+          </div>
           <div>
             <div className="login-brand-name">NexRev</div>
             <div className="login-brand-sub">Sign in to continue</div>
@@ -61,11 +64,11 @@ export default function LoginPage({ onLogin }: Props) {
           {error && <div className="login-error">{error}</div>}
           <button
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: 16, padding: '10px 16px', fontSize: 14 }}
+            style={{ width: '100%', marginTop: 16, padding: '12px 16px', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
             type="submit"
             disabled={loading || !username.trim() || !password}
           >
-            {loading ? <><span className="spinner" />Signing in…</> : 'Sign in'}
+            {loading ? <><span className="spinner" /> Signing in…</> : <><LogIn size={18} /> Sign in</>}
           </button>
         </form>
       </div>

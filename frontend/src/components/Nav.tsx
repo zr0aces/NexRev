@@ -1,4 +1,13 @@
 import React, { useRef } from 'react';
+import { 
+  FileUp, 
+  Save, 
+  FileDown, 
+  Plus, 
+  LogOut, 
+  Share, 
+  Rocket 
+} from 'lucide-react';
 import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
@@ -98,7 +107,9 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
   return (
     <nav className="nav">
       <div className="nav-brand">
-        <div className="nav-brand-icon">S</div>
+        <div className="nav-brand-icon">
+          <Rocket size={14} />
+        </div>
         <span className="nav-title">NexRev</span>
       </div>
       <div className="nav-divider" />
@@ -115,18 +126,24 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
       </div>
       <div className="nav-actions">
         <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm" onClick={() => exportMd(opps)}>Export</button>
-          <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
-            Backup
+          <button className="btn btn-sm" onClick={() => exportMd(opps)}>
+            <FileUp size={14} /> Export
           </button>
-          <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import</button>
+          <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
+            <Save size={14} /> Backup
+          </button>
+          <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>
+            <FileDown size={14} /> Import
+          </button>
         </div>
         
         <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
         
         <div className="nav-divider hide-mobile" />
         
-        <button className="btn btn-sm btn-primary hide-mobile" onClick={onAddClick}>+ Add Opportunity</button>
+        <button className="btn btn-sm btn-primary hide-mobile" onClick={onAddClick}>
+          <Plus size={14} /> Add Opportunity
+        </button>
         
         {username && (
           <div className="nav-user hide-mobile">
@@ -134,16 +151,21 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
           </div>
         )}
 
-        {/* Mobile Tools Menu (Simple Toggle) */}
         <div className="show-mobile">
           <button className="btn btn-sm" onClick={() => {
             if (confirm('Export to Markdown?')) exportMd(opps);
-          }} title="Export MD">📤</button>
+          }} title="Export MD">
+            <Share size={16} />
+          </button>
         </div>
         
         <button className="btn btn-sm" onClick={onLogout} title="Sign out">
-          <span className="hide-mobile">Sign out</span>
-          <span className="show-mobile">🚪</span>
+          <span className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <LogOut size={14} /> Sign out
+          </span>
+          <span className="show-mobile">
+            <LogOut size={16} />
+          </span>
         </button>
       </div>
     </nav>

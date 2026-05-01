@@ -1,4 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  Send, 
+  Link as LinkIcon, 
+  Lock, 
+  RefreshCw, 
+  Check, 
+  AlertCircle,
+  Bell,
+  Key
+} from 'lucide-react';
 import { api } from '../api';
 
 export default function ProfilePanel() {
@@ -96,20 +106,29 @@ export default function ProfilePanel() {
     }
   };
 
-  if (loading) return <div className="empty-state">Loading profile…</div>;
+  if (loading) return (
+    <div className="empty-state" style={{ paddingTop: '4rem' }}>
+      <RefreshCw className="spinner" />
+      <div>Loading profile…</div>
+    </div>
+  );
 
   return (
     <div className="profile-panel">
-      <div className="section-label">User Profile: {username}</div>
+      <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        User Profile: {username}
+      </div>
 
       <div className="profile-section">
-        <h3>Telegram Integration</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Send size={18} /> Telegram Integration
+        </h3>
         <p className="text-secondary" style={{ fontSize: 13, marginBottom: 15 }}>
           Receive daily reminders at 8:30 AM directly on Telegram.
         </p>
         <div className="form-group">
           <label>Telegram Chat ID</label>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div className="profile-actions-row">
             <input 
               type="text" 
               value={telegramChatId} 
@@ -117,10 +136,12 @@ export default function ProfilePanel() {
               onChange={e => setTelegramChatId(e.target.value)} 
               style={{ flex: 1 }}
             />
-            <button className="btn" onClick={handleAutoLink} disabled={linking}>
-              {linking ? 'Linking…' : '🔗 Link Automatically'}
+            <button className="btn" onClick={handleAutoLink} disabled={linking} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {linking ? <RefreshCw size={14} className="spinner" /> : <LinkIcon size={14} />}
+              {linking ? 'Linking…' : 'Link Automatically'}
             </button>
-            <button className="btn btn-primary" onClick={handleSaveTelegram} disabled={saving}>
+            <button className="btn btn-primary" onClick={handleSaveTelegram} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {saving ? <RefreshCw size={14} className="spinner" /> : <Check size={14} />}
               Update Manually
             </button>
           </div>
@@ -131,13 +152,15 @@ export default function ProfilePanel() {
       </div>
 
       <div className="profile-section" style={{ marginTop: 30 }}>
-        <h3>Security</h3>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Lock size={18} /> Security
+        </h3>
         <p className="text-secondary" style={{ fontSize: 13, marginBottom: 15 }}>
           Update your account password.
         </p>
         <div className="form-row">
           <div className="form-group">
-            <label>New Password</label>
+            <label><Key size={12} /> New Password</label>
             <input 
               type="password" 
               value={newPassword} 
@@ -146,7 +169,7 @@ export default function ProfilePanel() {
             />
           </div>
           <div className="form-group">
-            <label>Confirm Password</label>
+            <label><Check size={12} /> Confirm Password</label>
             <input 
               type="password" 
               value={confirmPassword} 
@@ -155,13 +178,15 @@ export default function ProfilePanel() {
             />
           </div>
         </div>
-        <button className="btn btn-primary" onClick={handleUpdatePassword} disabled={saving}>
+        <button className="btn btn-primary" onClick={handleUpdatePassword} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {saving ? <RefreshCw size={14} className="spinner" /> : <Lock size={14} />}
           Update Password
         </button>
       </div>
 
       {message && (
-        <div className={`message-toast message-toast--${message.type}`}>
+        <div className={`message-toast message-toast--${message.type}`} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {message.type === 'success' ? <Check size={16} /> : <AlertCircle size={16} />}
           {message.text}
         </div>
       )}

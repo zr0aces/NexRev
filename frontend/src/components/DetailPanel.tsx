@@ -1,4 +1,18 @@
 import React, { useState } from 'react';
+import { 
+  Edit3, 
+  Trash2, 
+  MessageSquare, 
+  Sparkles, 
+  Cloud, 
+  ClipboardList,
+  Mail,
+  Phone,
+  Calendar,
+  DollarSign,
+  User as UserIcon,
+  Clock
+} from 'lucide-react';
 import type { KanbanContext, Opportunity } from '../types';
 import Badge from './Badge';
 import OppKanban from './OppKanban';
@@ -128,53 +142,61 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
     <div>
       {/* ── Header ── */}
       <div className="detail-header">
-        <span className="detail-name">{opp.name}</span>
-        <Badge stage={opp.stage} />
-        <button className="btn btn-sm" onClick={onEdit}>Edit</button>
-        <button className="btn btn-sm btn-danger" onClick={deleteOpp}>Delete</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+          <span className="detail-name">{opp.name}</span>
+          <Badge stage={opp.stage} />
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button className="btn btn-sm" onClick={onEdit} title="Edit">
+            <Edit3 size={14} /> <span className="hide-mobile">Edit</span>
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={deleteOpp} title="Delete">
+            <Trash2 size={14} /> <span className="hide-mobile">Delete</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Contact / deal meta ── */}
       <div className="detail-meta-grid">
         {opp.contact && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Contact</span>
+            <span className="detail-meta-label"><UserIcon size={12} /> Contact</span>
             <span>{opp.contact}{opp.contactTitle ? ` — ${opp.contactTitle}` : ''}</span>
           </div>
         )}
         {opp.contactEmail && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Email</span>
+            <span className="detail-meta-label"><Mail size={12} /> Email</span>
             <a href={`mailto:${opp.contactEmail}`} style={{ color: 'var(--orange-mid)' }}>{opp.contactEmail}</a>
           </div>
         )}
         {opp.contactMobile && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Mobile</span>
+            <span className="detail-meta-label"><Phone size={12} /> Mobile</span>
             <a href={`tel:${opp.contactMobile}`} style={{ color: 'inherit' }}>{opp.contactMobile}</a>
           </div>
         )}
         {opp.value != null && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Value</span>
+            <span className="detail-meta-label"><DollarSign size={12} /> Value</span>
             <span>${Number(opp.value).toLocaleString()}</span>
           </div>
         )}
         {opp.close && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Close</span>
+            <span className="detail-meta-label"><Calendar size={12} /> Close</span>
             <span>{fmtDate(opp.close)}</span>
           </div>
         )}
         {opp.followup && (
           <div className="detail-meta-item">
-            <span className="detail-meta-label">Follow-up</span>
+            <span className="detail-meta-label"><Clock size={12} /> Follow-up</span>
             <span className={opp.followup < todayStr() ? 'overdue' : ''}>{fmtDate(opp.followup)}</span>
           </div>
         )}
         {opp.notes && (
           <div className="detail-meta-item" style={{ gridColumn: '1 / -1' }}>
-            <span className="detail-meta-label">Notes&nbsp;</span>
+            <span className="detail-meta-label"><MessageSquare size={12} /> Notes&nbsp;</span>
             <span style={{ whiteSpace: 'pre-wrap' }}>{opp.notes}</span>
           </div>
         )}
@@ -182,23 +204,31 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
 
       {/* ── Kanban board ── */}
       <div className="detail-section">
-        <div className="detail-section-title">Board</div>
+        <div className="detail-section-title"><ClipboardList size={16} /> Board</div>
         <OppKanban opp={opp} onUpdate={onUpdate} />
       </div>
 
       {/* ── Activity log input ── */}
       <div className="detail-section">
-        <div className="detail-section-title">Log activity / meeting notes</div>
+        <div className="detail-section-title"><MessageSquare size={16} /> Log activity / meeting notes</div>
         <textarea
           value={logInput}
           placeholder="Paste raw meeting notes, call summary, or any activity…"
           onChange={e => setLogInput(e.target.value)}
         />
         <div className="log-actions">
-          <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()}>Log note</button>
-          <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()}>✨ AI summarize</button>
-          <button className="btn btn-sm" onClick={genSfNote}>▪ SF update note</button>
-          <button className="btn btn-sm" onClick={extractTasks}>📋 Extract tasks</button>
+          <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()}>
+            <MessageSquare size={14} /> Log note
+          </button>
+          <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()}>
+            <Sparkles size={14} /> AI summarize
+          </button>
+          <button className="btn btn-sm" onClick={genSfNote}>
+            <Cloud size={14} /> SF update note
+          </button>
+          <button className="btn btn-sm" onClick={extractTasks}>
+            <ClipboardList size={14} /> Extract tasks
+          </button>
         </div>
         {aiLoading && (
           <div className="ai-box"><span className="spinner" />{aiLoading}</div>
@@ -220,15 +250,15 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
 
       {/* ── Activity history ── */}
       <div className="detail-section">
-        <div className="detail-section-title">Activity history ({activities.length})</div>
+        <div className="detail-section-title"><Clock size={16} /> Activity history ({activities.length})</div>
         {activities.length === 0 ? (
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No activities yet</div>
         ) : (
           activities.map((a, i) => (
             <div key={i} className="activity-item">
               <div className="activity-meta">
-                {a.sf && <span className="badge badge-sf" style={{ fontSize: 10 }}>SF</span>}
-                {a.ai && !a.sf && <span className="badge badge-ai" style={{ fontSize: 10 }}>AI</span>}
+                {a.sf && <span className="badge badge-sf" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Cloud size={10} /> SF</span>}
+                {a.ai && !a.sf && <span className="badge badge-ai" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Sparkles size={10} /> AI</span>}
                 <span style={{ fontSize: 12 }}>{a.summary ?? a.raw}</span>
               </div>
               {a.summary && !a.sf && a.raw !== a.summary && (

@@ -1,4 +1,13 @@
 import React, { useState, useRef } from 'react';
+import { 
+  GripVertical, 
+  Trash2, 
+  Plus, 
+  X, 
+  ListTodo, 
+  RotateCcw, 
+  CheckCircle2 
+} from 'lucide-react';
 import type { KanbanColumn, Opportunity } from '../types';
 import { api } from '../api';
 
@@ -7,10 +16,10 @@ interface Props {
   onUpdate: (opp: Opportunity) => void;
 }
 
-const COLUMNS: { key: KanbanColumn; label: string }[] = [
-  { key: 'todo',     label: 'To Do'       },
-  { key: 'followup', label: 'Follow-ups'  },
-  { key: 'done',     label: 'Done'        },
+const COLUMNS: { key: KanbanColumn; label: string; icon: React.ReactNode }[] = [
+  { key: 'todo',     label: 'To Do',       icon: <ListTodo size={14} /> },
+  { key: 'followup', label: 'Follow-ups',  icon: <RotateCcw size={14} /> },
+  { key: 'done',     label: 'Done',        icon: <CheckCircle2 size={14} /> },
 ];
 
 export default function OppKanban({ opp, onUpdate }: Props) {
@@ -121,7 +130,10 @@ export default function OppKanban({ opp, onUpdate }: Props) {
           >
             {/* column header */}
             <div className="opp-kanban-col-hd">
-              <span className="opp-kanban-col-title">{col.label}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {col.icon}
+                <span className="opp-kanban-col-title">{col.label}</span>
+              </div>
               <span className="opp-kanban-col-count">{steps.length}</span>
             </div>
 
@@ -135,13 +147,17 @@ export default function OppKanban({ opp, onUpdate }: Props) {
                   onDragStart={e => onDragStart(e, step._i)}
                   onDragEnd={onDragEnd}
                 >
-                  <span className="opp-kanban-card-drag" title="Drag to move">⠿</span>
+                  <span className="opp-kanban-card-drag" title="Drag to move">
+                    <GripVertical size={14} style={{ color: 'var(--text-tertiary)' }} />
+                  </span>
                   <span className="opp-kanban-card-text">{step.text}</span>
                   <button
                     className="rm-btn"
                     onClick={() => removeStep(step._i)}
                     title="Remove"
-                  >&times;</button>
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 </div>
               ))}
 
@@ -171,13 +187,17 @@ export default function OppKanban({ opp, onUpdate }: Props) {
                       className="btn btn-xs btn-primary"
                       onClick={() => commitAdd(col.key)}
                       disabled={!addText.trim()}
-                    >Add</button>
-                    <button className="btn btn-xs" onClick={cancelAdding}>✕</button>
+                    >
+                      <Plus size={12} /> Add
+                    </button>
+                    <button className="btn btn-xs" onClick={cancelAdding}>
+                      <X size={12} />
+                    </button>
                   </div>
                 </div>
               ) : (
                 <button className="opp-kanban-add-btn" onClick={() => startAdding(col.key)}>
-                  + Add item
+                  <Plus size={14} /> Add item
                 </button>
               )}
             </div>

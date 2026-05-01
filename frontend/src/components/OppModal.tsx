@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X, Check } from 'lucide-react';
 import type { Opportunity, Stage } from '../types';
 import { STAGES } from '../types';
 import { api } from '../api';
@@ -107,7 +108,7 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
       <div className="modal">
         <div className="modal-header">
           <span className="modal-title">{editOpp ? 'Edit opportunity' : 'Add opportunity'}</span>
-          <button className="modal-close" onClick={onClose}>&times;</button>
+          <button className="modal-close" onClick={onClose}><X size={20} /></button>
         </div>
 
         <div className="form-row">
@@ -206,8 +207,9 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
 
         <div className="modal-footer">
           <button className="btn" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={save} disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
+          <button className="btn btn-primary" onClick={save} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {saving ? <span className="spinner" /> : <Check size={16} />}
+            {saving ? 'Saving…' : 'Save Opportunity'}
           </button>
         </div>
       </div>

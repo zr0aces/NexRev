@@ -186,30 +186,52 @@ html, body {
   margin-bottom: 16px;
 }
 .metric-card {
-  background: var(--bg);
+  padding: 1.25rem;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 18px 20px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color var(--t);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color var(--t), transform var(--t);
 }
-.metric-card:hover { border-color: var(--border-hover); }
-.metric-card--orange { border-top: 2px solid var(--orange); }
-.metric-card--green  { border-top: 2px solid var(--green); }
-.metric-card--red    { border-top: 2px solid var(--red-mid); }
+.metric-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+.metric-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+.metric-icon--orange { color: var(--orange-mid); background: rgba(249, 115, 22, 0.1); }
+.metric-icon--red    { color: var(--red-mid);    background: rgba(239, 68, 68, 0.1);  }
+.metric-icon--green  { color: var(--green-mid);  background: rgba(34, 197, 94, 0.1);  }
+.metric-content { display: flex; flex-direction: column; overflow: hidden; }
 .metric-label {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 0.75rem;
+  font-weight: 600;
   color: var(--text-tertiary);
   text-transform: uppercase;
-  letter-spacing: .6px;
-  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.metric-val { font-size: 28px; font-weight: 600; letter-spacing: -1px; color: var(--text); }
-.metric-val--orange { color: var(--orange); }
-.metric-val--green  { color: var(--green-mid); }
+.metric-val {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  line-height: 1;
+}
+.metric-val--orange { color: var(--orange-mid); }
 .metric-val--red    { color: var(--red-mid); }
+.metric-val--green  { color: var(--green-mid); }
 
 /* ── Cards ────────────────────────────────────────────── */
 .card {
@@ -1086,8 +1108,26 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
     grid-template-columns: 1fr;
   }
 
+.profile-actions-row {
+  display: flex;
+  gap: 10px;
+}
+
   .profile-panel {
     padding: 1rem;
+  }
+
+  .profile-actions-row {
+    flex-direction: column;
+  }
+
+  .profile-actions-row input {
+    width: 100%;
+  }
+
+  .profile-actions-row .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .modal {

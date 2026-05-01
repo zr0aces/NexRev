@@ -1,4 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Sun, 
+  LayoutDashboard, 
+  ScrollText, 
+  User, 
+  Plus 
+} from 'lucide-react';
 import { api, getToken, setToken, clearToken, setUnauthorizedHandler } from './api';
 import type { Opportunity } from './types';
 import Nav from './components/Nav';
@@ -163,19 +170,19 @@ export default function App() {
       {/* Mobile-only Bottom Nav */}
       <div className="bottom-nav show-mobile">
         <button className={`bottom-nav-item${tab === 'today' ? ' active' : ''}`} onClick={() => setTab('today')}>
-          <div className="bottom-nav-icon">🌅</div>
+          <div className="bottom-nav-icon"><Sun size={20} /></div>
           <span className="bottom-nav-label">Today</span>
         </button>
         <button className={`bottom-nav-item${tab === 'pipeline' ? ' active' : ''}`} onClick={() => setTab('pipeline')}>
-          <div className="bottom-nav-icon">📊</div>
+          <div className="bottom-nav-icon"><LayoutDashboard size={20} /></div>
           <span className="bottom-nav-label">Pipeline</span>
         </button>
         <button className={`bottom-nav-item${tab === 'log' ? ' active' : ''}`} onClick={() => setTab('log')}>
-          <div className="bottom-nav-icon">📜</div>
+          <div className="bottom-nav-icon"><ScrollText size={20} /></div>
           <span className="bottom-nav-label">Logs</span>
         </button>
         <button className={`bottom-nav-item${tab === 'profile' ? ' active' : ''}`} onClick={() => setTab('profile')}>
-          <div className="bottom-nav-icon">👤</div>
+          <div className="bottom-nav-icon"><User size={20} /></div>
           <span className="bottom-nav-label">Profile</span>
         </button>
       </div>
@@ -183,7 +190,7 @@ export default function App() {
       {/* Floating Action Button for Mobile */}
       <div className="fab-container show-mobile">
         <button className="fab" onClick={() => setModalState('new')}>
-          +
+          <Plus size={28} />
         </button>
       </div>
     </div>

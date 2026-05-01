@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Search, ArrowUpDown, ArrowLeft } from 'lucide-react';
 import type { Opportunity } from '../types';
 import { STAGES } from '../types';
 import Badge from './Badge';
@@ -39,19 +40,26 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
   return (
     <div>
       <div className="pipeline-toolbar">
-        <input
-          className="search-bar"
-          type="text"
-          placeholder="Search accounts or contacts..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-        <select className="select-sm" value={sort} onChange={e => setSort(e.target.value)}>
-          <option value="name">Sort: Name</option>
-          <option value="value">Sort: Value</option>
-          <option value="due">Sort: Follow-up date</option>
-          <option value="stage">Sort: Stage</option>
-        </select>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+          <input
+            className="search-bar"
+            type="text"
+            placeholder="Search accounts or contacts..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ paddingLeft: 38 }}
+          />
+        </div>
+        <div style={{ position: 'relative' }}>
+          <ArrowUpDown size={14} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)' }} />
+          <select className="select-sm" value={sort} onChange={e => setSort(e.target.value)} style={{ paddingRight: 34 }}>
+            <option value="name">Sort: Name</option>
+            <option value="value">Sort: Value</option>
+            <option value="due">Sort: Follow-up date</option>
+            <option value="stage">Sort: Stage</option>
+          </select>
+        </div>
       </div>
       <div className="stage-filter">
         {['All', ...STAGES].map(f => (
@@ -99,10 +107,10 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
             <>
               <button 
                 className="btn btn-sm show-mobile" 
-                style={{ marginBottom: 15, width: 'auto' }}
+                style={{ marginBottom: 15, width: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}
                 onClick={() => onSelect(null)}
               >
-                ← Back to List
+                <ArrowLeft size={16} /> Back to List
               </button>
               <DetailPanel
                 key={selected.id}

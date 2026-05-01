@@ -127,7 +127,7 @@ export default function App() {
         onLogout={handleLogout}
         username={username}
       />
-      <div>
+      <div className="animate-entry" key={tab}>
         {tab === 'today' && (
           <TodayPanel
             opps={opps}

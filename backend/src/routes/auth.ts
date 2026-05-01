@@ -1,5 +1,4 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
-import rateLimit from '@fastify/rate-limit';
 import { 
   verifyCredentials, 
   signToken, 
@@ -32,15 +31,11 @@ async function requireAuth(req: FastifyRequest, reply: FastifyReply): Promise<st
 }
 
 export const authRoutes: FastifyPluginAsync = async (fastify) => {
-  // Strict rate limit for the login endpoint to prevent brute-force attacks
-  await fastify.register(rateLimit, {
-    max: 10,
-    timeWindow: '1 minute',
-    errorResponseBuilder: () => ({ error: 'Too many requests. Please try again later.' }),
-  });
-
   fastify.post<{ Body: { username: string; password: string } }>(
     '/auth/login',
+    {
+      config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
+    },
     async (req, reply) => {
       const { username, password } = req.body ?? {};
       if (!username || !password) {
@@ -54,7 +49,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
-  fastify.get('/auth/me', async (req, reply) => {
+  fastify.get(
+    '/auth/me',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (req, reply) => {
     const username = await requireAuth(req, reply);
     if (!username) return;
 
@@ -69,6 +67,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Body: { password: string } }>(
     '/auth/password',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const username = await requireAuth(req, reply);
       if (!username) return;
@@ -86,6 +85,7 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Body: { chatId: string | null } }>(
     '/auth/telegram',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const username = await requireAuth(req, reply);
       if (!username) return;
@@ -96,7 +96,10 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
     }
   );
 
-  fastify.get('/auth/telegram/link-token', async (req, reply) => {
+  fastify.get(
+    '/auth/telegram/link-token',
+    { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
+    async (req, reply) => {
     const username = await requireAuth(req, reply);
     if (!username) return;
 

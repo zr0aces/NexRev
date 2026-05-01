@@ -159,6 +159,33 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Mobile-only Bottom Nav */}
+      <div className="bottom-nav show-mobile">
+        <button className={`bottom-nav-item${tab === 'today' ? ' active' : ''}`} onClick={() => setTab('today')}>
+          <div className="bottom-nav-icon">🌅</div>
+          <span className="bottom-nav-label">Today</span>
+        </button>
+        <button className={`bottom-nav-item${tab === 'pipeline' ? ' active' : ''}`} onClick={() => setTab('pipeline')}>
+          <div className="bottom-nav-icon">📊</div>
+          <span className="bottom-nav-label">Pipeline</span>
+        </button>
+        <button className={`bottom-nav-item${tab === 'log' ? ' active' : ''}`} onClick={() => setTab('log')}>
+          <div className="bottom-nav-icon">📜</div>
+          <span className="bottom-nav-label">Logs</span>
+        </button>
+        <button className={`bottom-nav-item${tab === 'profile' ? ' active' : ''}`} onClick={() => setTab('profile')}>
+          <div className="bottom-nav-icon">👤</div>
+          <span className="bottom-nav-label">Profile</span>
+        </button>
+      </div>
+
+      {/* Floating Action Button for Mobile */}
+      <div className="fab-container show-mobile">
+        <button className="fab" onClick={() => setModalState('new')}>
+          +
+        </button>
+      </div>
     </div>
   );
 }

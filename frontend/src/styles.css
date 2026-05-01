@@ -935,18 +935,226 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
   line-height: 1.4;
 }
 
-/* ── Responsive ───────────────────────────────────────── */
+/* ── Mobile & Tablet Responsiveness ─────────────────── */
+
 @media (max-width: 1024px) {
-  .pipeline-split { grid-template-columns: 280px 1fr; }
+  .pipeline-split {
+    grid-template-columns: 1fr;
+  }
+  .opp-list-col {
+    margin-bottom: 1.5rem;
+  }
 }
-@media (max-width: 900px) {
-  .pipeline-split { grid-template-columns: 1fr; }
-  .metrics-row { grid-template-columns: 1fr 1fr; }
+
+@media (max-width: 768px) {
+  #app {
+    padding: 16px;
+    padding-bottom: 80px; /* Space for bottom nav */
+  }
+
+  /* Header Overhaul */
+  .nav {
+    height: 64px;
+    padding: 0 20px;
+    justify-content: space-between;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    flex-direction: row; /* Keep horizontal on mobile now that tabs moved */
+    align-items: center;
+    gap: 0;
+  }
+
+  .nav-tabs {
+    display: none !important; /* Move to bottom */
+  }
+
+  .nav-divider {
+    display: none;
+  }
+
+  .nav-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  /* Hide secondary actions on mobile, keep them accessible if needed */
+  .nav-actions .btn:not(.btn-primary) {
+    display: none;
+  }
+
+  .nav-user {
+    display: none;
+  }
+
+  /* Bottom Navigation Bar */
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    z-index: 1000;
+    padding: 0 10px;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 8px 0;
+  }
+
+  .bottom-nav-item:active {
+    transform: scale(0.9);
+  }
+
+  .bottom-nav-icon {
+    font-size: 18px;
+    margin-bottom: 2px;
+  }
+
+  .bottom-nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--orange-text);
+  }
+
+  /* FAB - Floating Action Button */
+  .fab-container {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    z-index: 999;
+  }
+
+  .fab {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .fab:active {
+    transform: scale(0.9);
+  }
+
+  .metrics-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .opp-kanban {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .detail-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-panel {
+    padding: 1rem;
+  }
+
+  .modal {
+    padding: 20px;
+    width: 100%;
+    margin: 0;
+    border-radius: 20px 20px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 92vh;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
 }
-@media (max-width: 600px) {
-  #app { padding: 14px; }
-  .form-row { grid-template-columns: 1fr; }
-  .nav { padding: 0 14px; gap: 6px; }
-  .nav-title { font-size: 14px; }
-  .nav-tab { padding: 0 10px; font-size: 13px; }
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .today-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-val {
+    font-size: 24px;
+  }
+
+  .login-card {
+    padding: 32px 24px;
+  }
+}
+
+/* Premium Card Refinements */
+.today-card, .opp-card, .metric-card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.today-card:hover, .opp-card:hover {
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+/* Adjustments for existing components */
+.today-grid {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.pipeline-toolbar .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Touch friendly buttons */
+@media (pointer: coarse) {
+  .btn, .nav-tab, .filter-chip, .bottom-nav-item {
+    min-height: 44px;
+  }
 }

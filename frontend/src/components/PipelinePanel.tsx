@@ -65,7 +65,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
         ))}
       </div>
       <div className="pipeline-split">
-        <div className="opp-list-col">
+        <div className={`opp-list-col${selectedId ? ' hide-mobile' : ''}`}>
           <div className="opp-list">
             {list.length === 0 ? (
               <div className="empty-state">No opportunities match your search</div>
@@ -94,17 +94,26 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
             )}
           </div>
         </div>
-        <div className="detail-col">
+        <div className={`detail-col${!selectedId ? ' hide-mobile' : ''}`}>
           {selected ? (
-            <DetailPanel
-              key={selected.id}
-              opp={selected}
-              onEdit={() => onEdit(selected.id)}
-              onDeleted={() => { onSelect(null); onRemove(selected.id); }}
-              onUpdate={onUpdate}
-            />
+            <>
+              <button 
+                className="btn btn-sm show-mobile" 
+                style={{ marginBottom: 15, width: 'auto' }}
+                onClick={() => onSelect(null)}
+              >
+                ← Back to List
+              </button>
+              <DetailPanel
+                key={selected.id}
+                opp={selected}
+                onEdit={() => onEdit(selected.id)}
+                onDeleted={() => { onSelect(null); onRemove(selected.id); }}
+                onUpdate={onUpdate}
+              />
+            </>
           ) : (
-            <div className="empty-state" style={{ paddingTop: '4rem' }}>
+            <div className="empty-state hide-mobile" style={{ paddingTop: '4rem' }}>
               <div className="empty-icon">&#x25A1;</div>
               <div>Select an opportunity to view details</div>
             </div>

@@ -114,20 +114,37 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
         ))}
       </div>
       <div className="nav-actions">
-        <button className="btn btn-sm" onClick={() => exportMd(opps)}>Export</button>
-        <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
-          Backup
-        </button>
-        <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import</button>
+        <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
+          <button className="btn btn-sm" onClick={() => exportMd(opps)}>Export</button>
+          <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
+            Backup
+          </button>
+          <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>Import</button>
+        </div>
+        
         <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
-        <div className="nav-divider" />
-        <button className="btn btn-sm btn-primary" onClick={onAddClick}>+ Add Opportunity</button>
+        
+        <div className="nav-divider hide-mobile" />
+        
+        <button className="btn btn-sm btn-primary hide-mobile" onClick={onAddClick}>+ Add Opportunity</button>
+        
         {username && (
-          <div className="nav-user">
+          <div className="nav-user hide-mobile">
             <span className="nav-user-name">{username}</span>
           </div>
         )}
-        <button className="btn btn-sm" onClick={onLogout} title="Sign out">Sign out</button>
+
+        {/* Mobile Tools Menu (Simple Toggle) */}
+        <div className="show-mobile">
+          <button className="btn btn-sm" onClick={() => {
+            if (confirm('Export to Markdown?')) exportMd(opps);
+          }} title="Export MD">📤</button>
+        </div>
+        
+        <button className="btn btn-sm" onClick={onLogout} title="Sign out">
+          <span className="hide-mobile">Sign out</span>
+          <span className="show-mobile">🚪</span>
+        </button>
       </div>
     </nav>
   );

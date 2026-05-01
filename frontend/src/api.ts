@@ -22,9 +22,10 @@ export function setUnauthorizedHandler(cb: () => void): void {
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = getToken();
+  const hasBody = options?.body !== undefined && options?.body !== null;
   const res = await fetch(`${BASE}${path}`, {
     headers: {
-      'Content-Type': 'application/json',
+      ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     ...options,

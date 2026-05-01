@@ -15,6 +15,7 @@ NexRev is designed for individual account executives and sales professionals who
 | **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
 | **AI Task Extraction** | **[NEW]** Instantly scan your recent meeting notes to extract and populate Kanban tasks automatically. |
 | **SF Update Note** | Generate Salesforce-ready activity summaries that strictly reflect developments since your last sync. |
+| **Telegram Notifications** | **[NEW]** Receive a daily digest of due and overdue opportunities at 8:30 AM directly on Telegram. |
 | **One Opportunity Per Client** | Enforces a clean pipeline by mapping exactly one opportunity to each unique account. |
 | **Local-First Privacy** | All data is stored in human-readable Markdown files on your machine. No cloud database required. |
 | **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for summarization and CRM note generation. |

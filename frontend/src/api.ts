@@ -49,6 +49,19 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       }),
+    updateTelegram: (chatId: string | null) =>
+      request<{ ok: boolean }>('/auth/telegram', {
+        method: 'POST',
+        body: JSON.stringify({ chatId }),
+      }),
+    getMe: () => request<{ username: string; telegram_chat_id: string | null }>('/auth/me'),
+    updatePassword: (password: string) =>
+      request<{ ok: boolean }>('/auth/password', {
+        method: 'POST',
+        body: JSON.stringify({ password }),
+      }),
+    getTelegramLinkToken: () => request<{ token: string; botName: string }>('/auth/telegram/link-token'),
+    pollTelegramLink: (token: string) => request<{ chatId: string | null }>(`/auth/telegram/poll-link?token=${token}`),
   },
   opportunities: {
     list: () => request<Opportunity[]>('/opportunities'),

@@ -19,6 +19,7 @@ if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
 interface User {
   username: string;
   password_hash: string;
+  telegram_chat_id?: string;
 }
 
 interface Secrets {
@@ -65,4 +66,34 @@ export function signToken(username: string): string {
 
 export function verifyToken(token: string): { username: string } {
   return jwt.verify(token, JWT_SECRET) as { username: string };
+}
+
+export async function setTelegramChatId(username: string, chatId: string | null): Promise<void> {
+  const secrets = await loadSecrets();
+  const user = secrets.users.find(u => u.username === username);
+  if (user) {
+    user.telegram_chat_id = chatId ?? undefined;
+    await saveSecrets(secrets);
+  }
+}
+
+export async function getTelegramUsers(): Promise<{ username: string, telegram_chat_id: string }[]> {
+  const secrets = await loadSecrets();
+  return (secrets.users ?? [])
+    .filter(u => !!u.telegram_chat_id)
+    .map(u => ({ username: u.username, telegram_chat_id: u.telegram_chat_id! }));
+}
+
+export async function getUser(username: string): Promise<User | null> {
+  const secrets = await loadSecrets();
+  return secrets.users.find(u => u.username === username) ?? null;
+}
+
+export async function updatePassword(username: string, newPassword: string): Promise<void> {
+  const secrets = await loadSecrets();
+  const user = secrets.users.find(u => u.username === username);
+  if (user) {
+    user.password_hash = await bcrypt.hash(newPassword, 10);
+    await saveSecrets(secrets);
+  }
 }

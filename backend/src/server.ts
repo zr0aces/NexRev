@@ -5,6 +5,7 @@ import { opportunityRoutes } from './routes/opportunities.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
+import { initNotifications } from './notifications.js';
 
 const server = Fastify({
   logger: { level: process.env.NODE_ENV === 'production' ? 'warn' : 'info' },
@@ -41,6 +42,7 @@ server.get('/health', async () => ({ status: 'ok' }));
 
 await ensureDataDir();
 await initSecrets();
+initNotifications();
 
 const port = parseInt(process.env.PORT ?? '3001', 10);
 await server.listen({ port, host: '0.0.0.0' });

@@ -7,8 +7,9 @@ import PipelinePanel from './components/PipelinePanel';
 import ActivityLogPanel from './components/ActivityLogPanel';
 import OppModal from './components/OppModal';
 import LoginPage from './components/LoginPage';
+import ProfilePanel from './components/ProfilePanel';
 
-type Tab = 'today' | 'pipeline' | 'log';
+type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 type ModalState = string | null;
 
 export default function App() {
@@ -143,6 +144,7 @@ export default function App() {
           />
         )}
         {tab === 'log' && <ActivityLogPanel opps={opps} />}
+        {tab === 'profile' && <ProfilePanel />}
       </div>
       {modalState !== null && (
         <OppModal

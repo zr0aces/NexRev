@@ -637,6 +637,47 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
   }
 }
 
+/* Profile Panel */
+.profile-panel {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.profile-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.profile-section h3 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: var(--orange-text);
+}
+
+.message-toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+  color: #fff;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.message-toast--success { background: var(--green-mid); border: 1px solid var(--green-text); }
+.message-toast--error { background: var(--red-mid); border: 1px solid var(--red-text); }
+
+.text-secondary { color: var(--text-secondary); }
+.text-tertiary { color: var(--text-tertiary); }
+
 /* ── Modal ────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed;

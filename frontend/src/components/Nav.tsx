@@ -3,7 +3,7 @@ import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
 
-type Tab = 'today' | 'pipeline' | 'log';
+type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 
 interface Props {
   tab: Tab;
@@ -103,13 +103,13 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
       </div>
       <div className="nav-divider" />
       <div className="nav-tabs">
-        {(['today', 'pipeline', 'log'] as Tab[]).map(t => (
+        {(['today', 'pipeline', 'log', 'profile'] as Tab[]).map(t => (
           <button
             key={t}
             className={`nav-tab${tab === t ? ' active' : ''}`}
             onClick={() => onTabChange(t)}
           >
-            {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : 'Activity Log'}
+            {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : t === 'log' ? 'Activity Log' : 'Profile'}
           </button>
         ))}
       </div>

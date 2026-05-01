@@ -8,7 +8,13 @@ Welcome to NexRev! This guide will help you get started with managing your sales
 - **Login**: Use your credentials to sign in. The default is `admin` / `admin`.
 - **Navigation**: Use the tabs at the top to switch between **Today**, **Pipeline**, and **Activity Log**.
 
-## 2. Managing Your Day (Today Tab)
+## 2. Profile & Telegram Notifications
+- **Profile Tab**: Navigate to the **Profile** tab to manage your account.
+- **Security**: You can update your password in the Security section.
+- **Telegram Setup**: Click **🔗 Link Automatically** to open Telegram and connect your account instantly. Alternatively, you can still enter your Chat ID manually if preferred.
+- **Daily Digest**: Every morning at **8:30 AM**, you will receive a summary of deals due today and overdue items directly on Telegram.
+
+## 3. Managing Your Day (Today Tab)
 - **Daily Dashboard**: View your urgent follow-ups in a 3-column card grid.
 - **Urgency Indicators**: 
     - 🔴 **Red**: Overdue follow-up.

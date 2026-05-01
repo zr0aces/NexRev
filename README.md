@@ -14,9 +14,10 @@ NexRev is designed for individual account executives and sales professionals who
 | **Today Dashboard** | A centralized view of pending follow-ups with smart urgency indicators and high-impact metrics. |
 | **Integrated Pipeline** | Manage your entire deal flow with instant search, stage filters, and streamlined navigation. |
 | **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
-| **AI Task Extraction** | Instantly scan meeting notes to extract and populate Kanban tasks automatically. |
+| **AI Task Extraction** | **[NEW]** Instantly scan activity logs to extract and populate Kanban tasks automatically. |
+| **AI Activity Summary** | Generate concise summaries of meeting notes and activity logs using local LLMs. |
 | **SF Update Note** | Generate Salesforce-ready activity summaries reflecting developments since your last sync. |
-| **Telegram Integration** | Receive daily reminders at 8:30 AM and link your account instantly with one click. |
+| **Telegram Integration** | **[NEW]** Daily reminders at 8:30 AM for due/overdue tasks. Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
 | **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for private, on-device intelligence. |

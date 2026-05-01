@@ -24,10 +24,12 @@ cd frontend && npm install && npm run dev
 ## Stack
 
 - **Frontend:** React 18, TypeScript, Vite — no UI library, vanilla CSS (always-dark, orange accent)
-- **Backend:** Fastify 5, TypeScript, Node.js — data stored as Markdown files in `data/`
-- **Auth:** JWT (jsonwebtoken) + bcrypt (bcryptjs) — credentials in `data/secrets.yaml`
+- **Backend:** Fastify 5, TypeScript, Node.js
+- **Storage:** SQLite (better-sqlite3) — primary file: `data/nexrev.sqlite3`
+- **Auth:** JWT (jsonwebtoken) + bcrypt (bcryptjs) — credentials stored in SQLite `users` table
 - **Infrastructure:** Docker Compose, Nginx reverse proxy (port 8088)
 - **AI:** Local Ollama instance called server-side; configured via `OLLAMA_BASE_URL` and `OLLAMA_MODEL` env vars
+- **Notifications:** Telegram Bot (Daily reminders + account linking)
 
 ## Architecture
 
@@ -52,33 +54,32 @@ frontend/src/
 
 backend/src/
   server.ts                 Fastify setup + JWT auth middleware (onRequest hook)
-  storage.ts                Markdown file CRUD via gray-matter
-  auth.ts                   bcrypt credential verification, JWT sign/verify, secrets init
+  db.ts                     SQLite schema definition, initialization, and legacy migrations
+  storage.ts                SQLite CRUD operations for opportunities, steps, and activities
+  auth.ts                   bcrypt verification, JWT sign/verify, user management
+  notifications.ts          Telegram bot long-polling (linking) and cron (daily reminders)
   types.ts                  Shared TypeScript interfaces
   routes/
-    auth.ts                 POST /api/auth/login
-    opportunities.ts        CRUD, activities, steps (with Kanban column), bulk import
-    ai.ts                   /api/ai/summarize, /api/ai/sf-note (Kanban-context aware)
+    auth.ts                 POST /api/auth/login, /api/auth/password, Telegram linking
+    opportunities.ts        CRUD, activities, steps (with Kanban column)
+    ai.ts                   /api/ai/summarize, /api/ai/sf-note, /api/ai/extract-tasks
   scripts/
     manage-users.mjs        User management CLI (add/passwd/delete/list)
+    db-backup-restore.mjs   SQLite database backup and restore utility
 
-data/                       One .md file per opportunity + secrets.yaml (gitignored)
+data/                       nexrev.sqlite3 database file (gitignored)
 docs/                       Project documentation (guide, architecture, API reference)
 nginx/nginx.conf            /api/* → backend:3001, /* → frontend:3000
 docker-compose.yml
 ```
 
-**Data model** — each opportunity is `data/<id>.md` with YAML frontmatter. `nextSteps[]` items carry a `column: 'todo' | 'followup' | 'done'` field that drives the Kanban board. Activities carry `raw`, `summary`, `date`, `ai` fields (no column).
+**Data model** — Relational schema in SQLite. `opportunities` is the root, with `next_steps` (Kanban) and `activities` linked by `opportunity_id`. `users` stores hashed credentials and `telegram_chat_id`.
 
-**Auth flow** — backend `onRequest` hook verifies `Authorization: Bearer <token>` on all routes except `/health`, `/api/auth/*`, and `OPTIONS`. `api.ts` attaches the stored token automatically; on 401 it calls `onUnauthorized` which clears the token and triggers the login screen.
+**Auth flow** — backend `onRequest` hook verifies `Authorization: Bearer <token>` on all routes except `/health`, `/api/auth/login`, and `OPTIONS`. `api.ts` attaches the stored token automatically.
 
-**Kanban context** — `buildKanbanContext(opp)` in DetailPanel.tsx groups `nextSteps` by column into `{ todo, followup, done }` string arrays, which are passed to both AI endpoints so Claude has full deal context.
+**Telegram** — Backend polls Telegram API for `/start <token>` to link Chat IDs to users. A cron job sends daily digests at 8:30 AM to linked users.
 
-**done/column sync** — `PATCH /steps/:index`: if `column` is set, `done` is derived from `column === 'done'`; if only `done` is toggled, column updates to `'done'` or reverts to `'todo'` (preserving `'followup'`).
-
-**Rendering** — React state in App.tsx holds the opportunity list. `api.ts` makes fetch calls to the Fastify backend. Mutations call `onRefresh()` which re-fetches the full list.
-
-**AI integration** — AI calls go through the backend (`/api/ai/*`) to a local Ollama instance. `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are env vars; the browser never talks to Ollama directly.
+**AI integration** — AI calls go through the backend (`/api/ai/*`) to a local Ollama instance. `OLLAMA_BASE_URL` and `OLLAMA_MODEL` are env vars.
 
 ## Keyboard Shortcuts
 
@@ -87,6 +88,8 @@ docker-compose.yml
 - `Enter` (Kanban add input) — Commit new card
 - `Escape` (Kanban add input) — Cancel add
 
-## No Tests or Linting
+## Tests & Linting
 
-There is no test suite and no linter configured. Manual browser testing is the only verification path.
+- **Backend Tests:** `cd backend && npm test` (Integration tests for SQLite persistence)
+- **Linting:** Not configured.
+

@@ -70,6 +70,18 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
 3. **Persistence**: Frontend stores the token and username in `localStorage`.
 4. **Authorized Requests**: All API calls (except `/health` and `/auth/login`) must include the Bearer token.
 
+## Telegram Notifications
+1. **Account Linking**:
+   - User requests a link token via `/api/auth/telegram/link-token`.
+   - User clicks a link or sends `/start <token>` to the bot.
+   - Backend (long-polling) detects the token and captures the `chat_id`.
+   - Frontend polls `/api/auth/telegram/poll-link` to confirm success.
+   - The `telegram_chat_id` is persisted in the `users` table.
+2. **Daily Reminders**:
+   - A `node-cron` job runs daily at 8:30 AM.
+   - Filters opportunities for those due today or overdue.
+   - Sends a formatted HTML "Daily Digest" message to all users with a linked `telegram_chat_id`.
+
 ## Legacy Import
 - Startup migration imports legacy Markdown/YAML data when SQLite tables are empty.
 - On-demand migration command: `cd backend && npm run migrate:legacy`

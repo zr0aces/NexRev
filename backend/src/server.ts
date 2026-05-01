@@ -64,6 +64,8 @@ server.log.info(
     schemaVersion: dbInit.schemaVersion,
     opportunitiesImported: dbInit.legacyMigration.opportunitiesImported,
     usersImported: dbInit.legacyMigration.usersImported,
+    legacyFilesDeleted: dbInit.legacyMigration.legacyFilesDeleted,
+    secretsFileDeleted: dbInit.legacyMigration.secretsFileDeleted,
   },
   'SQLite initialized'
 );

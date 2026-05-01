@@ -124,10 +124,19 @@ test('forced legacy migration imports without duplicating existing aggregates', 
   const first = await dbModule.migrateLegacyData({ onlyWhenEmpty: false });
   assert.equal(first.opportunitiesImported, 1);
   assert.equal(first.usersImported, 1);
+  assert.equal(first.legacyFilesDeleted, 1);
+  assert.equal(first.secretsFileDeleted, true);
+
+  const legacyOppPath = path.join(tempDir, 'opp-legacy-1.md');
+  const legacySecretsPath = path.join(tempDir, 'secrets.yaml');
+  await assert.rejects(fs.access(legacyOppPath));
+  await assert.rejects(fs.access(legacySecretsPath));
 
   const second = await dbModule.migrateLegacyData({ onlyWhenEmpty: false });
   assert.equal(second.opportunitiesImported, 0);
   assert.equal(second.usersImported, 0);
+  assert.equal(second.legacyFilesDeleted, 0);
+  assert.equal(second.secretsFileDeleted, false);
 
   const loaded = await storageModule.readOpportunity('opp-legacy-1');
   assert.equal(loaded.nextSteps.length, 1);

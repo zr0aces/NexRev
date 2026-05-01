@@ -30,16 +30,29 @@ const SCHEMA_VERSION = 1;
 
 interface MigrationOptions {
   onlyWhenEmpty?: boolean;
+  cleanupAfterSuccess?: boolean;
 }
 
 export interface LegacyMigrationResult {
   opportunitiesImported: number;
   usersImported: number;
+  legacyFilesDeleted: number;
+  secretsFileDeleted: boolean;
 }
 
 export interface DatabaseInitResult {
   schemaVersion: number;
   legacyMigration: LegacyMigrationResult;
+}
+
+interface LegacyOpportunityCandidate {
+  fileName: string;
+  id: string;
+}
+
+interface LegacyCleanupResult {
+  legacyFilesDeleted: number;
+  secretsFileDeleted: boolean;
 }
 
 function normalizeDate(value: unknown): string {
@@ -345,20 +358,121 @@ async function migrateLegacyUsers(
   }
 }
 
+async function collectLegacyOpportunities(): Promise<LegacyOpportunityCandidate[] | null> {
+  const files = await fs.readdir(DATA_DIR).catch(() => [] as string[]);
+  const mdFiles = files.filter((file) => file.endsWith('.md'));
+  if (!mdFiles.length) return [];
+
+  const candidates: LegacyOpportunityCandidate[] = [];
+  for (const fileName of mdFiles) {
+    try {
+      const content = await fs.readFile(path.join(DATA_DIR, fileName), 'utf8');
+      const parsed = parseLegacyOpportunity(path.basename(fileName, '.md'), content);
+      candidates.push({ fileName, id: parsed.id });
+    } catch (err) {
+      console.warn(`Skipping cleanup check for legacy opportunity file ${fileName}:`, err);
+      return null;
+    }
+  }
+
+  return candidates;
+}
+
+async function collectLegacyUsers(): Promise<LegacyUser[] | null> {
+  const content = await fs.readFile(LEGACY_SECRETS_FILE, 'utf8').catch(() => null);
+  if (!content) return [];
+
+  try {
+    const parsed = (yaml.load(content) as LegacySecrets) ?? {};
+    const users = Array.isArray(parsed.users) ? parsed.users : [];
+    return users.filter((u) => Boolean(u.username));
+  } catch (err) {
+    console.warn('Skipping cleanup check for legacy secrets.yaml:', err);
+    return null;
+  }
+}
+
+async function cleanupLegacyFilesIfFullyImported(db: Database.Database): Promise<LegacyCleanupResult> {
+  const oppCandidates = await collectLegacyOpportunities();
+  const userCandidates = await collectLegacyUsers();
+
+  if (oppCandidates === null || userCandidates === null) {
+    return { legacyFilesDeleted: 0, secretsFileDeleted: false };
+  }
+
+  for (const opp of oppCandidates) {
+    const exists = db
+      .prepare('SELECT 1 FROM opportunities WHERE id = ?')
+      .get(opp.id) as { 1: number } | undefined;
+    if (!exists) return { legacyFilesDeleted: 0, secretsFileDeleted: false };
+  }
+
+  for (const user of userCandidates) {
+    const exists = db
+      .prepare('SELECT 1 FROM users WHERE username = ?')
+      .get(user.username) as { 1: number } | undefined;
+    if (!exists) return { legacyFilesDeleted: 0, secretsFileDeleted: false };
+  }
+
+  let legacyFilesDeleted = 0;
+  for (const opp of oppCandidates) {
+    try {
+      await fs.unlink(path.join(DATA_DIR, opp.fileName));
+      legacyFilesDeleted += 1;
+    } catch {
+      // Best effort; do not throw during cleanup path.
+    }
+  }
+
+  let secretsFileDeleted = false;
+  try {
+    await fs.unlink(LEGACY_SECRETS_FILE);
+    secretsFileDeleted = true;
+  } catch {
+    // Best effort.
+  }
+
+  if (legacyFilesDeleted > 0 || secretsFileDeleted) {
+    db.prepare(`
+      INSERT INTO app_meta (key, value)
+      VALUES ('legacy_cleanup_at', ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `).run(new Date().toISOString());
+  }
+
+  return { legacyFilesDeleted, secretsFileDeleted };
+}
+
 export async function migrateLegacyData(
   options: MigrationOptions = {}
 ): Promise<LegacyMigrationResult> {
   const db = getDb();
   const opportunitiesImported = await migrateLegacyOpportunities(db, options);
   const usersImported = await migrateLegacyUsers(db, options);
-  return { opportunitiesImported, usersImported };
+
+  const shouldCleanup = options.cleanupAfterSuccess ?? true;
+  const cleanup = shouldCleanup
+    ? await cleanupLegacyFilesIfFullyImported(db)
+    : { legacyFilesDeleted: 0, secretsFileDeleted: false };
+
+  return {
+    opportunitiesImported,
+    usersImported,
+    legacyFilesDeleted: cleanup.legacyFilesDeleted,
+    secretsFileDeleted: cleanup.secretsFileDeleted,
+  };
 }
 
 export async function initDatabase(): Promise<DatabaseInitResult> {
   if (conn) {
     return {
       schemaVersion: getStoredSchemaVersion(conn),
-      legacyMigration: { opportunitiesImported: 0, usersImported: 0 },
+      legacyMigration: {
+        opportunitiesImported: 0,
+        usersImported: 0,
+        legacyFilesDeleted: 0,
+        secretsFileDeleted: false,
+      },
     };
   }
 

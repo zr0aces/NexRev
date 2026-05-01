@@ -73,6 +73,7 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
 ## Legacy Import
 - Startup migration imports legacy Markdown/YAML data when SQLite tables are empty.
 - On-demand migration command: `cd backend && npm run migrate:legacy`
+- After all legacy records are verified in SQLite, legacy `.md` opportunity files and `secrets.yaml` are removed automatically to keep a single source of truth.
 
 ## Backup and Restore
 - Backup command: `cd backend && npm run db:backup`

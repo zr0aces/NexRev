@@ -38,11 +38,12 @@ NexRev is designed for individual account executives and sales professionals who
 - Primary datastore: `data/nexrev.sqlite3`
 - Legacy migration: legacy `data/*.md` opportunities and `data/secrets.yaml` users are auto-imported at startup when SQLite tables are empty.
 - On-demand re-import: run `cd backend && npm run migrate:legacy` to import any missing legacy records without duplicating existing IDs/usernames.
+- Cleanup behavior: once all legacy records are verified in SQLite, legacy `.md` files and `secrets.yaml` are deleted automatically.
 
 Environment overrides:
 - `DATA_DIR` sets the base data directory.
 - `SQLITE_FILE` overrides the SQLite path directly.
-- `SECRETS_FILE` is only used as a legacy migration input path.
+- `SECRETS_FILE` is only used as a temporary legacy migration input path.
 
 Startup telemetry:
 - Backend logs the active SQLite schema version and legacy import counts at boot.

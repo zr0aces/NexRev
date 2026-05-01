@@ -42,13 +42,24 @@ async function saveSecrets(secrets: Secrets): Promise<void> {
 }
 
 export async function initSecrets(): Promise<void> {
-  const secrets = await loadSecrets();
+  let secrets = await loadSecrets();
+  
+  // If user accounts are defined and 'admin' is present, remove 'admin'
+  if (secrets.users?.length > 1) {
+    const filtered = secrets.users.filter(u => u.username !== 'admin');
+    if (filtered.length < secrets.users.length) {
+      secrets.users = filtered;
+      await saveSecrets(secrets);
+      console.info('ℹ️  Removed default admin account because other user accounts are defined.');
+    }
+  }
+
   if (!secrets.users?.length) {
     const hash = await bcrypt.hash('admin', 10);
     await saveSecrets({ users: [{ username: 'admin', password_hash: hash }] });
     console.warn(
       '⚠️  Created default user (username: admin, password: admin). ' +
-      'Change it using: node backend/scripts/manage-users.mjs passwd admin <newpassword>'
+      'Change it using the Profile page or: node backend/scripts/manage-users.mjs passwd admin <newpassword>'
     );
   }
 }

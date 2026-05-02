@@ -1,8 +1,11 @@
 {
   "name": "nexrev-backend",
-  "version": "1.0.0",
+  "version": "2026.4.4",
   "type": "module",
   "scripts": {
+    "version:sync": "node ../scripts/sync-version.mjs",
+    "predev": "npm run version:sync",
+    "prebuild": "npm run version:sync",
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",

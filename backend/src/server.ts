@@ -51,7 +51,20 @@ await server.register(aiRoutes, { prefix: '/api' });
 
 let appVersion = 'unknown';
 try {
-  appVersion = (await fs.readFile(path.join(process.cwd(), 'VERSION'), 'utf8')).trim();
+  // Try looking in current directory, then one level up (root if started from backend/)
+  const possiblePaths = [
+    path.join(process.cwd(), 'VERSION'),
+    path.join(process.cwd(), '..', 'VERSION')
+  ];
+  
+  for (const p of possiblePaths) {
+    try {
+      appVersion = (await fs.readFile(p, 'utf8')).trim();
+      break;
+    } catch {
+      continue;
+    }
+  }
 } catch (e) {
   console.warn('Could not read VERSION file:', e);
 }

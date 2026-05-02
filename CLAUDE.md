@@ -21,6 +21,10 @@ cd frontend && npm install && npm run dev
 # Open http://localhost:5173
 ```
 
+### Versioning
+- **Source of Truth:** `/VERSION` file in the root.
+- **Syncing:** Run `node scripts/sync-version.mjs` or run `npm run dev`/`npm run build` in either subproject (handled via `predev`/`prebuild` hooks).
+
 ## Stack
 
 - **Frontend:** React 18, TypeScript, Vite — no UI library, vanilla CSS (always-dark, orange accent)

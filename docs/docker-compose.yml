@@ -9,7 +9,7 @@
 
 services:
   backend:
-    image: ghcr.io/zr0aces/nexrev-backend:latest
+    image: ghcr.io/zr0aces/nexrev-backend:${NEXREV_VERSION:-latest}
     container_name: nexrev-backend
     environment:
       - NODE_ENV=production
@@ -29,7 +29,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/zr0aces/nexrev-frontend:latest
+    image: ghcr.io/zr0aces/nexrev-frontend:${NEXREV_VERSION:-latest}
     container_name: nexrev-frontend
     restart: unless-stopped
     depends_on:

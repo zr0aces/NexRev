@@ -1,8 +1,11 @@
 {
   "name": "nexrev-frontend",
-  "version": "1.0.0",
+  "version": "2026.4.4",
   "type": "module",
   "scripts": {
+    "version:sync": "node ../scripts/sync-version.mjs",
+    "predev": "npm run version:sync",
+    "prebuild": "npm run version:sync",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview"

@@ -101,6 +101,12 @@ NexRev uses a SQLite-first storage approach.
 - **Primary backup**: copy `data/nexrev.sqlite3`.
 - **Portability**: copy the `data/` folder to a new machine.
 
+## 🔢 Version Management
+NexRev uses a centralized versioning system:
+- **Source of Truth**: The root [`VERSION`](./VERSION) file.
+- **Automatic Sync**: Versioning is automatically propagated to `package.json` files and the frontend display during `npm run dev` or `npm run build`.
+- **Manual Sync**: Run `node scripts/sync-version.mjs` from the root to force a synchronization.
+
 ## ✅ Backend Validation
 
 Run backend integration tests:

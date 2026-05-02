@@ -91,3 +91,15 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
 - Backup command: `cd backend && npm run db:backup`
 - Restore command: `cd backend && npm run db:restore`
 - Backups are generated via SQLite `VACUUM INTO` for consistent snapshots.
+
+## Application Versioning
+NexRev uses a centralized versioning strategy to ensure consistency across the stack:
+- **Central Definition**: The version is defined in a single [`VERSION`](../VERSION) file at the project root.
+- **Propagation**: A synchronization script (`scripts/sync-version.mjs`) propagates this version to:
+  - `backend/package.json`
+  - `frontend/package.json`
+  - `frontend/src/version.ts` (for client-side display)
+  - `.env` (as `NEXREV_VERSION` for Docker image tagging)
+- **Runtime Access**:
+  - The **Backend** reads the `VERSION` file at startup and exposes it via the `/api/health` endpoint.
+  - The **Frontend** displays the version in the Profile panel, using the API value if available, or the build-time value from `version.ts` as a fallback.

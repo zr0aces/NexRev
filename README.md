@@ -107,18 +107,25 @@ NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.
 - **M**: Release cycle (e.g., month or major iteration).
 - **PATCH**: Incremental fixes within the same cycle.
 
+### Versioning
+- **Source of Truth:** `/VERSION` file in the root.
+- **Syncing:** Run `node scripts/sync-version.mjs` to propagate version to `package.json` files and `.env`.
+- **Runtime:** Backend reads `/VERSION` at boot; Frontend fetches version from `/api/health`.
+
 ### Release Workflow
 1. **Update Version**: Use the release script from the root:
    ```bash
    node scripts/release.mjs
    ```
-   This script will prompt for the new version, update the root `VERSION` file, synchronize all package configurations, and optionally create a local git tag.
-2. **Push Changes**:
+2. **Runtime Access**:
+  - The **Backend** reads the `VERSION` file at startup (either from the image or a volume mount) and exposes it via the `/api/health` endpoint.
+  - The **Frontend** fetches this version dynamically from the API and displays it on the Login page and Profile panel, ensuring consistency with the running backend.
+3. **Push Changes**:
    ```bash
    git push origin main --tags
    ```
-3. **Automated Tagging**: If you push a change to the `VERSION` file without a tag, a GitHub Action will automatically create one for you.
-4. **CI/CD Deployment**: Upon pushing a tag, the system automatically builds and publishes new Docker images to GHCR.
+4. **Automated Tagging**: If you push a change to the `VERSION` file without a tag, a GitHub Action will automatically create one for you.
+5. **CI/CD Deployment**: Upon pushing a tag, the system automatically builds and publishes new Docker images to GHCR.
 
 ## ✅ Backend Validation
 

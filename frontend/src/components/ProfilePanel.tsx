@@ -13,7 +13,11 @@ import {
 import { api } from '../api';
 import { useToast } from '../context/ToastContext';
 
-export default function ProfilePanel() {
+interface Props {
+  version: string;
+}
+
+export default function ProfilePanel({ version }: Props) {
   const { addToast } = useToast();
   const [username, setUsername] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
@@ -22,7 +26,6 @@ export default function ProfilePanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [linking, setLinking] = useState(false);
-  const [version, setVersion] = useState('');
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -37,10 +40,6 @@ export default function ProfilePanel() {
       setTelegramChatId(data.telegram_chat_id ?? '');
       setLoading(false);
     }).catch(() => setLoading(false));
-
-    api.auth.getHealth().then(data => {
-      setVersion(data.version);
-    }).catch(() => {});
   }, []);
 
   const handleSaveTelegram = async () => {

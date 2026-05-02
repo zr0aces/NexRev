@@ -23,7 +23,8 @@ cd frontend && npm install && npm run dev
 
 ### Versioning
 - **Source of Truth:** `/VERSION` file in the root.
-- **Syncing:** Run `node scripts/sync-version.mjs` or run `npm run dev`/`npm run build` in either subproject (handled via `predev`/`prebuild` hooks).
+- **Syncing:** Run `node scripts/sync-version.mjs` to propagate version to `package.json` files and `.env`.
+- **Runtime:** Backend reads `/VERSION` at boot; Frontend fetches version from `/api/health`.
 
 ## Stack
 

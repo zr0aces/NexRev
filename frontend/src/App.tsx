@@ -29,9 +29,11 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modalState, setModalState] = useState<ModalState>(null);
   const [loading, setLoading]   = useState(true);
+  const [version, setVersion]   = useState('');
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthenticated(false));
+    api.auth.getHealth().then(data => setVersion(data.version)).catch(() => {});
   }, []);
 
   const reload = useCallback(async () => {
@@ -92,7 +94,7 @@ export default function App() {
     addToast('Logged out.', 'info');
   };
 
-  if (!authenticated) return <LoginPage onLogin={handleLogin} />;
+  if (!authenticated) return <LoginPage onLogin={handleLogin} version={version} />;
 
   if (loading) {
     return (
@@ -141,7 +143,7 @@ export default function App() {
           />
         )}
         {tab === 'log' && <ActivityLogPanel opps={opps} />}
-        {tab === 'profile' && <ProfilePanel />}
+        {tab === 'profile' && <ProfilePanel version={version} />}
       </div>
       {modalState !== null && (
         <OppModal

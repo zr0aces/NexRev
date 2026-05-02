@@ -99,12 +99,11 @@ NexRev uses a centralized versioning strategy to ensure consistency across the s
 - **Propagation**: A synchronization script (`scripts/sync-version.mjs`) propagates this version to:
   - `backend/package.json`
   - `frontend/package.json`
-  - `frontend/src/version.ts` (build artifact)
   - `.env` and `.env.example` (as `NEXREV_VERSION` for Docker image tagging)
 - **Standardized Release**:
   - `scripts/release.mjs` handles the interactive update and local tagging.
   - GitHub Actions (`tag-version.yml`) ensure that any change to `VERSION` in the `main` branch is captured as a git tag.
   - Image builds (`release.yml`) are triggered by release publication, using the version tag for image identification.
 - **Runtime Access**:
-  - The **Backend** reads the `VERSION` file at startup, logs it, and exposes it via the `/api/health` endpoint.
-  - The **Frontend** displays the version in the Profile panel, fetching it dynamically from the API.
+  - The **Backend** reads the `VERSION` file at startup (either from the image or a volume mount) and exposes it via the `/api/health` endpoint.
+  - The **Frontend** fetches this version dynamically from the API and displays it on the Login page and Profile panel, ensuring consistency with the running backend.

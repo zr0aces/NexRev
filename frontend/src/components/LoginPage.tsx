@@ -4,9 +4,10 @@ import { useToast } from '../context/ToastContext';
 
 interface Props {
   onLogin: (username: string, password: string) => Promise<void>;
+  version: string;
 }
 
-export default function LoginPage({ onLogin }: Props) {
+export default function LoginPage({ onLogin, version }: Props) {
   const { addToast } = useToast();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -70,6 +71,11 @@ export default function LoginPage({ onLogin }: Props) {
             {loading ? <><span className="spinner" /> Signing in…</> : <><LogIn size={18} /> Sign in</>}
           </button>
         </form>
+        <div style={{ marginTop: 24, textAlign: 'center', borderTop: '1px solid var(--border-light)', paddingTop: 16 }}>
+          <p className="text-tertiary" style={{ fontSize: 11, margin: 0 }}>
+            NexRev System &bull; Version {version || 'Loading...'}
+          </p>
+        </div>
       </div>
     </div>
   );

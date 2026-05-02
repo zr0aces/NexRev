@@ -71,25 +71,34 @@ export default function ProfilePanel() {
 
       // Start polling
       let attempts = 0;
-      pollIntervalRef.current = setInterval(async () => {
-        attempts++;
-        if (attempts > 30) { // 30s timeout
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          setLinking(false);
-          addToast('Linking timed out. Please try again.', 'error');
-          return;
-        }
+      pollIntervalRef.current = setInterval(() => {
+        void (async () => {
+          try {
+            attempts++;
+            if (attempts > 30) { // 30s timeout
+              clearInterval(pollIntervalRef.current!);
+              pollIntervalRef.current = null;
+              setLinking(false);
+              addToast('Linking timed out. Please try again.', 'error');
+              return;
+            }
 
-        const { chatId } = await api.auth.pollTelegramLink(token);
-        if (chatId) {
-          clearInterval(pollIntervalRef.current!);
-          pollIntervalRef.current = null;
-          setTelegramChatId(chatId);
-          await api.auth.updateTelegram(chatId);
-          setLinking(false);
-          addToast('Telegram linked successfully!', 'success');
-        }
+            const { chatId } = await api.auth.pollTelegramLink(token);
+            if (chatId) {
+              clearInterval(pollIntervalRef.current!);
+              pollIntervalRef.current = null;
+              setTelegramChatId(chatId);
+              await api.auth.updateTelegram(chatId);
+              setLinking(false);
+              addToast('Telegram linked successfully!', 'success');
+            }
+          } catch {
+            clearInterval(pollIntervalRef.current!);
+            pollIntervalRef.current = null;
+            setLinking(false);
+            addToast('Linking failed. Please try again.', 'error');
+          }
+        })();
       }, 2000);
     } catch (err) {
       setLinking(false);

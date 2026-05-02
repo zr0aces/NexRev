@@ -25,7 +25,7 @@ export default function ActivityLogPanel({ opps }: Props) {
         </div>
       ) : (
         all.map((a, i) => (
-          <div key={i} className="activity-item">
+          <div key={`${a.oppId}-${a.date}-${i}`} className="activity-item">
             <div className="activity-meta">
               <span className="activity-opp" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <MessageSquare size={12} /> {a.oppName}

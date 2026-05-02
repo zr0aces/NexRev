@@ -22,7 +22,7 @@ export default function MetricsRow({ opps }: { opps: Opportunity[] }) {
         <div className="metric-icon metric-icon--orange"><DollarSign size={20} /></div>
         <div className="metric-content">
           <div className="metric-label">Pipeline Value</div>
-          <div className="metric-val metric-val--orange">${(totalVal / 1000).toFixed(0)}k</div>
+          <div className="metric-val metric-val--orange">{totalVal >= 1000 ? `$${(totalVal / 1000).toFixed(0)}k` : `$${totalVal.toLocaleString()}`}</div>
         </div>
       </div>
       <div className={`metric-card${overdue > 0 ? ' metric-card--red' : ''}`}>

@@ -79,16 +79,8 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
       addToast('Contact email is required', 'error'); 
       return; 
     }
-    if (!isValidEmail(form.contactEmail.trim())) { 
+    if (form.contactEmail.trim() && !isValidEmail(form.contactEmail.trim())) { 
       addToast('Please enter a valid email address', 'error'); 
-      return; 
-    }
-    if (!form.contactMobile.trim()) { 
-      addToast('Contact mobile number is required', 'error'); 
-      return; 
-    }
-    if (!form.contactTitle.trim()) { 
-      addToast('Contact title / job title is required', 'error'); 
       return; 
     }
     setSaving(true);
@@ -184,11 +176,11 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
 
         <div className="form-row">
           <div className="form-group">
-            <label>Contact mobile *</label>
+            <label>Contact mobile</label>
             <input type="tel" value={form.contactMobile} placeholder="+1 555 000 0000" onChange={e => set('contactMobile', e.target.value)} />
           </div>
           <div className="form-group">
-            <label>Contact title / job title *</label>
+            <label>Contact title / job title</label>
             <input type="text" value={form.contactTitle} placeholder="VP of Engineering" onChange={e => set('contactTitle', e.target.value)} />
           </div>
         </div>

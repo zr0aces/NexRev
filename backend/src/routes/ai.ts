@@ -27,7 +27,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         return { summary };
       } catch (e) {
         if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        return reply.code(404).send({ error: 'Not found' });
+        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   );
@@ -41,7 +42,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         return { note };
       } catch (e) {
         if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        return reply.code(404).send({ error: 'Not found' });
+        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   );
@@ -63,7 +65,8 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         return opp;
       } catch (e) {
         if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        return reply.code(404).send({ error: 'Not found' });
+        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
+        return reply.code(500).send({ error: 'Internal server error' });
       }
     }
   );

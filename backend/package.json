@@ -10,7 +10,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate:legacy": "tsx src/scripts/migrate-legacy.ts",
-    "test": "node --import tsx --test test/**/*.test.ts",
+    "test": "node --import tsx --test test/*.test.ts",
     "db:backup": "node scripts/db-backup-restore.mjs backup data/backups/nexrev-backup.sqlite3",
     "db:restore": "node scripts/db-backup-restore.mjs restore data/backups/nexrev-backup.sqlite3"
   },

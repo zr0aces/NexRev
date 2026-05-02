@@ -9,8 +9,6 @@ interface Props {
   opps: Opportunity[];
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
-  onUpdate: (opp: Opportunity) => void;
-  onRemove: (id: string) => void;
 }
 
 function urgencyInfo(o: Opportunity): { label: React.ReactNode; icon: React.ReactNode; dotColor: string; priority: number } {
@@ -44,7 +42,7 @@ function urgencyInfo(o: Opportunity): { label: React.ReactNode; icon: React.Reac
   return { label: null, icon: null, dotColor: 'var(--text-tertiary)', priority: 4 };
 }
 
-export default function TodayPanel({ opps, onSelect, onEdit, onUpdate, onRemove }: Props) {
+export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
   const pending = opps
     .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost' && (o.followup || o.nextStep))
     .sort((a, b) => {

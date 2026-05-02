@@ -128,8 +128,6 @@ export default function App() {
               setSelectedId(id);
             }}
             onEdit={(id) => setModalState(id)}
-            onUpdate={updateOpp}
-            onRemove={removeOpp}
           />
         )}
         {tab === 'pipeline' && (

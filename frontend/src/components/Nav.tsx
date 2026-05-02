@@ -12,6 +12,7 @@ import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
 import { useToast } from '../context/ToastContext';
+import type { ToastType } from '../context/ToastContext';
 
 type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 
@@ -34,7 +35,7 @@ function downloadFile(filename: string, content: string, type: string) {
   URL.revokeObjectURL(a.href);
 }
 
-function exportMd(opps: Opportunity[], addToast: any) {
+function exportMd(opps: Opportunity[], addToast: (message: string, type?: ToastType) => void) {
   const t = todayStr();
   const active = opps.filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
   const isOverdue = (d: string) => !!d && d < t;

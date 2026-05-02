@@ -255,7 +255,7 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
         activity.summary ?? null,
         activity.ai ? 1 : 0,
         activity.sf ? 1 : 0,
-        value.updatedAt
+        activity.date
       );
     });
   });

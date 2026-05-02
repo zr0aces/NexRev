@@ -227,7 +227,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No activities yet</div>
         ) : (
           activities.map((a, i) => (
-            <div key={i} className="activity-item">
+            <div key={`${a.date}-${i}`} className="activity-item">
               <div className="activity-meta">
                 {a.sf && <span className="badge badge-sf" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Cloud size={10} /> SF</span>}
                 {a.ai && !a.sf && <span className="badge badge-ai" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Sparkles size={10} /> AI</span>}

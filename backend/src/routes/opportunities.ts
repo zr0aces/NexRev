@@ -52,11 +52,16 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
     }
   });
 
-  fastify.post<{ Body: unknown[] }>('/import', async (req, reply) => {
-    if (!Array.isArray(req.body)) return reply.code(400).send({ error: 'Expected array' });
-    const result = await store.bulkImport(req.body);
-    return { imported: result.created.length, skipped: result.skipped.length };
-  });
+  fastify.post<{ Body: unknown[] }>(
+    '/import',
+    { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      if (!Array.isArray(req.body)) return reply.code(400).send({ error: 'Expected array' });
+      if (req.body.length > 500) return reply.code(400).send({ error: 'Import batch too large (max 500)' });
+      const result = await store.bulkImport(req.body);
+      return { imported: result.created.length, skipped: result.skipped.length };
+    }
+  );
 
   fastify.post<{
     Params: { id: string };

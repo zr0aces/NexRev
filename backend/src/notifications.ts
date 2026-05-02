@@ -8,6 +8,23 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 // Token-to-ChatID mapping for automatic linking
 const pendingLinks = new Map<string, string>();
 let lastUpdateId = 0;
+let pollingActive = false;
+let pollShutdownRequested = false;
+
+interface TelegramMessage {
+  text?: string;
+  chat: { id: number };
+}
+
+interface TelegramUpdate {
+  update_id: number;
+  message?: TelegramMessage;
+}
+
+interface TelegramGetUpdatesResponse {
+  ok: boolean;
+  result: TelegramUpdate[];
+}
 
 function escapeHtml(text: string): string {
   // IMPORTANT: '&' must be replaced first to prevent double-escaping
@@ -42,12 +59,14 @@ async function sendTelegramMessage(chatId: string, text: string) {
 }
 
 async function pollTelegramUpdates() {
-  if (!TELEGRAM_BOT_TOKEN) return;
+  if (!TELEGRAM_BOT_TOKEN || pollShutdownRequested) return;
+  pollingActive = true;
   const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
   try {
-    const res = await fetch(url);
+    // AbortSignal timeout slightly exceeds the Telegram server-side 30s hold
+    const res = await fetch(url, { signal: AbortSignal.timeout(35000) });
     if (!res.ok) return;
-    const data = await res.json() as { ok: boolean, result: any[] };
+    const data = await res.json() as TelegramGetUpdatesResponse;
     if (!data.ok) return;
 
     for (const update of data.result) {
@@ -68,9 +87,16 @@ async function pollTelegramUpdates() {
   } catch (err) {
     console.error('Error polling Telegram updates:', err);
   } finally {
-    // Poll again immediately (Long Polling)
-    setTimeout(pollTelegramUpdates, 1000);
+    pollingActive = false;
+    if (!pollShutdownRequested) {
+      // Poll again immediately (Long Polling)
+      setTimeout(pollTelegramUpdates, 1000);
+    }
   }
+}
+
+export function stopNotifications() {
+  pollShutdownRequested = true;
 }
 
 export function createLinkToken(): string {

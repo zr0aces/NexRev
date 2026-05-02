@@ -82,9 +82,11 @@ export class OpportunityStore {
 
   async patch(id: string, fields: Partial<Opportunity>): Promise<Opportunity> {
     const existing = await read(id);
-    const updated: Opportunity = { ...existing, ...fields, id: existing.id };
+    // Strip fields that must not be overwritten via patch
+    const { id: _id, activities: _activities, nextSteps: _nextSteps, createdAt: _createdAt, updatedAt: _updatedAt, ...safe } = fields;
+    const updated: Opportunity = { ...existing, ...safe, id: existing.id };
     await storage.writeOpportunity(updated);
-    return updated;
+    return read(id);
   }
 
   async addActivity(id: string, input: ActivityInput): Promise<Opportunity> {
@@ -98,7 +100,7 @@ export class OpportunityStore {
     };
     opp.activities.push(activity);
     await storage.writeOpportunity(opp);
-    return opp;
+    return read(id);
   }
 
   async upsertStep(id: string, index: number | null, patch: StepPatch): Promise<Opportunity> {
@@ -111,7 +113,7 @@ export class OpportunityStore {
       opp.nextSteps[index] = syncStep(opp.nextSteps[index], patch);
     }
     await storage.writeOpportunity(opp);
-    return opp;
+    return read(id);
   }
 
   async removeStep(id: string, index: number): Promise<Opportunity> {
@@ -119,7 +121,7 @@ export class OpportunityStore {
     if (index < 0 || index >= opp.nextSteps.length) throw new NotFoundError(`step:${index}`);
     opp.nextSteps.splice(index, 1);
     await storage.writeOpportunity(opp);
-    return opp;
+    return read(id);
   }
 
   async delete(id: string): Promise<void> {

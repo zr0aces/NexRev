@@ -8,7 +8,7 @@ import { opportunityRoutes } from './routes/opportunities.js';
 import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
-import { initNotifications } from './notifications.js';
+import { initNotifications, stopNotifications } from './notifications.js';
 
 const server = Fastify({
   logger: { level: process.env.NODE_ENV === 'production' ? 'warn' : 'info' },
@@ -89,3 +89,11 @@ server.log.info({ version: appVersion }, 'NexRev System started');
 
 const port = parseInt(process.env.PORT ?? '3001', 10);
 await server.listen({ port, host: '0.0.0.0' });
+
+for (const signal of ['SIGTERM', 'SIGINT']) {
+  process.once(signal, async () => {
+    stopNotifications();
+    await server.close();
+    process.exit(0);
+  });
+}

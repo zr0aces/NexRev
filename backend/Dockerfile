@@ -19,6 +19,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=deps /app/backend/node_modules ./backend/node_modules
 COPY --from=build /app/backend/dist ./backend/dist
+COPY VERSION ./
 RUN mkdir -p /app/data
 EXPOSE 3001
 WORKDIR /app/backend

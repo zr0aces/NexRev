@@ -4,6 +4,8 @@
 # Usage:
 # 1. Copy this file to the root of the project.
 # 2. Update the image tags if you want a specific version.
+#    By default, this uses the ${NEXREV_VERSION} variable from your .env file, 
+#    which is automatically kept in sync with the root VERSION file.
 # 3. Ensure your .env file is configured correctly.
 # 4. Run `docker compose up -d`
 

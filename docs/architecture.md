@@ -92,14 +92,19 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
 - Restore command: `cd backend && npm run db:restore`
 - Backups are generated via SQLite `VACUUM INTO` for consistent snapshots.
 
-## Application Versioning
+## Application Versioning & Release Strategy
 NexRev uses a centralized versioning strategy to ensure consistency across the stack:
+- **Format**: Uses `YYYY.M.PATCH` (e.g., `2026.4.1`) for clear temporal and iterative tracking.
 - **Central Definition**: The version is defined in a single [`VERSION`](../VERSION) file at the project root.
 - **Propagation**: A synchronization script (`scripts/sync-version.mjs`) propagates this version to:
   - `backend/package.json`
   - `frontend/package.json`
-  - `frontend/src/version.ts` (for client-side display)
-  - `.env` (as `NEXREV_VERSION` for Docker image tagging)
+  - `frontend/src/version.ts` (build artifact)
+  - `.env` and `.env.example` (as `NEXREV_VERSION` for Docker image tagging)
+- **Standardized Release**:
+  - `scripts/release.mjs` handles the interactive update and local tagging.
+  - GitHub Actions (`tag-version.yml`) ensure that any change to `VERSION` in the `main` branch is captured as a git tag.
+  - Image builds (`release.yml`) are triggered by release publication, using the version tag for image identification.
 - **Runtime Access**:
-  - The **Backend** reads the `VERSION` file at startup and exposes it via the `/api/health` endpoint.
-  - The **Frontend** displays the version in the Profile panel, using the API value if available, or the build-time value from `version.ts` as a fallback.
+  - The **Backend** reads the `VERSION` file at startup, logs it, and exposes it via the `/api/health` endpoint.
+  - The **Frontend** displays the version in the Profile panel, fetching it dynamically from the API.

@@ -85,5 +85,7 @@ server.log.info(
 await initSecrets();
 initNotifications();
 
+server.log.info({ version: appVersion }, 'NexRev System started');
+
 const port = parseInt(process.env.PORT ?? '3001', 10);
 await server.listen({ port, host: '0.0.0.0' });

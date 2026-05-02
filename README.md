@@ -101,11 +101,24 @@ NexRev uses a SQLite-first storage approach.
 - **Primary backup**: copy `data/nexrev.sqlite3`.
 - **Portability**: copy the `data/` folder to a new machine.
 
-## 🔢 Version Management
-NexRev uses a centralized versioning system:
-- **Source of Truth**: The root [`VERSION`](./VERSION) file.
-- **Automatic Sync**: Versioning is automatically propagated to `package.json` files and the frontend display during `npm run dev` or `npm run build`.
-- **Manual Sync**: Run `node scripts/sync-version.mjs` from the root to force a synchronization.
+## 🔢 Version Management & Releases
+NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.4.1`):
+- **YYYY**: Release year.
+- **M**: Release cycle (e.g., month or major iteration).
+- **PATCH**: Incremental fixes within the same cycle.
+
+### Release Workflow
+1. **Update Version**: Use the release script from the root:
+   ```bash
+   node scripts/release.mjs
+   ```
+   This script will prompt for the new version, update the root `VERSION` file, synchronize all package configurations, and optionally create a local git tag.
+2. **Push Changes**:
+   ```bash
+   git push origin main --tags
+   ```
+3. **Automated Tagging**: If you push a change to the `VERSION` file without a tag, a GitHub Action will automatically create one for you.
+4. **CI/CD Deployment**: Upon pushing a tag, the system automatically builds and publishes new Docker images to GHCR.
 
 ## ✅ Backend Validation
 

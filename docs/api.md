@@ -131,4 +131,8 @@ Extract Kanban tasks from activity logs.
 ## Utility
 
 ### GET `/api/health`
-Returns `200 OK`. Used for Docker health checks.
+Returns `200 OK` and the current application version. Used for Docker health checks and frontend version display.
+**Response `200`**
+```json
+{ "status": "ok", "version": "2026.4.4" }
+```

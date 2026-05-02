@@ -11,7 +11,6 @@ import {
   BookOpen
 } from 'lucide-react';
 import { api } from '../api';
-import { APP_VERSION } from '../version';
 import { useToast } from '../context/ToastContext';
 
 export default function ProfilePanel() {
@@ -221,7 +220,7 @@ export default function ProfilePanel() {
 
       <div className="profile-section" style={{ marginTop: 30, textAlign: 'center', background: 'transparent', border: 'none', padding: 0 }}>
         <p className="text-tertiary" style={{ fontSize: 12 }}>
-          NexRev System &bull; Version {version || APP_VERSION}
+          NexRev System &bull; Version {version || 'Loading...'}
         </p>
       </div>
     </div>

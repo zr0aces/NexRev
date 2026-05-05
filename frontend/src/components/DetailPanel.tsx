@@ -33,16 +33,25 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   const [logInput,   setLogInput]   = useState('');
   const [aiOutput,   setAiOutput]   = useState<{ type: 'ai' | 'sf'; text: string } | null>(null);
   const [aiLoading,  setAiLoading]  = useState<string | null>(null);
+  const [nextFollowup, setNextFollowup] = useState(opp.followup || '');
 
   const logRaw = async () => {
     const raw = logInput.trim();
     if (!raw) return;
+    if (nextFollowup === opp.followup) {
+      addToast('Please update the Next Follow-up Date before logging this activity.', 'error');
+      return;
+    }
     try {
+      // First update the opportunity with the new follow-up date
+      const updatedOpp = await api.opportunities.update(opp.id, { followup: nextFollowup });
+      onUpdate(updatedOpp);
+      
       const updated = await api.activities.add(opp.id, { raw, ai: false });
       setLogInput('');
       setAiOutput(null);
       onUpdate(updated);
-      addToast('Activity logged.', 'success');
+      addToast('Activity logged and follow-up date updated.', 'success');
     } catch (e) {
       addToast('Failed to log activity: ' + (e as Error).message, 'error');
     }
@@ -51,14 +60,22 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
   const logWithAI = async () => {
     const raw = logInput.trim();
     if (!raw) return;
+    if (nextFollowup === opp.followup) {
+      addToast('Please update the Next Follow-up Date before generating AI summary.', 'error');
+      return;
+    }
     setAiLoading('Summarizing with AI…');
     try {
+      // First update the opportunity with the new follow-up date
+      const updatedOpp = await api.opportunities.update(opp.id, { followup: nextFollowup });
+      onUpdate(updatedOpp);
+
       const { summary } = await api.ai.summarize(raw, opp.id);
       const updated = await api.activities.add(opp.id, { raw, summary, ai: true });
       setAiOutput({ type: 'ai', text: summary });
       setLogInput('');
       onUpdate(updated);
-      addToast('AI summary generated and logged.', 'success');
+      addToast('AI summary generated, activity logged, and follow-up updated.', 'success');
     } catch (e) {
       addToast('AI summarization failed: ' + (e as Error).message, 'error');
       setAiOutput({ type: 'ai', text: (e as Error).message });
@@ -183,22 +200,41 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
       {/* ── Activity log input ── */}
       <div className="detail-section">
         <div className="detail-section-title"><MessageSquare size={16} /> Log activity / meeting notes</div>
+        
         <textarea
           value={logInput}
           placeholder="Paste raw meeting notes, call summary, or any activity…"
           onChange={e => setLogInput(e.target.value)}
         />
-        <div className="log-actions">
+        <div className="log-actions" style={{ alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--orange-text)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Follow-up</span>
+            <input 
+              type="date" 
+              value={nextFollowup} 
+              onChange={e => setNextFollowup(e.target.value)}
+              className="btn-sm"
+              style={{ 
+                background: 'var(--bg-input)', 
+                border: '1px solid var(--border)', 
+                color: 'var(--text)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                height: '32px'
+              }}
+            />
+          </div>
           <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
             <MessageSquare size={14} /> Log note
           </button>
-          <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()} title="Start here to generate a concise summary of the logged note">
+          <button className="btn btn-sm btn-ai" onClick={logWithAI} disabled={!logInput.trim()} title="Start here to generate a concise summary of the logged note">
             <Sparkles size={14} /> AI summarize
           </button>
-          <button className="btn btn-sm" onClick={extractTasks} title="Identify and populate actionable items into the Kanban Board">
+          <button className="btn btn-sm btn-teal" onClick={extractTasks} title="Identify and populate actionable items into the Kanban Board">
             <ClipboardList size={14} /> Extract tasks
           </button>
-          <button className="btn btn-sm" onClick={genSfNote} title="Synchronize notes with Salesforce (SFDC)">
+          <button className="btn btn-sm btn-blue" onClick={genSfNote} title="Synchronize notes with Salesforce (SFDC)">
             <Cloud size={14} /> SF update note
           </button>
         </div>

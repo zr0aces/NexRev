@@ -189,8 +189,43 @@ html, body {
   box-shadow: var(--shadow-glow);
   filter: brightness(1.1);
 }
-.btn-danger { color: var(--red-mid); border-color: transparent; background: transparent; }
 .btn-danger:hover { background: var(--red-light); border-color: var(--red-light); color: var(--red-mid); }
+
+.btn-ai {
+  background: rgba(139, 92, 246, 0.12);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.25);
+}
+.btn-ai:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: #c4b5fd;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.btn-teal {
+  background: rgba(45, 212, 191, 0.12);
+  color: #2dd4bf;
+  border-color: rgba(45, 212, 191, 0.25);
+}
+.btn-teal:hover:not(:disabled) {
+  background: rgba(45, 212, 191, 0.2);
+  border-color: #2dd4bf;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.3);
+}
+
+.btn-blue {
+  background: rgba(59, 130, 246, 0.12);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.25);
+}
+.btn-blue:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: #93c5fd;
+  color: #fff;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+}
 
 /* ── Layout ───────────────────────────────────────────── */
 #app { max-width: 1280px; margin: 0 auto; padding: 24px; }

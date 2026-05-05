@@ -234,7 +234,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             className="btn btn-sm btn-ai" 
             style={{ height: 34 }}
             onClick={logWithAI} 
-            disabled={!aiEnabled || !logInput.trim() || (opp.activities?.length === 0)} 
+            disabled={!aiEnabled || !logInput.trim()} 
             title={!aiEnabled ? "AI Service (Ollama) not configured" : "Start here to generate a concise summary of the logged note"}
           >
             <Sparkles size={14} /> AI summarize
@@ -243,7 +243,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             className="btn btn-sm btn-teal" 
             style={{ height: 34 }}
             onClick={extractTasks} 
-            disabled={!aiEnabled || (opp.activities?.length === 0)} 
+            disabled={!aiEnabled || (!logInput.trim() && (!aiOutput || aiOutput.type !== 'ai')) && (opp.activities?.length === 0)} 
             title={!aiEnabled ? "AI Service (Ollama) not configured" : "Identify and populate actionable items into the Kanban Board"}
           >
             <ClipboardList size={14} /> Extract tasks

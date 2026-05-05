@@ -25,6 +25,7 @@ interface NextStepRow {
 }
 
 interface ActivityRow {
+  id: number;
   activity_date: string;
   raw: string;
   summary: string | null;
@@ -56,6 +57,7 @@ function buildOpportunity(
       column: step.column_name,
     })),
     activities: activities.map((activity) => ({
+      id: activity.id,
       date: activity.activity_date,
       raw: activity.raw,
       summary: activity.summary ?? undefined,
@@ -81,7 +83,7 @@ function hydrateOpportunity(row: OpportunityRow): Opportunity {
 
   const activities = db
     .prepare(`
-      SELECT activity_date, raw, summary, ai, sf
+      SELECT id, activity_date, raw, summary, ai, sf
       FROM activities
       WHERE opportunity_id = ?
       ORDER BY id ASC
@@ -140,7 +142,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
 
     const activities = db
       .prepare(
-        `SELECT opportunity_id, activity_date, raw, summary, ai, sf
+        `SELECT opportunity_id, id, activity_date, raw, summary, ai, sf
          FROM activities
          WHERE opportunity_id IN (${ph})
          ORDER BY opportunity_id, id ASC`

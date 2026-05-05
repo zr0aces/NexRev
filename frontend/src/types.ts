@@ -27,6 +27,7 @@ export interface NextStep {
 }
 
 export interface Activity {
+  id?: number;
   date: string;
   raw: string;
   summary?: string;

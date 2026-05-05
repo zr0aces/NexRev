@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default function ActivityLogPanel({ opps }: Props) {
-  const all: Array<{ date: string; raw: string; summary?: string; ai: boolean; oppName: string; oppId: string; sf?: boolean }> = [];
+  const all: Array<{ id?: number; date: string; raw: string; summary?: string; ai: boolean; oppName: string; oppId: string; sf?: boolean }> = [];
   opps.forEach(o =>
     (o.activities ?? []).forEach(a => all.push({ ...a, oppName: o.name, oppId: o.id }))
   );
@@ -25,7 +25,7 @@ export default function ActivityLogPanel({ opps }: Props) {
         </div>
       ) : (
         all.map((a, i) => (
-          <div key={`${a.oppId}-${a.date}-${i}`} className="activity-item">
+          <div key={a.id || `${a.oppId}-${a.date}-${i}`} className="activity-item">
             <div className="activity-meta">
               <span className="activity-opp" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <MessageSquare size={12} /> {a.oppName}

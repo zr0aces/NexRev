@@ -230,7 +230,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No activities yet</div>
         ) : (
           activities.map((a, i) => (
-            <div key={`${a.date}-${i}`} className="activity-item">
+            <div key={a.id || `${a.date}-${i}`} className="activity-item">
               <div className="activity-meta">
                 {a.sf && <span className="badge badge-sf" title="Salesforce Source"><Cloud size={10} /> SF</span>}
                 {a.ai && !a.sf && <span className="badge badge-ai" title="AI Generated"><Sparkles size={10} /> AI</span>}

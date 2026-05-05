@@ -66,7 +66,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{
     Params: { id: string };
     Body: { raw: string; summary?: string; ai: boolean; sf?: boolean };
-  }>('/opportunities/:id/activities', async (req, reply) => {
+  }>('/opportunities/:id/activities', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req, reply) => {
     try {
       return await store.addActivity(req.params.id, req.body);
     } catch (e) {
@@ -77,6 +77,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Params: { id: string }; Body: { text: string; column?: KanbanColumn } }>(
     '/opportunities/:id/steps',
+    { config: { rateLimit: { max: 30, timeWindow: '1 minute' } } },
     async (req, reply) => {
       try {
         return await store.upsertStep(req.params.id, null, {

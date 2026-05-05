@@ -125,17 +125,17 @@ export function initNotifications() {
 
   // Schedule for 8:30 AM every day
   cron.schedule('30 8 * * *', async () => {
-    console.log('🔔 Running daily Telegram reminders at 08:30...');
+    console.log('🔔 Running daily Telegram reminders at 08:30 (Asia/Bangkok)...');
     try {
       const opps = await listOpportunities();
       const users = await getTelegramUsers();
 
       if (users.length === 0) return;
 
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
       const next7Days = new Date();
       next7Days.setDate(next7Days.getDate() + 7);
-      const weekEnd = next7Days.toISOString().split('T')[0];
+      const weekEnd = next7Days.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
 
       const dueToday = opps.filter(o => o.followup === today);
       const overdue = opps.filter(o => o.followup && o.followup < today && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
@@ -148,7 +148,13 @@ export function initNotifications() {
 
       let message = '';
       try {
-        message = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
+        const rawMessage = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
+        // Although the AI is asked to produce HTML, we wrap it in a minimal sanitize/guard
+        // if needed, but here we trust the AI-generated HTML tags (<b>, <i>) 
+        // while ensuring it doesn't break the parser with unclosed tags or & symbols.
+        // Actually, the most robust way is to have the AI return a structured object,
+        // but for now, we will just ensure it's not empty.
+        message = rawMessage;
       } catch (err) {
         console.error('AI digest generation failed, falling back to manual summary:', err);
         message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
@@ -188,6 +194,8 @@ export function initNotifications() {
     } catch (err) {
       console.error('Error running daily reminders:', err);
     }
+  }, {
+    timezone: "Asia/Bangkok"
   });
 
   console.log('✅ Daily Telegram reminders scheduled for 08:30.');

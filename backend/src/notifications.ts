@@ -2,8 +2,10 @@ import cron from 'node-cron';
 import { randomBytes } from 'crypto';
 import { listOpportunities } from './storage.js';
 import { getTelegramUsers } from './auth.js';
+import { AiService } from './ai-service.js';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const ai = new AiService();
 
 // Token-to-ChatID mapping for automatic linking
 const pendingLinks = new Map<string, string>();
@@ -131,34 +133,54 @@ export function initNotifications() {
       if (users.length === 0) return;
 
       const today = new Date().toISOString().split('T')[0];
+      const next7Days = new Date();
+      next7Days.setDate(next7Days.getDate() + 7);
+      const weekEnd = next7Days.toISOString().split('T')[0];
+
       const dueToday = opps.filter(o => o.followup === today);
       const overdue = opps.filter(o => o.followup && o.followup < today && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
+      const upcomingWeek = opps.filter(o => o.followup > today && o.followup <= weekEnd && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
 
-      if (dueToday.length === 0 && overdue.length === 0) {
+      if (dueToday.length === 0 && overdue.length === 0 && upcomingWeek.length === 0) {
         console.log('No reminders to send today.');
         return;
       }
 
-      let message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
-      
-      if (dueToday.length > 0) {
-        message += `<b>📅 Due Today:</b>\n`;
-        dueToday.forEach(o => {
-          message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
-          if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
-        });
-        message += `\n`;
+      let message = '';
+      try {
+        message = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
+      } catch (err) {
+        console.error('AI digest generation failed, falling back to manual summary:', err);
+        message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
+        
+        if (dueToday.length > 0) {
+          message += `<b>📅 Due Today:</b>\n`;
+          dueToday.forEach(o => {
+            message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
+            if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
+          });
+          message += `\n`;
+        }
+
+        if (overdue.length > 0) {
+          message += `<b>⚠️ Overdue:</b>\n`;
+          overdue.forEach(o => {
+            const days = Math.floor((new Date(today).getTime() - new Date(o.followup).getTime()) / (1000 * 60 * 60 * 24));
+            message += `• ${escapeHtml(o.name)} (${days}d overdue)\n`;
+          });
+          message += `\n`;
+        }
+
+        if (upcomingWeek.length > 0) {
+          message += `<b>⏭️ Upcoming this Week:</b>\n`;
+          upcomingWeek.forEach(o => {
+            message += `• ${escapeHtml(o.name)} (Due: ${escapeHtml(o.followup)})\n`;
+          });
+        }
       }
 
-      if (overdue.length > 0) {
-        message += `<b>⚠️ Overdue:</b>\n`;
-        overdue.forEach(o => {
-          const days = Math.floor((new Date(today).getTime() - new Date(o.followup).getTime()) / (1000 * 60 * 60 * 24));
-          message += `• ${escapeHtml(o.name)} (${days}d overdue)\n`;
-        });
-      }
-
-      message += `\n<a href="${process.env.APP_URL ?? 'http://localhost:8088'}">Open NexRev Dashboard</a>`;
+      const dashboardUrl = process.env.APP_URL ?? 'http://localhost:8088';
+      message += `\n\n<a href="${dashboardUrl}">Open NexRev Dashboard</a>`;
 
       for (const user of users) {
         await sendTelegramMessage(user.telegram_chat_id, message);

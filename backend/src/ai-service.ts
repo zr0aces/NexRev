@@ -119,4 +119,48 @@ If no tasks are found for a category, return an empty array. No other text.`;
       throw new Error('Failed to parse AI task extraction result: ' + (e as Error).message);
     }
   }
+
+  async generateDailyDigest(data: {
+    dueToday: Opportunity[];
+    overdue: Opportunity[];
+    upcomingWeek: Opportunity[];
+  }): Promise<string> {
+    const sections: string[] = [];
+
+    if (data.dueToday.length > 0) {
+      sections.push("DUE TODAY:\n" + data.dueToday.map(o => {
+        let text = `- ${o.name} (${o.stage})`;
+        if (o.nextStep) text += `\n  Next: ${o.nextStep}`;
+        const pending = o.nextSteps.filter(s => !s.done).map(s => s.text);
+        if (pending.length > 0) text += `\n  Tasks: ${pending.join(', ')}`;
+        return text;
+      }).join('\n'));
+    }
+
+    if (data.overdue.length > 0) {
+      sections.push("OVERDUE:\n" + data.overdue.map(o => `- ${o.name} (Due: ${o.followup})`).join('\n'));
+    }
+
+    if (data.upcomingWeek.length > 0) {
+      sections.push("UPCOMING THIS WEEK:\n" + data.upcomingWeek.map(o => `- ${o.name} (Due: ${o.followup})`).join('\n'));
+    }
+
+    if (sections.length === 0) return "No activities planned for today or this week. Have a great day!";
+
+    const context = sections.join('\n\n');
+    const prompt = `You are a sales operations assistant. Create a professional, encouraging daily digest for a sales team.
+The digest should be formatted in HTML for Telegram (using <b>, <i> tags).
+Include:
+1) A brief greeting (e.g. 🌅 NexRev Daily Digest).
+2) A clear summary of "Activities for Today" (including overdue items).
+3) An overview of "Planned for the Week".
+
+Keep it concise, actionable, and visually organized with emojis. Use <b> for headings.
+Use bullet points for items.
+
+Data:
+${context}`;
+
+    return chat(prompt, "Please generate the Telegram message.");
+  }
 }

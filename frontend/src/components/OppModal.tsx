@@ -188,7 +188,17 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
         <div className="form-row">
           <div className="form-group">
             <label>Deal value (USD)</label>
-            <input type="number" value={form.value} placeholder="50000" onChange={e => set('value', e.target.value)} />
+            <input 
+              type="text" 
+              value={form.value} 
+              placeholder="50000" 
+              onChange={e => {
+                const val = e.target.value.toLowerCase().replace('k', '000');
+                if (/^\d*$/.test(val)) {
+                  set('value', val);
+                }
+              }} 
+            />
           </div>
           <div className="form-group">
             <label>Stage</label>

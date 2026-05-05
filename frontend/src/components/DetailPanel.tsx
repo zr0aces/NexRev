@@ -25,10 +25,11 @@ interface Props {
   onEdit: () => void;
   onDeleted: () => void;
   onUpdate: (opp: Opportunity) => void;
+  aiEnabled: boolean;
 }
 
 
-export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props) {
+export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnabled }: Props) {
   const { addToast } = useToast();
   const [logInput,   setLogInput]   = useState('');
   const [aiOutput,   setAiOutput]   = useState<{ type: 'ai' | 'sf'; text: string } | null>(null);
@@ -206,8 +207,8 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           placeholder="Paste raw meeting notes, call summary, or any activity…"
           onChange={e => setLogInput(e.target.value)}
         />
-        <div className="log-actions" style={{ alignItems: 'center' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div className="log-actions" style={{ alignItems: 'flex-end' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
             <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--orange-text)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Follow-up</span>
             <input 
               type="date" 
@@ -221,20 +222,39 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
                 padding: '4px 8px',
                 borderRadius: '6px',
                 fontSize: '12px',
-                height: '32px'
+                height: '34px', /* Match button height */
+                width: '130px'
               }}
             />
           </div>
-          <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
+          <button className="btn btn-sm btn-primary" style={{ height: 34 }} onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
             <MessageSquare size={14} /> Log note
           </button>
-          <button className="btn btn-sm btn-ai" onClick={logWithAI} disabled={!logInput.trim()} title="Start here to generate a concise summary of the logged note">
+          <button 
+            className="btn btn-sm btn-ai" 
+            style={{ height: 34 }}
+            onClick={logWithAI} 
+            disabled={!aiEnabled || !logInput.trim() || (opp.activities?.length === 0)} 
+            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Start here to generate a concise summary of the logged note"}
+          >
             <Sparkles size={14} /> AI summarize
           </button>
-          <button className="btn btn-sm btn-teal" onClick={extractTasks} title="Identify and populate actionable items into the Kanban Board">
+          <button 
+            className="btn btn-sm btn-teal" 
+            style={{ height: 34 }}
+            onClick={extractTasks} 
+            disabled={!aiEnabled || (opp.activities?.length === 0)} 
+            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Identify and populate actionable items into the Kanban Board"}
+          >
             <ClipboardList size={14} /> Extract tasks
           </button>
-          <button className="btn btn-sm btn-blue" onClick={genSfNote} title="Synchronize notes with Salesforce (SFDC)">
+          <button 
+            className="btn btn-sm btn-blue" 
+            style={{ height: 34 }}
+            onClick={genSfNote} 
+            disabled={!aiEnabled || (opp.activities?.length === 0)} 
+            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Synchronize notes with Salesforce (SFDC)"}
+          >
             <Cloud size={14} /> SF update note
           </button>
         </div>

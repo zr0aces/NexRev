@@ -30,10 +30,14 @@ export default function App() {
   const [modalState, setModalState] = useState<ModalState>(null);
   const [loading, setLoading]   = useState(true);
   const [version, setVersion]   = useState('');
+  const [aiEnabled, setAiEnabled] = useState(false);
 
   useEffect(() => {
     setUnauthorizedHandler(() => setAuthenticated(false));
-    api.auth.getHealth().then(data => setVersion(data.version)).catch(() => {});
+    api.auth.getHealth().then(data => {
+      setVersion(data.version);
+      setAiEnabled(!!(data as any).aiEnabled);
+    }).catch(() => {});
   }, []);
 
   const reload = useCallback(async () => {
@@ -140,10 +144,11 @@ export default function App() {
             onEdit={(id) => setModalState(id)}
             onUpdate={updateOpp}
             onRemove={removeOpp}
+            aiEnabled={aiEnabled}
           />
         )}
         {tab === 'log' && <ActivityLogPanel opps={opps} />}
-        {tab === 'profile' && <ProfilePanel version={version} />}
+        {tab === 'profile' && <ProfilePanel version={version} aiEnabled={aiEnabled} />}
       </div>
       {modalState !== null && (
         <OppModal

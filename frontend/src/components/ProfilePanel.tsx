@@ -15,9 +15,10 @@ import { useToast } from '../context/ToastContext';
 
 interface Props {
   version: string;
+  aiEnabled: boolean;
 }
 
-export default function ProfilePanel({ version }: Props) {
+export default function ProfilePanel({ version, aiEnabled }: Props) {
   const { addToast } = useToast();
   const [username, setUsername] = useState('');
   const [telegramChatId, setTelegramChatId] = useState('');
@@ -227,6 +228,12 @@ export default function ProfilePanel({ version }: Props) {
       </div>
 
       <div className="profile-section" style={{ marginTop: 30, textAlign: 'center', background: 'transparent', border: 'none', padding: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-tertiary)' }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: aiEnabled ? '#4ade80' : '#f87171' }} />
+            AI Service: {aiEnabled ? 'Active' : 'Not Configured (Ollama)'}
+          </div>
+        </div>
         <p className="text-tertiary" style={{ fontSize: 12 }}>
           NexRev System &bull; Version {version || 'Loading...'}
         </p>

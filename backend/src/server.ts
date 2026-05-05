@@ -69,7 +69,11 @@ try {
   console.warn('Could not read VERSION file:', e);
 }
 
-server.get('/api/health', async () => ({ status: 'ok', version: appVersion }));
+server.get('/api/health', async () => ({ 
+  status: 'ok', 
+  version: appVersion,
+  aiEnabled: !!process.env.OLLAMA_BASE_URL
+}));
 
 const dbInit = await initDatabase();
 server.log.info(

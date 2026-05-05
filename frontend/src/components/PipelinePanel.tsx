@@ -13,9 +13,10 @@ interface Props {
   onEdit: (id: string) => void;
   onUpdate: (opp: Opportunity) => void;
   onRemove: (id: string) => void;
+  aiEnabled: boolean;
 }
 
-export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUpdate, onRemove }: Props) {
+export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUpdate, onRemove, aiEnabled }: Props) {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('name');
   const [stageFilter, setStageFilter] = useState('All');
@@ -118,6 +119,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                 onEdit={() => onEdit(selected.id)}
                 onDeleted={() => { onSelect(null); onRemove(selected.id); }}
                 onUpdate={onUpdate}
+                aiEnabled={aiEnabled}
               />
             </>
           ) : (

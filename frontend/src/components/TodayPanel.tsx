@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox } from 'lucide-react';
+import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard } from 'lucide-react';
 import type { Opportunity } from '../types';
 import MetricsRow from './MetricsRow';
 import Badge from './Badge';
@@ -44,7 +44,7 @@ function urgencyInfo(o: Opportunity): { label: React.ReactNode; icon: React.Reac
 
 export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
   const pending = opps
-    .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost' && (o.followup || o.nextStep))
+    .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost')
     .sort((a, b) => {
       const pa = urgencyInfo(a).priority;
       const pb = urgencyInfo(b).priority;
@@ -58,7 +58,7 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
 
       <div className="today-grid-wrapper">
         <div className="section-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Clock size={16} /> Pending actions &amp; follow-ups
+          <LayoutDashboard size={16} /> All Active Opportunities
         </div>
 
         {pending.length === 0 ? (

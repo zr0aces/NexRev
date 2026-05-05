@@ -36,7 +36,7 @@ export default function ActivityLogPanel({ opps }: Props) {
                 </span>
               )}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text)' }}>{a.summary ?? a.raw}</div>
+            <div style={{ fontSize: 13, color: 'var(--text)', whiteSpace: 'pre-wrap', marginTop: 4 }}>{a.summary ?? a.raw}</div>
             <div className="activity-date">{a.date}</div>
           </div>
         ))

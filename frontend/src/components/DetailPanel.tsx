@@ -189,18 +189,21 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           onChange={e => setLogInput(e.target.value)}
         />
         <div className="log-actions">
-          <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()}>
+          <button className="btn btn-sm btn-primary" onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
             <MessageSquare size={14} /> Log note
           </button>
-          <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()}>
+          <button className="btn btn-sm" onClick={logWithAI} disabled={!logInput.trim()} title="Start here to generate a concise summary of the logged note">
             <Sparkles size={14} /> AI summarize
           </button>
-          <button className="btn btn-sm" onClick={genSfNote}>
-            <Cloud size={14} /> SF update note
-          </button>
-          <button className="btn btn-sm" onClick={extractTasks}>
+          <button className="btn btn-sm" onClick={extractTasks} title="Identify and populate actionable items into the Kanban Board">
             <ClipboardList size={14} /> Extract tasks
           </button>
+          <button className="btn btn-sm" onClick={genSfNote} title="Synchronize notes with Salesforce (SFDC)">
+            <Cloud size={14} /> SF update note
+          </button>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>
+          Recommended: Start with <b>AI Summarize</b>, then <b>Extract Tasks</b>, and finally <b>SF Update</b>.
         </div>
         {aiLoading && (
           <div className="ai-box"><span className="spinner" />{aiLoading}</div>
@@ -229,9 +232,11 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate }: Props)
           activities.map((a, i) => (
             <div key={`${a.date}-${i}`} className="activity-item">
               <div className="activity-meta">
-                {a.sf && <span className="badge badge-sf" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Cloud size={10} /> SF</span>}
-                {a.ai && !a.sf && <span className="badge badge-ai" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}><Sparkles size={10} /> AI</span>}
-                <span style={{ fontSize: 12 }}>{a.summary ?? a.raw}</span>
+                {a.sf && <span className="badge badge-sf" title="Salesforce Source"><Cloud size={10} /> SF</span>}
+                {a.ai && !a.sf && <span className="badge badge-ai" title="AI Generated"><Sparkles size={10} /> AI</span>}
+              </div>
+              <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', marginTop: 4, color: 'var(--text)' }}>
+                {a.summary ?? a.raw}
               </div>
               {a.summary && !a.sf && a.raw !== a.summary && (
                 <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>

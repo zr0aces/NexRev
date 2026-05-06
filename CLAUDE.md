@@ -71,6 +71,9 @@ backend/src/
   scripts/
     manage-users.mjs        User management CLI (add/passwd/delete/list)
     db-backup-restore.mjs   SQLite database backup and restore utility
+  src/scripts/
+    send-daily-digest.ts    Manual trigger for daily Telegram digest
+    test-telegram.ts        Telegram connectivity and logic tester
 
 data/                       nexrev.sqlite3 database file (gitignored)
 docs/                       Project documentation (guide, architecture, API reference)

@@ -22,27 +22,40 @@ const baseUrl = () => (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434').
 const model   = () => process.env.OLLAMA_MODEL ?? 'llama3.2';
 
 async function chat(system: string, user: string): Promise<string> {
-  const res = await fetch(`${baseUrl()}/api/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: model(),
-      stream: false,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user',   content: user   },
-      ],
-    }),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => res.statusText);
-    throw new Error(`Ollama error ${res.status}: ${text}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+  try {
+    const res = await fetch(`${baseUrl()}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: model(),
+        stream: false,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user',   content: user   },
+        ],
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(`Ollama error ${res.status}: ${text}`);
+    }
+    const data = await res.json() as { message?: { content?: string }; error?: string };
+    if (data.error) throw new Error(`Ollama: ${data.error}`);
+    const content = data.message?.content;
+    if (!content) throw new Error('Empty response from Ollama');
+    return content;
+  } catch (err: any) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') {
+      throw new Error('Ollama request timed out after 30 seconds');
+    }
+    throw err;
   }
-  const data = await res.json() as { message?: { content?: string }; error?: string };
-  if (data.error) throw new Error(`Ollama: ${data.error}`);
-  const content = data.message?.content;
-  if (!content) throw new Error('Empty response from Ollama');
-  return content;
 }
 
 function formatKanban(opp: Opportunity): string {
@@ -161,6 +174,9 @@ Use bullet points for items.
 Data:
 ${context}`;
 
-    return chat(prompt, "Please generate the Telegram message.");
+    console.log('🤖 Requesting AI digest generation...');
+    const result = await chat(prompt, "Please generate the Telegram message.");
+    console.log('✨ AI digest generated successfully.');
+    return result;
   }
 }

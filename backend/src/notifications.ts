@@ -4,7 +4,7 @@ import { listOpportunities } from './storage.js';
 import { getTelegramUsers } from './auth.js';
 import { AiService } from './ai-service.js';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+
 const ai = new AiService();
 
 // Token-to-ChatID mapping for automatic linking
@@ -39,21 +39,38 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-async function sendTelegramMessage(chatId: string, text: string) {
-  if (!TELEGRAM_BOT_TOKEN) return;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  try {
-    const res = await fetch(url, {
+export async function sendTelegramMessage(chatId: string, text: string) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  const attempt = async (parseMode?: string) => {
+    return fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: chatId,
         text: text,
-        parse_mode: 'HTML'
+        parse_mode: parseMode
       })
     });
+  };
+
+  try {
+    let res = await attempt('HTML');
     if (!res.ok) {
-      console.error(`Failed to send Telegram message to ${chatId}: ${res.statusText}`);
+      const errorData = await res.text();
+      console.warn(`⚠️ Failed to send HTML message to ${chatId}: ${errorData}`);
+      
+      // Fallback: Send as plain text if HTML failed (likely due to broken tags or unescaped characters)
+      console.log(`🔄 Retrying as plain text for ${chatId}...`);
+      res = await attempt(undefined);
+      if (!res.ok) {
+        const fallbackError = await res.text();
+        console.error(`❌ Fallback also failed for ${chatId}: ${fallbackError}`);
+      } else {
+        console.log(`✅ Successfully sent fallback plain text message to ${chatId}.`);
+      }
     }
   } catch (err) {
     console.error(`Error sending Telegram message:`, err);
@@ -61,9 +78,10 @@ async function sendTelegramMessage(chatId: string, text: string) {
 }
 
 async function pollTelegramUpdates() {
-  if (!TELEGRAM_BOT_TOKEN || pollShutdownRequested) return;
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token || pollShutdownRequested) return;
   pollingActive = true;
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
+  const url = `https://api.telegram.org/bot${token}/getUpdates?offset=${lastUpdateId + 1}&timeout=30`;
   try {
     // AbortSignal timeout slightly exceeds the Telegram server-side 30s hold
     const res = await fetch(url, { signal: AbortSignal.timeout(35000) });
@@ -114,8 +132,79 @@ export function getChatIdByToken(token: string): string | null {
   return chatId || null;
 }
 
+export async function sendDailyReminders() {
+  console.log('🔔 Running daily Telegram reminders...');
+  try {
+    const opps = await listOpportunities();
+    const users = await getTelegramUsers();
+
+    if (users.length === 0) {
+      console.log('No users with linked Telegram found.');
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const next7Days = new Date();
+    next7Days.setDate(next7Days.getDate() + 7);
+    const weekEnd = next7Days.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+
+    const dueToday = opps.filter(o => o.followup === today);
+    const overdue = opps.filter(o => o.followup && o.followup < today && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
+    const upcomingWeek = opps.filter(o => o.followup > today && o.followup <= weekEnd && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
+
+    if (dueToday.length === 0 && overdue.length === 0 && upcomingWeek.length === 0) {
+      console.log('No reminders to send today.');
+      return;
+    }
+
+    let message = '';
+    try {
+      const rawMessage = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
+      message = rawMessage;
+    } catch (err) {
+      console.error('AI digest generation failed, falling back to manual summary:', err);
+      message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
+      
+      if (dueToday.length > 0) {
+        message += `<b>📅 Due Today:</b>\n`;
+        dueToday.forEach(o => {
+          message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
+          if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
+        });
+        message += `\n`;
+      }
+
+      if (overdue.length > 0) {
+        message += `<b>⚠️ Overdue:</b>\n`;
+        overdue.forEach(o => {
+          const days = Math.floor((new Date(today).getTime() - new Date(o.followup).getTime()) / (1000 * 60 * 60 * 24));
+          message += `• ${escapeHtml(o.name)} (${days}d overdue)\n`;
+        });
+        message += `\n`;
+      }
+
+      if (upcomingWeek.length > 0) {
+        message += `<b>⏭️ Upcoming this Week:</b>\n`;
+        upcomingWeek.forEach(o => {
+          message += `• ${escapeHtml(o.name)} (Due: ${escapeHtml(o.followup)})\n`;
+        });
+      }
+    }
+
+    const dashboardUrl = process.env.APP_URL ?? 'http://localhost:8088';
+    message += `\n\n<a href="${dashboardUrl}">Open NexRev Dashboard</a>`;
+
+    for (const user of users) {
+      await sendTelegramMessage(user.telegram_chat_id, message);
+      console.log(`✅ Sent digest to user ${user.username} (${user.telegram_chat_id})`);
+    }
+  } catch (err) {
+    console.error('Error running daily reminders:', err);
+  }
+}
+
 export function initNotifications() {
-  if (!TELEGRAM_BOT_TOKEN) {
+  if (!process.env.TELEGRAM_BOT_TOKEN) {
     console.warn('⚠️ TELEGRAM_BOT_TOKEN not set. Daily reminders will not be sent.');
     return;
   }
@@ -125,75 +214,7 @@ export function initNotifications() {
 
   // Schedule for 8:30 AM every day
   cron.schedule('30 8 * * *', async () => {
-    console.log('🔔 Running daily Telegram reminders at 08:30 (Asia/Bangkok)...');
-    try {
-      const opps = await listOpportunities();
-      const users = await getTelegramUsers();
-
-      if (users.length === 0) return;
-
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-      const next7Days = new Date();
-      next7Days.setDate(next7Days.getDate() + 7);
-      const weekEnd = next7Days.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
-
-      const dueToday = opps.filter(o => o.followup === today);
-      const overdue = opps.filter(o => o.followup && o.followup < today && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
-      const upcomingWeek = opps.filter(o => o.followup > today && o.followup <= weekEnd && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
-
-      if (dueToday.length === 0 && overdue.length === 0 && upcomingWeek.length === 0) {
-        console.log('No reminders to send today.');
-        return;
-      }
-
-      let message = '';
-      try {
-        const rawMessage = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
-        // Although the AI is asked to produce HTML, we wrap it in a minimal sanitize/guard
-        // if needed, but here we trust the AI-generated HTML tags (<b>, <i>) 
-        // while ensuring it doesn't break the parser with unclosed tags or & symbols.
-        // Actually, the most robust way is to have the AI return a structured object,
-        // but for now, we will just ensure it's not empty.
-        message = rawMessage;
-      } catch (err) {
-        console.error('AI digest generation failed, falling back to manual summary:', err);
-        message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
-        
-        if (dueToday.length > 0) {
-          message += `<b>📅 Due Today:</b>\n`;
-          dueToday.forEach(o => {
-            message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
-            if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
-          });
-          message += `\n`;
-        }
-
-        if (overdue.length > 0) {
-          message += `<b>⚠️ Overdue:</b>\n`;
-          overdue.forEach(o => {
-            const days = Math.floor((new Date(today).getTime() - new Date(o.followup).getTime()) / (1000 * 60 * 60 * 24));
-            message += `• ${escapeHtml(o.name)} (${days}d overdue)\n`;
-          });
-          message += `\n`;
-        }
-
-        if (upcomingWeek.length > 0) {
-          message += `<b>⏭️ Upcoming this Week:</b>\n`;
-          upcomingWeek.forEach(o => {
-            message += `• ${escapeHtml(o.name)} (Due: ${escapeHtml(o.followup)})\n`;
-          });
-        }
-      }
-
-      const dashboardUrl = process.env.APP_URL ?? 'http://localhost:8088';
-      message += `\n\n<a href="${dashboardUrl}">Open NexRev Dashboard</a>`;
-
-      for (const user of users) {
-        await sendTelegramMessage(user.telegram_chat_id, message);
-      }
-    } catch (err) {
-      console.error('Error running daily reminders:', err);
-    }
+    await sendDailyReminders();
   }, {
     timezone: "Asia/Bangkok"
   });

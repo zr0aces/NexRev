@@ -1,5 +1,7 @@
-import fs from 'fs/promises';
+import fs, { existsSync, readFileSync } from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -9,6 +11,27 @@ import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
 import { initNotifications, stopNotifications } from './notifications.js';
+
+// Simple .env loader to keep a single source of truth for Telegram/AI tokens
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  try {
+    const rootEnvPath = path.join(process.cwd(), '..', '.env');
+    if (fs.existsSync(rootEnvPath)) {
+      const envContent = fs.readFileSync(rootEnvPath, 'utf8');
+      envContent.split('\n').forEach(line => {
+        const [key, ...valueParts] = line.split('=');
+        if (key && valueParts.length > 0) {
+          const k = key.trim();
+          if (!process.env[k]) {
+            process.env[k] = valueParts.join('=').trim();
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.warn('Could not auto-load .env fallback:', err);
+  }
+}
 
 const server = Fastify({
   logger: { level: process.env.NODE_ENV === 'production' ? 'warn' : 'info' },
@@ -59,7 +82,7 @@ try {
   
   for (const p of possiblePaths) {
     try {
-      appVersion = (await fs.readFile(p, 'utf8')).trim();
+      appVersion = (await fsPromises.readFile(p, 'utf8')).trim();
       break;
     } catch {
       continue;

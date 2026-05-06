@@ -21,6 +21,7 @@ NexRev is designed for individual account executives and sales professionals who
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
 | **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for private, on-device intelligence. |
+| **Manual Digest** | **[NEW]** Trigger the daily Telegram digest manually via CLI in production. |
 
 ---
 
@@ -100,6 +101,12 @@ Access the application at **http://localhost:8088**.
 NexRev uses a SQLite-first storage approach.
 - **Primary backup**: copy `data/nexrev.sqlite3`.
 - **Portability**: copy the `data/` folder to a new machine.
+
+## 🔔 Manual Telegram Digest
+If you need to manually trigger the daily digest for all linked Telegram users (e.g., for testing or if the cron failed), run:
+```bash
+docker compose exec backend node dist/scripts/send-daily-digest.js
+```
 
 ## 🔢 Version Management & Releases
 NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.4.1`):

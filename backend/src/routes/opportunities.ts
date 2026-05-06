@@ -25,7 +25,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: Omit<Opportunity, 'id' | 'createdAt' | 'updatedAt' | 'activities' | 'nextSteps'> }>(
     '/opportunities',
     async (req, reply) => {
-      const opp = await store.create(req.body);
+      const opp = await store.create(req.body, req.user?.username);
       return reply.code(201).send(opp);
     }
   );
@@ -34,7 +34,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
     '/opportunities/:id',
     async (req, reply) => {
       try {
-        return await store.patch(req.params.id, req.body);
+        return await store.patch(req.params.id, req.body, req.user?.username);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;
@@ -68,7 +68,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
     Body: { raw: string; summary?: string; ai: boolean; sf?: boolean };
   }>('/opportunities/:id/activities', { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } }, async (req, reply) => {
     try {
-      return await store.addActivity(req.params.id, req.body);
+      return await store.addActivity(req.params.id, req.body, req.user?.username);
     } catch (e) {
       if (e instanceof NotFoundError) return notFound(reply);
       throw e;
@@ -83,7 +83,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
         return await store.upsertStep(req.params.id, null, {
           text: req.body.text,
           column: req.body.column,
-        });
+        }, req.user?.username);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;
@@ -100,7 +100,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
       const index = parseInt(req.params.index, 10);
       if (isNaN(index)) return notFound(reply);
       try {
-        return await store.upsertStep(req.params.id, index, req.body);
+        return await store.upsertStep(req.params.id, index, req.body, req.user?.username);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;
@@ -114,7 +114,7 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
       const index = parseInt(req.params.index, 10);
       if (isNaN(index)) return notFound(reply);
       try {
-        return await store.removeStep(req.params.id, index);
+        return await store.removeStep(req.params.id, index, req.user?.username);
       } catch (e) {
         if (e instanceof NotFoundError) return notFound(reply);
         throw e;

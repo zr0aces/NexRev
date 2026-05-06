@@ -64,6 +64,7 @@ export const api = {
       }),
     getTelegramLinkToken: () => request<{ token: string; botName: string }>('/auth/telegram/link-token'),
     pollTelegramLink: (token: string) => request<{ chatId: string | null }>(`/auth/telegram/poll-link?token=${token}`),
+    listUsers: () => request<{ username: string }[]>('/auth/users'),
   },
   opportunities: {
     list: () => request<Opportunity[]>('/opportunities'),

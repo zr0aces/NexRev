@@ -148,7 +148,8 @@ function createSchema(db: Database.Database): void {
       next_step TEXT NOT NULL DEFAULT '',
       notes TEXT NOT NULL DEFAULT '',
       created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      updated_by TEXT
     );
 
     CREATE TABLE IF NOT EXISTS next_steps (
@@ -203,6 +204,15 @@ function createSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_activities_created_at
       ON activities(created_at);
   `);
+
+  // Migration: Add updated_by column if it doesn't exist
+  const tableInfo = db.prepare("PRAGMA table_info(opportunities)").all() as any[];
+  const hasUpdatedBy = tableInfo.some(col => col.name === 'updated_by');
+  if (!hasUpdatedBy) {
+    db.exec("ALTER TABLE opportunities ADD COLUMN updated_by TEXT;");
+    // Set existing records to 'admin' as a reasonable default for legacy data
+    db.exec("UPDATE opportunities SET updated_by = 'admin' WHERE updated_by IS NULL;");
+  }
 }
 
 function setSchemaVersion(db: Database.Database, version: number): void {
@@ -226,10 +236,10 @@ function insertOpportunityFromLegacy(db: Database.Database, opp: Opportunity): b
   const insertOpp = db.prepare(`
     INSERT INTO opportunities (
       id, name, contact, contact_email, contact_mobile, contact_title,
-      value, stage, close_date, followup_date, next_step, notes, created_at, updated_at
+      value, stage, close_date, followup_date, next_step, notes, created_at, updated_at, updated_by
     ) VALUES (
       @id, @name, @contact, @contactEmail, @contactMobile, @contactTitle,
-      @value, @stage, @close, @followup, @nextStep, @notes, @createdAt, @updatedAt
+      @value, @stage, @close, @followup, @nextStep, @notes, @createdAt, @updatedAt, @updatedBy
     )
     ON CONFLICT(id) DO NOTHING
   `);

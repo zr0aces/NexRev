@@ -49,6 +49,12 @@ await server.register(rateLimit, {
   errorResponseBuilder: () => ({ error: 'Too many requests. Please try again later.' }),
 });
 
+declare module 'fastify' {
+  interface FastifyRequest {
+    user?: { username: string };
+  }
+}
+
 server.addHook('onRequest', async (request, reply) => {
   const url = request.raw.url ?? '';
   if (
@@ -62,7 +68,8 @@ server.addHook('onRequest', async (request, reply) => {
     return reply.code(401).send({ error: 'Unauthorized' });
   }
   try {
-    verifyToken(auth.slice(7));
+    const payload = verifyToken(auth.slice(7));
+    request.user = payload;
   } catch {
     return reply.code(401).send({ error: 'Invalid or expired token' });
   }

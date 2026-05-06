@@ -126,3 +126,8 @@ export async function updatePassword(username: string, newPassword: string): Pro
     username
   );
 }
+
+export async function listUsers(): Promise<{ username: string }[]> {
+  const db = getDb();
+  return db.prepare('SELECT username FROM users ORDER BY username ASC').all() as { username: string }[];
+}

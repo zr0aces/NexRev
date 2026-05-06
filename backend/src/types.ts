@@ -42,4 +42,5 @@ export interface Opportunity {
   activities: Activity[];
   createdAt: string;
   updatedAt: string;
+  updatedBy?: string;
 }

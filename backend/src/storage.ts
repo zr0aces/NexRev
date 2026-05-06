@@ -16,6 +16,7 @@ interface OpportunityRow {
   notes: string;
   created_at: string;
   updated_at: string;
+  updated_by: string | null;
 }
 
 interface NextStepRow {
@@ -66,6 +67,7 @@ function buildOpportunity(
     })),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    updatedBy: row.updated_by ?? undefined,
   };
 }
 
@@ -110,7 +112,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
       SELECT
         id, name, contact, contact_email, contact_mobile, contact_title,
         value, stage, close_date, followup_date, next_step, notes,
-        created_at, updated_at
+        created_at, updated_at, updated_by
       FROM opportunities
       ORDER BY name COLLATE NOCASE ASC
     `)
@@ -177,7 +179,7 @@ export async function readOpportunity(id: string): Promise<Opportunity> {
       SELECT
         id, name, contact, contact_email, contact_mobile, contact_title,
         value, stage, close_date, followup_date, next_step, notes,
-        created_at, updated_at
+        created_at, updated_at, updated_by
       FROM opportunities
       WHERE id = ?
     `)
@@ -196,11 +198,11 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
     INSERT INTO opportunities (
       id, name, contact, contact_email, contact_mobile, contact_title,
       value, stage, close_date, followup_date, next_step, notes,
-      created_at, updated_at
+      created_at, updated_at, updated_by
     ) VALUES (
       @id, @name, @contact, @contactEmail, @contactMobile, @contactTitle,
       @value, @stage, @close, @followup, @nextStep, @notes,
-      @createdAt, @updatedAt
+      @createdAt, @updatedAt, @updatedBy
     )
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
@@ -214,7 +216,8 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
       followup_date = excluded.followup_date,
       next_step = excluded.next_step,
       notes = excluded.notes,
-      updated_at = excluded.updated_at
+      updated_at = excluded.updated_at,
+      updated_by = excluded.updated_by
   `);
 
   const deleteSteps = db.prepare('DELETE FROM next_steps WHERE opportunity_id = ?');

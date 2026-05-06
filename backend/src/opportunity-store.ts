@@ -65,7 +65,8 @@ export class OpportunityStore {
   }
 
   async create(
-    draft: Omit<Opportunity, 'id' | 'activities' | 'nextSteps' | 'createdAt' | 'updatedAt'>
+    draft: Omit<Opportunity, 'id' | 'activities' | 'nextSteps' | 'createdAt' | 'updatedAt' | 'updatedBy'>,
+    updatedBy?: string
   ): Promise<Opportunity> {
     const now = new Date().toISOString();
     const opp: Opportunity = {
@@ -75,21 +76,22 @@ export class OpportunityStore {
       nextSteps: [],
       createdAt: now,
       updatedAt: now,
+      updatedBy,
     };
     await storage.writeOpportunity(opp);
     return opp;
   }
 
-  async patch(id: string, fields: Partial<Opportunity>): Promise<Opportunity> {
+  async patch(id: string, fields: Partial<Opportunity>, updatedBy?: string): Promise<Opportunity> {
     const existing = await read(id);
     // Strip fields that must not be overwritten via patch
     const { id: _id, activities: _activities, nextSteps: _nextSteps, createdAt: _createdAt, updatedAt: _updatedAt, ...safe } = fields;
-    const updated: Opportunity = { ...existing, ...safe, id: existing.id };
+    const updated: Opportunity = { ...existing, ...safe, id: existing.id, updatedBy };
     await storage.writeOpportunity(updated);
     return read(id);
   }
 
-  async addActivity(id: string, input: ActivityInput): Promise<Opportunity> {
+  async addActivity(id: string, input: ActivityInput, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     const activity: Activity = {
       date: today(),
@@ -99,11 +101,12 @@ export class OpportunityStore {
       sf: input.sf,
     };
     opp.activities.push(activity);
+    opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
     return read(id);
   }
 
-  async upsertStep(id: string, index: number | null, patch: StepPatch): Promise<Opportunity> {
+  async upsertStep(id: string, index: number | null, patch: StepPatch, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     if (index === null) {
       const col: KanbanColumn = patch.column ?? 'todo';
@@ -112,14 +115,16 @@ export class OpportunityStore {
       if (index < 0 || index >= opp.nextSteps.length) throw new NotFoundError(`step:${index}`);
       opp.nextSteps[index] = syncStep(opp.nextSteps[index], patch);
     }
+    opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
     return read(id);
   }
 
-  async removeStep(id: string, index: number): Promise<Opportunity> {
+  async removeStep(id: string, index: number, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     if (index < 0 || index >= opp.nextSteps.length) throw new NotFoundError(`step:${index}`);
     opp.nextSteps.splice(index, 1);
+    opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
     return read(id);
   }

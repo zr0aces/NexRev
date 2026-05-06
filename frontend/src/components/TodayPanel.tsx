@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
-import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard, Search, User } from 'lucide-react';
 import type { Opportunity } from '../types';
 import MetricsRow from './MetricsRow';
 import Badge from './Badge';
 import { todayStr, fmtDate, daysUntil } from '../utils';
+import { api } from '../api';
 
 interface Props {
   opps: Opportunity[];
+  username: string;
   onSelect: (id: string) => void;
   onEdit: (id: string) => void;
 }
@@ -42,11 +44,26 @@ function urgencyInfo(o: Opportunity): { label: React.ReactNode; icon: React.Reac
   return { label: null, icon: null, dotColor: 'var(--text-tertiary)', priority: 4 };
 }
 
-export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
+export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) {
   const [search, setSearch] = useState('');
+  const [userFilter, setUserFilter] = useState('all');
+  const [sortMode, setSortMode] = useState<'urgency' | 'updated'>('urgency');
+  const [users, setUsers] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.auth.listUsers().then(data => {
+      setUsers(data.map(u => u.username));
+    }).catch(err => {
+      console.error('Failed to fetch users:', err);
+    });
+  }, []);
 
   let pending = opps
     .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
+
+  if (userFilter !== 'all') {
+    pending = pending.filter(o => o.updatedBy === userFilter);
+  }
 
   if (search) {
     const q = search.toLowerCase();
@@ -58,6 +75,9 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
   }
 
   pending.sort((a, b) => {
+    if (sortMode === 'updated') {
+      return (b.updatedAt || '').localeCompare(a.updatedAt || '');
+    }
     const pa = urgencyInfo(a).priority;
     const pb = urgencyInfo(b).priority;
     if (pa !== pb) return pa - pb;
@@ -87,8 +107,8 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
           </div>
         </div>
 
-        <div className="pipeline-toolbar" style={{ marginBottom: 16 }}>
-          <div style={{ position: 'relative', flex: 1 }}>
+        <div className="pipeline-toolbar" style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: '1 1 300px' }}>
             <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
             <input
               className="search-bar"
@@ -98,6 +118,30 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
               onChange={e => setSearch(e.target.value)}
               style={{ paddingLeft: 38, width: '100%' }}
             />
+          </div>
+
+          <div style={{ display: 'flex', gap: 8 }}>
+            <select 
+              className="search-bar" 
+              style={{ width: 'auto', padding: '0 12px', fontSize: '13px' }}
+              value={userFilter}
+              onChange={e => setUserFilter(e.target.value)}
+            >
+              <option value="all">All Users</option>
+              {users.map(u => (
+                <option key={u} value={u}>{u === username ? 'Me' : u}</option>
+              ))}
+            </select>
+
+            <select 
+              className="search-bar" 
+              style={{ width: 'auto', padding: '0 12px', fontSize: '13px' }}
+              value={sortMode}
+              onChange={e => setSortMode(e.target.value as any)}
+            >
+              <option value="urgency">Sort: Urgency</option>
+              <option value="updated">Sort: Last Updated</option>
+            </select>
           </div>
         </div>
 
@@ -110,6 +154,8 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
           <div className="today-grid">
             {pending.map(o => {
               const { label, icon, dotColor } = urgencyInfo(o);
+              const lastUpdateStr = o.updatedAt ? new Date(o.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+              
               return (
                 <div
                   key={o.id}
@@ -123,11 +169,18 @@ export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
                   <div className="today-card-body">
                     <div className="today-card-name">{o.name}</div>
                     {o.contact && <div className="today-card-contact">{o.contact}</div>}
-                    {label && (
-                      <div className="today-card-urgency" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {icon} {label}
-                      </div>
-                    )}
+                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                      {label && (
+                        <div className="today-card-urgency" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                          {icon} {label}
+                        </div>
+                      )}
+                      {o.updatedBy && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <User size={12} /> {o.updatedBy === username ? 'Me' : o.updatedBy} • {lastUpdateStr}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {o.nextStep && (
                     <div className="today-card-footer">

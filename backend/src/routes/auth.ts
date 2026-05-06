@@ -5,7 +5,8 @@ import {
   verifyToken,
   setTelegramChatId, 
   getUser, 
-  updatePassword 
+  updatePassword,
+  listUsers
 } from '../auth.js';
 import { createLinkToken, getChatIdByToken } from '../notifications.js';
 
@@ -64,6 +65,16 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       telegram_chat_id: user.telegram_chat_id ?? null 
     };
   });
+
+  fastify.get(
+    '/auth/users',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const username = await requireAuth(req, reply);
+      if (!username) return;
+      return await listUsers();
+    }
+  );
 
   fastify.post<{ Body: { password: string } }>(
     '/auth/password',

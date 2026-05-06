@@ -129,6 +129,7 @@ export default function App() {
         {tab === 'today' && (
           <TodayPanel
             opps={opps}
+            username={username}
             onSelect={(id) => {
               setTab('pipeline');
               setSelectedId(id);

@@ -28,7 +28,13 @@ export const RP_NAME = process.env.WEBAUTHN_RP_NAME ?? 'NexRev';
  * Supports comma-separated values, e.g. "https://app.example.com,https://www.example.com".
  */
 function getExpectedOrigin(): string | string[] {
-  const raw = process.env.WEBAUTHN_ORIGIN ?? `http://localhost:5173`;
+  const raw = process.env.WEBAUTHN_ORIGIN;
+  if (!raw) {
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('⚠️  WEBAUTHN_ORIGIN env var not set — passkey authentication will fail in production. Set it to your app origin (e.g. https://app.example.com).');
+    }
+    return 'http://localhost:5173';
+  }
   const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
   return parts.length === 1 ? parts[0] : parts;
 }
@@ -301,10 +307,8 @@ export function renamePasskey(username: string, passkeyId: string, name: string)
   if (!userId) return false;
 
   const db = getDb();
-  const now = new Date().toISOString();
   const result = db
-    .prepare('UPDATE passkeys SET name = ?, created_at = created_at WHERE id = ? AND user_id = ?')
+    .prepare('UPDATE passkeys SET name = ? WHERE id = ? AND user_id = ?')
     .run(name, passkeyId, userId);
-  void now; // used for clarity; created_at is unchanged here intentionally
   return result.changes > 0;
 }

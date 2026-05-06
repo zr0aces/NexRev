@@ -157,7 +157,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       const options = await api.auth.passkey.getRegisterOptions();
       const regResponse = await startRegistration({ optionsJSON: options as any });
       const passkey = await api.auth.passkey.register(regResponse, newPasskeyName || 'Passkey');
-      setPasskeys(prev => [...prev, { ...passkey, lastUsedAt: null, deviceType: 'singleDevice', backedUp: false }]);
+      setPasskeys(prev => [...prev, passkey]);
       setNewPasskeyName('');
       addToast('Passkey registered successfully!', 'success');
     } catch (err) {

@@ -79,7 +79,7 @@ export const api = {
       getRegisterOptions: () =>
         request<Record<string, unknown>>('/auth/passkey/register-options', { method: 'POST' }),
       register: (response: unknown, name?: string) =>
-        request<{ id: string; name: string; createdAt: string }>('/auth/passkey/register', {
+        request<{ id: string; name: string; createdAt: string; lastUsedAt: string | null; deviceType: string; backedUp: boolean }>('/auth/passkey/register', {
           method: 'POST',
           body: JSON.stringify({ response, name }),
         }),

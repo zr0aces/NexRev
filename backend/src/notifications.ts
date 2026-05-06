@@ -39,41 +39,59 @@ function escapeHtml(text: string): string {
     .replace(/'/g, '&#x27;');
 }
 
-export async function sendTelegramMessage(chatId: string, text: string) {
+export async function sendTelegramMessage(chatId: string, text: string, retryCount = 2) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
   const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
   const attempt = async (parseMode?: string) => {
-    return fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-        parse_mode: parseMode
-      })
-    });
+    // 15s timeout for message sending
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), 15000);
+    
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: text,
+          parse_mode: parseMode
+        }),
+        signal: controller.signal
+      });
+      return res;
+    } finally {
+      clearTimeout(id);
+    }
   };
 
-  try {
-    let res = await attempt('HTML');
-    if (!res.ok) {
-      const errorData = await res.text();
-      console.warn(`⚠️ Failed to send HTML message to ${chatId}: ${errorData}`);
+  for (let i = 0; i <= retryCount; i++) {
+    try {
+      let res = await attempt('HTML');
       
-      // Fallback: Send as plain text if HTML failed (likely due to broken tags or unescaped characters)
-      console.log(`🔄 Retrying as plain text for ${chatId}...`);
-      res = await attempt(undefined);
-      if (!res.ok) {
-        const fallbackError = await res.text();
-        console.error(`❌ Fallback also failed for ${chatId}: ${fallbackError}`);
-      } else {
-        console.log(`✅ Successfully sent fallback plain text message to ${chatId}.`);
+      if (res.ok) return; // Success
+
+      const errorData = await res.text();
+      console.warn(`⚠️ Telegram API error (Attempt ${i+1}) for ${chatId}: ${errorData}`);
+
+      // If it's a "Bad Request: can't parse entities", retry once without HTML
+      if (errorData.includes('can\'t parse entities') || errorData.includes('bad_request')) {
+        console.log(`🔄 Retrying without HTML formatting for ${chatId}...`);
+        const fallbackRes = await attempt(undefined);
+        if (fallbackRes.ok) return;
       }
+      
+    } catch (err: any) {
+      const isTimeout = err.name === 'AbortError' || err.code === 'ETIMEDOUT';
+      console.error(`❌ Connection error (Attempt ${i+1}/${retryCount+1}) for ${chatId}:`, isTimeout ? 'Timeout' : err.message);
+      
+      if (i === retryCount) throw err; // Final attempt failed
+      
+      // Exponential backoff
+      const delay = Math.pow(2, i) * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-  } catch (err) {
-    console.error(`Error sending Telegram message:`, err);
   }
 }
 
@@ -195,8 +213,12 @@ export async function sendDailyReminders() {
     message += `\n\n<a href="${dashboardUrl}">Open NexRev Dashboard</a>`;
 
     for (const user of users) {
-      await sendTelegramMessage(user.telegram_chat_id, message);
-      console.log(`✅ Sent digest to user ${user.username} (${user.telegram_chat_id})`);
+      try {
+        await sendTelegramMessage(user.telegram_chat_id, message);
+        console.log(`✅ Sent digest to user ${user.username} (${user.telegram_chat_id})`);
+      } catch (err) {
+        console.error(`❌ Failed to send digest to ${user.username} after all retries:`, err);
+      }
     }
   } catch (err) {
     console.error('Error running daily reminders:', err);

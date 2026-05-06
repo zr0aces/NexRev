@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard, Search } from 'lucide-react';
 import type { Opportunity } from '../types';
 import MetricsRow from './MetricsRow';
 import Badge from './Badge';
@@ -43,28 +43,68 @@ function urgencyInfo(o: Opportunity): { label: React.ReactNode; icon: React.Reac
 }
 
 export default function TodayPanel({ opps, onSelect, onEdit }: Props) {
-  const pending = opps
-    .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost')
-    .sort((a, b) => {
-      const pa = urgencyInfo(a).priority;
-      const pb = urgencyInfo(b).priority;
-      if (pa !== pb) return pa - pb;
-      return (a.followup ?? '').localeCompare(b.followup ?? '');
-    });
+  const [search, setSearch] = useState('');
+
+  let pending = opps
+    .filter(o => o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
+
+  if (search) {
+    const q = search.toLowerCase();
+    pending = pending.filter(o =>
+      o.name.toLowerCase().includes(q) ||
+      (o.contact ?? '').toLowerCase().includes(q) ||
+      (o.notes ?? '').toLowerCase().includes(q)
+    );
+  }
+
+  pending.sort((a, b) => {
+    const pa = urgencyInfo(a).priority;
+    const pb = urgencyInfo(b).priority;
+    if (pa !== pb) return pa - pb;
+    return (a.followup ?? '').localeCompare(b.followup ?? '');
+  });
 
   return (
     <div>
       <MetricsRow opps={opps} />
 
       <div className="today-grid-wrapper">
-        <div className="section-label" style={{ marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <LayoutDashboard size={16} /> All Active Opportunities
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
+          <div className="section-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <LayoutDashboard size={16} /> All Active Opportunities
+          </div>
+          
+          <div className="today-legend" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)' }} /> Overdue
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--amber-mid)' }} /> Due Soon
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-tertiary)' }} /> Later
+            </div>
+          </div>
+        </div>
+
+        <div className="pipeline-toolbar" style={{ marginBottom: 16 }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
+            <input
+              className="search-bar"
+              type="text"
+              placeholder="Search accounts or contacts..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ paddingLeft: 38, width: '100%' }}
+            />
+          </div>
         </div>
 
         {pending.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon"><Inbox size={48} /></div>
-            <div>No pending actions. Add opportunities to get started.</div>
+            <div>{search ? 'No opportunities match your search' : 'No pending actions. Add opportunities to get started.'}</div>
           </div>
         ) : (
           <div className="today-grid">

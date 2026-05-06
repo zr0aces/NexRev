@@ -23,7 +23,7 @@ const model   = () => process.env.OLLAMA_MODEL ?? 'llama3.2';
 
 async function chat(system: string, user: string): Promise<string> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+  const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout (better for local CPU-based LLMs)
 
   try {
     const res = await fetch(`${baseUrl()}/api/chat`, {
@@ -52,7 +52,7 @@ async function chat(system: string, user: string): Promise<string> {
   } catch (err: any) {
     clearTimeout(timeout);
     if (err.name === 'AbortError') {
-      throw new Error('Ollama request timed out after 30 seconds');
+      throw new Error('Ollama request timed out after 90 seconds');
     }
     throw err;
   }

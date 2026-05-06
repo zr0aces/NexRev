@@ -19,13 +19,18 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
     if (fs.existsSync(rootEnvPath)) {
       const envContent = fs.readFileSync(rootEnvPath, 'utf8');
       envContent.split('\n').forEach(line => {
-        const [key, ...valueParts] = line.split('=');
-        if (key && valueParts.length > 0) {
-          const k = key.trim();
-          if (!process.env[k]) {
-            process.env[k] = valueParts.join('=').trim();
-          }
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx < 1) return;
+        const k = trimmed.slice(0, eqIdx).trim();
+        if (!k || process.env[k]) return;
+        let v = trimmed.slice(eqIdx + 1).trim();
+        // Strip surrounding single or double quotes
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+          v = v.slice(1, -1);
         }
+        process.env[k] = v;
       });
     }
   } catch (err) {

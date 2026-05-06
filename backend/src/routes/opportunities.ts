@@ -25,7 +25,11 @@ export const opportunityRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: Omit<Opportunity, 'id' | 'createdAt' | 'updatedAt' | 'activities' | 'nextSteps'> }>(
     '/opportunities',
     async (req, reply) => {
-      const opp = await store.create(req.body, req.user?.username);
+      const body = req.body ?? ({} as Partial<Opportunity>);
+      if (!body.name || typeof body.name !== 'string' || !body.name.trim()) {
+        return reply.code(400).send({ error: 'name is required' });
+      }
+      const opp = await store.create(body, req.user?.username);
       return reply.code(201).send(opp);
     }
   );

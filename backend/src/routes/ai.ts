@@ -21,9 +21,12 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: { raw: string; id: string } }>(
     '/ai/summarize',
     async (req, reply) => {
+      const { raw, id } = req.body ?? ({} as { raw?: string; id?: string });
+      if (!id) return reply.code(400).send({ error: 'id is required' });
+      if (!raw) return reply.code(400).send({ error: 'raw is required' });
       try {
-        const opp = await storage.readOpportunity(req.body.id);
-        const summary = await service.summarize(req.body.raw, opp);
+        const opp = await storage.readOpportunity(id);
+        const summary = await service.summarize(raw, opp);
         return { summary };
       } catch (e) {
         if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
@@ -36,9 +39,11 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/sf-note',
     async (req, reply) => {
+      const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
+      if (!id) return reply.code(400).send({ error: 'id is required' });
       try {
-        const opp = await storage.readOpportunity(req.body.id);
-        const note = await service.buildSfNote(opp, req.body.context);
+        const opp = await storage.readOpportunity(id);
+        const note = await service.buildSfNote(opp, context);
         return { note };
       } catch (e) {
         if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
@@ -51,9 +56,11 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/extract-tasks',
     async (req, reply) => {
+      const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
+      if (!id) return reply.code(400).send({ error: 'id is required' });
       try {
-        const opp = await storage.readOpportunity(req.body.id);
-        const tasks = await service.extractTasks(opp, req.body.context);
+        const opp = await storage.readOpportunity(id);
+        const tasks = await service.extractTasks(opp, context);
         const existing = new Set(opp.nextSteps.map(s => s.text));
         tasks.todo.filter(t => !existing.has(t)).forEach(t =>
           opp.nextSteps.push({ text: t, done: false, column: 'todo' }));

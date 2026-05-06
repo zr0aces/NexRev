@@ -139,5 +139,12 @@ NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.
 Run backend integration tests:
 ```bash
 cd backend
+npm install
 npm test
 ```
+
+## 🔒 Security Notes
+
+- **JWT_SECRET**: Must be set to a long random string in production via `.env`. The server logs a warning at startup if this is missing.
+- **Default credentials**: On first run, a default `admin/admin` account is created. Change the password immediately via the Profile tab or `node backend/scripts/manage-users.mjs passwd admin <newpassword>`. The default account is automatically removed once any other user account is defined.
+- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints at 503 if Ollama is unreachable.

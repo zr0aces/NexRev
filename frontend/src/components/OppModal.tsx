@@ -79,7 +79,7 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
       addToast('Contact email is required', 'error'); 
       return; 
     }
-    if (form.contactEmail.trim() && !isValidEmail(form.contactEmail.trim())) { 
+    if (!isValidEmail(form.contactEmail.trim())) { 
       addToast('Please enter a valid email address', 'error'); 
       return; 
     }

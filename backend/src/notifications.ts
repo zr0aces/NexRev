@@ -112,12 +112,12 @@ async function pollTelegramUpdates() {
       const msg = update.message;
       if (!msg || !msg.text) continue;
 
-      // Handle /start TOKEN
+      // Handle /start LINK_TOKEN
       if (msg.text.startsWith('/start ')) {
-        const token = msg.text.split(' ')[1];
-        if (token && pendingLinks.has(token)) {
-          console.log(`🔗 Linked Telegram Chat ID ${msg.chat.id} to token ${token}`);
-          pendingLinks.set(token, String(msg.chat.id));
+        const linkToken = msg.text.split(' ')[1];
+        if (linkToken && pendingLinks.has(linkToken)) {
+          console.log(`🔗 Linked Telegram Chat ID ${msg.chat.id} to token ${linkToken}`);
+          pendingLinks.set(linkToken, String(msg.chat.id));
           await sendTelegramMessage(String(msg.chat.id), '✅ <b>Success!</b> Your Telegram account has been linked to NexRev.');
         }
       }

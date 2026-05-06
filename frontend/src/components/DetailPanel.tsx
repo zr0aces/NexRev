@@ -39,8 +39,8 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
   const logRaw = async () => {
     const raw = logInput.trim();
     if (!raw) return;
-    if (nextFollowup === opp.followup) {
-      addToast('Please update the Next Follow-up Date before logging this activity.', 'error');
+    if (!nextFollowup) {
+      addToast('Please set a Next Follow-up Date before logging this activity.', 'error');
       return;
     }
     try {
@@ -61,8 +61,8 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
   const logWithAI = async () => {
     const raw = logInput.trim();
     if (!raw) return;
-    if (nextFollowup === opp.followup) {
-      addToast('Please update the Next Follow-up Date before generating AI summary.', 'error');
+    if (!nextFollowup) {
+      addToast('Please set a Next Follow-up Date before generating AI summary.', 'error');
       return;
     }
     setAiLoading('Summarizing with AI…');

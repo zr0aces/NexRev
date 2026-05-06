@@ -124,11 +124,12 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       }
     });
 
-  fastify.get<{ Querystring: { token: string } }>(
+  fastify.get<{ Querystring: { token?: string } }>(
     '/auth/telegram/poll-link',
     { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
     async (req) => {
       const { token } = req.query;
+      if (!token) return { chatId: null };
       const chatId = getChatIdByToken(token);
       return { chatId };
     }

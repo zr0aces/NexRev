@@ -31,8 +31,12 @@ function getExpectedOrigin(): string | string[] {
   const raw = process.env.WEBAUTHN_ORIGIN;
   if (!raw) {
     if (process.env.NODE_ENV === 'production') {
-      console.warn('⚠️  WEBAUTHN_ORIGIN env var not set — passkey authentication will fail in production. Set it to your app origin (e.g. https://app.example.com).');
+      throw new Error(
+        'WEBAUTHN_ORIGIN env var is required in production. ' +
+        'Set it to your app origin (e.g. https://app.example.com).'
+      );
     }
+    console.warn('⚠️  WEBAUTHN_ORIGIN env var not set — using http://localhost:5173 for development.');
     return 'http://localhost:5173';
   }
   const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);

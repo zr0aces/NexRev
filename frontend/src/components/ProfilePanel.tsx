@@ -13,9 +13,9 @@ import {
   Trash2,
   Plus
 } from 'lucide-react';
-import { startRegistration } from '@simplewebauthn/browser';
 import { api } from '../api';
 import { useToast } from '../context/ToastContext';
+import AddPasskeyModal from './AddPasskeyModal';
 
 interface Props {
   version: string;
@@ -42,8 +42,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
     backedUp: boolean;
   };
   const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([]);
-  const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [newPasskeyName, setNewPasskeyName] = useState('');
+  const [showAddPasskeyModal, setShowAddPasskeyModal] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -148,27 +147,6 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       addToast('Failed to update password.', 'error');
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleRegisterPasskey = async () => {
-    setPasskeyLoading(true);
-    try {
-      const options = await api.auth.passkey.getRegisterOptions();
-      const regResponse = await startRegistration({ optionsJSON: options as any });
-      const passkey = await api.auth.passkey.register(regResponse, newPasskeyName || 'Passkey');
-      setPasskeys(prev => [...prev, passkey]);
-      setNewPasskeyName('');
-      addToast('Passkey registered successfully!', 'success');
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg.includes('cancel') || msg.includes('abort') || msg.includes('NotAllowedError')) {
-        addToast('Passkey registration cancelled.', 'info');
-      } else {
-        addToast(msg || 'Failed to register passkey.', 'error');
-      }
-    } finally {
-      setPasskeyLoading(false);
     }
   };
 
@@ -378,24 +356,26 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
         )}
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            type="text"
-            value={newPasskeyName}
-            onChange={e => setNewPasskeyName(e.target.value)}
-            placeholder="Passkey name (e.g. MacBook Touch ID)"
-            style={{ flex: 1 }}
-          />
           <button
             className="btn btn-primary"
-            onClick={handleRegisterPasskey}
-            disabled={passkeyLoading}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
+            onClick={() => setShowAddPasskeyModal(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
-            {passkeyLoading ? <RefreshCw size={14} className="spinner" /> : <Plus size={14} />}
-            {passkeyLoading ? 'Registering…' : 'Add Passkey'}
+            <Plus size={14} />
+            Add Passkey
           </button>
         </div>
       </div>
+
+      {showAddPasskeyModal && (
+        <AddPasskeyModal
+          onClose={() => setShowAddPasskeyModal(false)}
+          onAdded={(passkey) => {
+            setPasskeys(prev => [...prev, passkey]);
+            addToast('Passkey registered successfully!', 'success');
+          }}
+        />
+      )}
 
       <div className="profile-section" style={{ marginTop: 30 }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

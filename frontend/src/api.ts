@@ -65,6 +65,31 @@ export const api = {
     getTelegramLinkToken: () => request<{ token: string; botName: string }>('/auth/telegram/link-token'),
     pollTelegramLink: (token: string) => request<{ chatId: string | null }>(`/auth/telegram/poll-link?token=${token}`),
     listUsers: () => request<{ username: string }[]>('/auth/users'),
+    passkey: {
+      getLoginOptions: (username: string) =>
+        request<Record<string, unknown>>('/auth/passkey/login-options', {
+          method: 'POST',
+          body: JSON.stringify({ username }),
+        }),
+      login: (username: string, response: unknown) =>
+        request<{ token: string; username: string }>('/auth/passkey/login', {
+          method: 'POST',
+          body: JSON.stringify({ username, response }),
+        }),
+      getRegisterOptions: () =>
+        request<Record<string, unknown>>('/auth/passkey/register-options', { method: 'POST' }),
+      register: (response: unknown, name?: string) =>
+        request<{ id: string; name: string; createdAt: string; lastUsedAt: string | null; deviceType: string; backedUp: boolean }>('/auth/passkey/register', {
+          method: 'POST',
+          body: JSON.stringify({ response, name }),
+        }),
+      listCredentials: () =>
+        request<{ id: string; name: string; createdAt: string; lastUsedAt: string | null; deviceType: string; backedUp: boolean }[]>(
+          '/auth/passkey/credentials'
+        ),
+      deleteCredential: (id: string) =>
+        request<{ ok: boolean }>(`/auth/passkey/credentials/${id}`, { method: 'DELETE' }),
+    },
   },
   opportunities: {
     list: () => request<Opportunity[]>('/opportunities'),

@@ -26,7 +26,7 @@ const LEGACY_SECRETS_FILE =
   process.env.SECRETS_FILE ?? path.join(DATA_DIR, 'secrets.yaml');
 
 let conn: Database.Database | null = null;
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 interface MigrationOptions {
   onlyWhenEmpty?: boolean;
@@ -204,6 +204,27 @@ function createSchema(db: Database.Database): void {
 
     CREATE INDEX IF NOT EXISTS idx_activities_created_at
       ON activities(created_at);
+
+    CREATE TABLE IF NOT EXISTS passkeys (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      credential_id TEXT NOT NULL UNIQUE,
+      public_key TEXT NOT NULL,
+      counter INTEGER NOT NULL DEFAULT 0,
+      device_type TEXT NOT NULL DEFAULT 'singleDevice',
+      backed_up INTEGER NOT NULL CHECK(backed_up IN (0, 1)) DEFAULT 0,
+      transports TEXT,
+      name TEXT NOT NULL DEFAULT 'Passkey',
+      created_at TEXT NOT NULL,
+      last_used_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_passkeys_user_id
+      ON passkeys(user_id);
+
+    CREATE INDEX IF NOT EXISTS idx_passkeys_credential_id
+      ON passkeys(credential_id);
   `);
 
   // Migration: Add updated_by column if it doesn't exist

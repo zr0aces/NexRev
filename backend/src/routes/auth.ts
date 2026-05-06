@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
+import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 import { 
   verifyCredentials, 
   signToken, 
@@ -9,6 +10,14 @@ import {
   listUsers
 } from '../auth.js';
 import { createLinkToken, getChatIdByToken } from '../notifications.js';
+import {
+  generatePasskeyRegistrationOptions,
+  verifyPasskeyRegistration,
+  generatePasskeyAuthenticationOptions,
+  verifyPasskeyAuthentication,
+  listPasskeys,
+  deletePasskey,
+} from '../webauthn.js';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -132,6 +141,98 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       if (!token) return { chatId: null };
       const chatId = getChatIdByToken(token);
       return { chatId };
+    }
+  );
+
+  // ── WebAuthn / Passkey routes ──────────────────────────────────────────────
+
+  fastify.post<{ Body: { username: string } }>(
+    '/auth/passkey/login-options',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const { username: rawUsername } = req.body ?? {};
+      if (!rawUsername) return reply.code(400).send({ error: 'Username required' });
+      const username = rawUsername.toLowerCase();
+      try {
+        const options = await generatePasskeyAuthenticationOptions(username);
+        return options;
+      } catch (err) {
+        return reply.code(400).send({ error: (err as Error).message });
+      }
+    }
+  );
+
+  fastify.post<{ Body: { username: string; response: AuthenticationResponseJSON } }>(
+    '/auth/passkey/login',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const { username: rawUsername, response } = req.body ?? {};
+      if (!rawUsername || !response) {
+        return reply.code(400).send({ error: 'Username and response required' });
+      }
+      const username = rawUsername.toLowerCase();
+      try {
+        const verified = await verifyPasskeyAuthentication(username, response);
+        if (!verified) return reply.code(401).send({ error: 'Passkey authentication failed' });
+        return { token: signToken(username), username };
+      } catch (err) {
+        return reply.code(401).send({ error: (err as Error).message });
+      }
+    }
+  );
+
+  fastify.post(
+    '/auth/passkey/register-options',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const username = await requireAuth(req, reply);
+      if (!username) return;
+      try {
+        const options = await generatePasskeyRegistrationOptions(username);
+        return options;
+      } catch (err) {
+        return reply.code(400).send({ error: (err as Error).message });
+      }
+    }
+  );
+
+  fastify.post<{ Body: { response: RegistrationResponseJSON; name?: string } }>(
+    '/auth/passkey/register',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const username = await requireAuth(req, reply);
+      if (!username) return;
+      const { response, name } = req.body ?? {};
+      if (!response) return reply.code(400).send({ error: 'Response required' });
+      try {
+        const passkey = await verifyPasskeyRegistration(username, response, name ?? 'Passkey');
+        return passkey;
+      } catch (err) {
+        return reply.code(400).send({ error: (err as Error).message });
+      }
+    }
+  );
+
+  fastify.get(
+    '/auth/passkey/credentials',
+    { config: { rateLimit: { max: 60, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const username = await requireAuth(req, reply);
+      if (!username) return;
+      return listPasskeys(username);
+    }
+  );
+
+  fastify.delete<{ Params: { id: string } }>(
+    '/auth/passkey/credentials/:id',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const username = await requireAuth(req, reply);
+      if (!username) return;
+      const { id } = req.params;
+      const deleted = deletePasskey(username, id);
+      if (!deleted) return reply.code(404).send({ error: 'Passkey not found' });
+      return { ok: true };
     }
   );
 };

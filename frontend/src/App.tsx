@@ -89,6 +89,15 @@ export default function App() {
     addToast('Logged in as ' + user.toUpperCase(), 'success');
   };
 
+  const handlePasskeyLogin = (user: string, token: string) => {
+    setToken(token);
+    localStorage.setItem('auth_user', user);
+    setUsername(user);
+    setAuthenticated(true);
+    setLoading(true);
+    addToast('Signed in with passkey as ' + user.toUpperCase(), 'success');
+  };
+
   const handleLogout = () => {
     clearToken();
     localStorage.removeItem('auth_user');
@@ -98,7 +107,7 @@ export default function App() {
     addToast('Logged out.', 'info');
   };
 
-  if (!authenticated) return <LoginPage onLogin={handleLogin} version={version} />;
+  if (!authenticated) return <LoginPage onLogin={handleLogin} onPasskeyLogin={handlePasskeyLogin} version={version} />;
 
   if (loading) {
     return (

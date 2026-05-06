@@ -8,8 +8,12 @@ import {
   AlertCircle,
   Bell,
   Key,
-  BookOpen
+  BookOpen,
+  Fingerprint,
+  Trash2,
+  Plus
 } from 'lucide-react';
+import { startRegistration } from '@simplewebauthn/browser';
 import { api } from '../api';
 import { useToast } from '../context/ToastContext';
 
@@ -29,6 +33,18 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
   const [linking, setLinking] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  type PasskeyInfo = {
+    id: string;
+    name: string;
+    createdAt: string;
+    lastUsedAt: string | null;
+    deviceType: string;
+    backedUp: boolean;
+  };
+  const [passkeys, setPasskeys] = useState<PasskeyInfo[]>([]);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [newPasskeyName, setNewPasskeyName] = useState('');
+
   useEffect(() => {
     return () => {
       if (pollIntervalRef.current !== null) clearInterval(pollIntervalRef.current);
@@ -41,6 +57,8 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       setTelegramChatId(data.telegram_chat_id ?? '');
       setLoading(false);
     }).catch(() => setLoading(false));
+
+    api.auth.passkey.listCredentials().then(setPasskeys).catch(() => {});
   }, []);
 
   const handleSaveTelegram = async (id?: string) => {
@@ -130,6 +148,37 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       addToast('Failed to update password.', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRegisterPasskey = async () => {
+    setPasskeyLoading(true);
+    try {
+      const options = await api.auth.passkey.getRegisterOptions();
+      const regResponse = await startRegistration({ optionsJSON: options as any });
+      const passkey = await api.auth.passkey.register(regResponse, newPasskeyName || 'Passkey');
+      setPasskeys(prev => [...prev, { ...passkey, lastUsedAt: null, deviceType: 'singleDevice', backedUp: false }]);
+      setNewPasskeyName('');
+      addToast('Passkey registered successfully!', 'success');
+    } catch (err) {
+      const msg = (err as Error).message;
+      if (msg.includes('cancel') || msg.includes('abort') || msg.includes('NotAllowedError')) {
+        addToast('Passkey registration cancelled.', 'info');
+      } else {
+        addToast(msg || 'Failed to register passkey.', 'error');
+      }
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
+  const handleDeletePasskey = async (id: string) => {
+    try {
+      await api.auth.passkey.deleteCredential(id);
+      setPasskeys(prev => prev.filter(pk => pk.id !== id));
+      addToast('Passkey removed.', 'success');
+    } catch {
+      addToast('Failed to remove passkey.', 'error');
     }
   };
 
@@ -286,6 +335,66 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
           {saving ? <RefreshCw size={14} className="spinner" /> : <Lock size={14} />}
           Update Password
         </button>
+      </div>
+
+      <div className="profile-section" style={{ marginTop: 30 }}>
+        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Fingerprint size={18} /> Passkeys
+        </h3>
+        <p className="text-secondary" style={{ fontSize: 13, marginBottom: 15 }}>
+          Sign in with biometrics or a device PIN — no password required.
+        </p>
+
+        {passkeys.length > 0 && (
+          <div style={{ marginBottom: 16 }}>
+            {passkeys.map(pk => (
+              <div key={pk.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)', marginBottom: 8
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Fingerprint size={16} style={{ color: 'var(--orange)' }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{pk.name}</div>
+                    <div className="text-tertiary" style={{ fontSize: 11 }}>
+                      Added {new Date(pk.createdAt).toLocaleDateString()}
+                      {pk.lastUsedAt && ` · Last used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
+                      {pk.backedUp && ' · Synced'}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  className="btn"
+                  onClick={() => handleDeletePasskey(pk.id)}
+                  title="Remove passkey"
+                  style={{ padding: '6px 10px', color: 'var(--text-error)', border: '1px solid var(--bg-error)', background: 'transparent' }}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="text"
+            value={newPasskeyName}
+            onChange={e => setNewPasskeyName(e.target.value)}
+            placeholder="Passkey name (e.g. MacBook Touch ID)"
+            style={{ flex: 1 }}
+          />
+          <button
+            className="btn btn-primary"
+            onClick={handleRegisterPasskey}
+            disabled={passkeyLoading}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
+          >
+            {passkeyLoading ? <RefreshCw size={14} className="spinner" /> : <Plus size={14} />}
+            {passkeyLoading ? 'Registering…' : 'Add Passkey'}
+          </button>
+        </div>
       </div>
 
       <div className="profile-section" style={{ marginTop: 30 }}>

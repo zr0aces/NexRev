@@ -176,9 +176,19 @@ export async function sendDailyReminders() {
     }
 
     let message = '';
+    const cacheFile = `${process.env.DATA_DIR || './data'}/daily-digest-${today}.txt`;
+    
     try {
-      const rawMessage = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
-      message = rawMessage;
+      const fs = await import('fs/promises');
+      const cached = await fs.readFile(cacheFile, 'utf8').catch(() => null);
+      if (cached) {
+        console.log('📦 Reusing cached AI digest for today.');
+        message = cached;
+      } else {
+        const rawMessage = await ai.generateDailyDigest({ dueToday, overdue, upcomingWeek });
+        message = rawMessage;
+        await fs.writeFile(cacheFile, message, 'utf8').catch(err => console.warn('Failed to cache digest:', err));
+      }
     } catch (err) {
       console.error('AI digest generation failed, falling back to manual summary:', err);
       message = `<b>🌅 NexRev Daily Digest</b>\n\n`;

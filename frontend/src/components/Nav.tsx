@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { 
   FileUp, 
   Save, 
@@ -6,13 +6,19 @@ import {
   Plus, 
   LogOut, 
   Share, 
-  Rocket 
+  Rocket,
+  Sun,
+  Moon,
+  ChevronDown,
+  Settings,
+  User
 } from 'lucide-react';
 import type { Opportunity } from '../types';
 import { api } from '../api';
 import { todayStr, fmtDate } from '../utils';
 import { useToast } from '../context/ToastContext';
 import type { ToastType } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 type Tab = 'today' | 'pipeline' | 'log' | 'profile';
 
@@ -86,7 +92,22 @@ function exportMd(opps: Opportunity[], addToast: (message: string, type?: ToastT
 
 export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLogout, username }: Props) {
   const { addToast } = useToast();
+  const { theme, toggleTheme } = useTheme();
   const fileRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const initials = username ? username.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '??';
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -108,70 +129,108 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
     reader.readAsText(file);
   };
 
-
   return (
     <nav className="nav">
-      <div className="nav-brand">
-        <div className="nav-brand-icon">
-          <Rocket size={14} />
-        </div>
-        <span className="nav-title">NexRev</span>
-      </div>
-      <div className="nav-divider" />
-      <div className="nav-tabs">
-        {(['today', 'pipeline', 'log', 'profile'] as Tab[]).map(t => (
-          <button
-            key={t}
-            className={`nav-tab${tab === t ? ' active' : ''}`}
-            onClick={() => onTabChange(t)}
-          >
-            {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : t === 'log' ? 'Activity Log' : 'Profile'}
-          </button>
-        ))}
-      </div>
-      <div className="nav-actions">
-        <div className="hide-mobile" style={{ display: 'flex', gap: 6 }}>
-          <button className="btn btn-sm" onClick={() => exportMd(opps, addToast)}>
-            <FileUp size={14} /> Export
-          </button>
-          <button className="btn btn-sm" onClick={() => downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json')}>
-            <Save size={14} /> Backup
-          </button>
-          <button className="btn btn-sm" onClick={() => fileRef.current?.click()}>
-            <FileDown size={14} /> Import
-          </button>
-        </div>
-        
-        <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
-        
-        <div className="nav-divider hide-mobile" />
-        
-        <button className="btn btn-sm btn-primary hide-mobile" onClick={onAddClick}>
-          <Plus size={14} /> Add Opportunity
-        </button>
-        
-        {username && (
-          <div className="nav-user hide-mobile">
-            <span className="nav-user-name">{username}</span>
+      <div className="nav-left">
+        <div className="nav-brand-wrapper">
+          <div className="nav-brand">
+            <div className="nav-brand-icon">
+              <Rocket size={16} strokeWidth={3} />
+            </div>
+            <span className="nav-title">NexRev</span>
           </div>
-        )}
-
-        <div className="show-mobile">
-          <button className="btn btn-sm" onClick={() => {
-            if (confirm('Export to Markdown?')) exportMd(opps, addToast);
-          }} title="Export MD">
-            <Share size={16} />
-          </button>
         </div>
-        
-        <button className="btn btn-sm" onClick={onLogout} title="Sign out">
-          <span className="hide-mobile" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <LogOut size={14} /> Sign out
-          </span>
-          <span className="show-mobile">
-            <LogOut size={16} />
-          </span>
-        </button>
+
+        <div className="nav-tabs">
+          {(['today', 'pipeline', 'log', 'profile'] as Tab[]).map(t => (
+            <button
+              key={t}
+              className={`nav-tab${tab === t ? ' active' : ''}`}
+              onClick={() => onTabChange(t)}
+            >
+              {t === 'today' ? 'Today' : t === 'pipeline' ? 'Pipeline' : t === 'log' ? 'Logs' : 'Profile'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="nav-center hide-mobile" />
+
+      <div className="nav-right">
+        <div className="nav-right-wrapper">
+          <div className="nav-actions">
+            <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+            
+            <button className="btn btn-primary hide-mobile" onClick={onAddClick}>
+              <Plus size={18} strokeWidth={2.5} />
+              <span>Add Opportunity</span>
+            </button>
+            
+            <div className="nav-divider hide-mobile" />
+
+            {/* Unified Profile & Actions Dropdown */}
+            {username && (
+              <div className="nav-profile-container" ref={dropdownRef}>
+                <button className="nav-profile-trigger" onClick={() => setIsOpen(!isOpen)}>
+                  <div className="hide-mobile nav-profile-info">
+                    <div className="nav-user-name">{username?.toUpperCase()}</div>
+                  </div>
+                  <div className="nav-avatar">
+                    {initials}
+                  </div>
+                  <ChevronDown size={14} className={`dropdown-arrow ${isOpen ? 'open' : ''}`} />
+                </button>
+
+                {isOpen && (
+                  <div className="profile-dropdown animate-entry">
+                    <div className="dropdown-header">
+                      <span className="dropdown-title">System Tools</span>
+                    </div>
+                    
+                    <div className="dropdown-action-row">
+                      <button className="dropdown-btn" onClick={() => { toggleTheme(); setIsOpen(false); }} title="Switch Theme">
+                        <div className="dropdown-btn-inner">
+                          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+                          <span className="btn-hint">Theme</span>
+                        </div>
+                      </button>
+                      <button className="dropdown-btn" onClick={() => { exportMd(opps, addToast); setIsOpen(false); }} title="Export Markdown">
+                        <div className="dropdown-btn-inner">
+                          <FileUp size={18} />
+                          <span className="btn-hint">Export</span>
+                        </div>
+                      </button>
+                      <button className="dropdown-btn" onClick={() => { downloadFile(`nexrev-backup-${todayStr()}.json`, JSON.stringify(opps, null, 2), 'application/json'); setIsOpen(false); }} title="Backup JSON">
+                        <div className="dropdown-btn-inner">
+                          <Save size={18} />
+                          <span className="btn-hint">Backup</span>
+                        </div>
+                      </button>
+                      <button className="dropdown-btn" onClick={() => { fileRef.current?.click(); setIsOpen(false); }} title="Import JSON">
+                        <div className="dropdown-btn-inner">
+                          <FileDown size={18} />
+                          <span className="btn-hint">Import</span>
+                        </div>
+                      </button>
+                    </div>
+
+                    <div className="dropdown-divider" />
+                    
+                    <button className="dropdown-item" onClick={() => { onTabChange('profile'); setIsOpen(false); }}>
+                      <User size={16} />
+                      <span>View Profile</span>
+                    </button>
+                    
+                    <button className="dropdown-item logout" onClick={onLogout}>
+                      <LogOut size={16} />
+                      <span>Sign out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </nav>
   );

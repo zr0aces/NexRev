@@ -38,10 +38,11 @@ export const authRoutes: FastifyPluginAsync = async (fastify) => {
       config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
     },
     async (req, reply) => {
-      const { username, password } = req.body ?? {};
-      if (!username || !password) {
+      const { username: rawUsername, password } = req.body ?? {};
+      if (!rawUsername || !password) {
         return reply.code(400).send({ error: 'Username and password required' });
       }
+      const username = rawUsername.toLowerCase();
       const ok = await verifyCredentials(username, password);
       if (!ok) {
         return reply.code(401).send({ error: 'Invalid credentials' });

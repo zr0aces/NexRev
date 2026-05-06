@@ -129,7 +129,7 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
             >
               <option value="all">All Users</option>
               {users.map(u => (
-                <option key={u} value={u}>{u === username ? 'Me' : u}</option>
+                <option key={u} value={u}>{u === username ? 'Me' : u.toUpperCase()}</option>
               ))}
             </select>
 
@@ -177,7 +177,7 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
                       )}
                       {o.updatedBy && (
                         <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <User size={12} /> {o.updatedBy === username ? 'Me' : o.updatedBy} • {lastUpdateStr}
+                          <User size={12} /> {o.updatedBy === username ? 'Me' : o.updatedBy.toUpperCase()} • {lastUpdateStr}
                         </div>
                       )}
                     </div>

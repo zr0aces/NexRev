@@ -50,11 +50,13 @@ const [, , cmd, ...args] = process.argv;
 
 switch (cmd) {
   case 'add': {
-    const [username, password] = args;
-    if (!username || !password) {
+    const rawUsername = args[0];
+    const password = args[1];
+    if (!rawUsername || !password) {
       console.error('Usage: add <username> <password>');
       process.exit(1);
     }
+    const username = rawUsername.toLowerCase();
 
     const exists = db.prepare('SELECT 1 FROM users WHERE username = ?').get(username);
     if (exists) {
@@ -73,11 +75,13 @@ switch (cmd) {
   }
 
   case 'passwd': {
-    const [username, password] = args;
-    if (!username || !password) {
+    const rawUsername = args[0];
+    const password = args[1];
+    if (!rawUsername || !password) {
       console.error('Usage: passwd <username> <newpassword>');
       process.exit(1);
     }
+    const username = rawUsername.toLowerCase();
 
     const user = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
     if (!user) {
@@ -98,11 +102,12 @@ switch (cmd) {
   }
 
   case 'delete': {
-    const [username] = args;
-    if (!username) {
+    const rawUsername = args[0];
+    if (!rawUsername) {
       console.error('Usage: delete <username>');
       process.exit(1);
     }
+    const username = rawUsername.toLowerCase();
 
     const result = db.prepare('DELETE FROM users WHERE username = ?').run(username);
     if (result.changes === 0) {

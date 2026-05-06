@@ -80,13 +80,13 @@ export default function App() {
   }, []);
 
   const handleLogin = async (username: string, password: string) => {
-    const { token, username: user } = await api.auth.login(username, password);
+    const { token, username: user } = await api.auth.login(username.toLowerCase(), password);
     setToken(token);
     localStorage.setItem('auth_user', user);
     setUsername(user);
     setAuthenticated(true);
     setLoading(true);
-    addToast('Logged in as ' + user, 'success');
+    addToast('Logged in as ' + user.toUpperCase(), 'success');
   };
 
   const handleLogout = () => {
@@ -168,19 +168,19 @@ export default function App() {
       {/* Mobile-only Bottom Nav */}
       <div className="bottom-nav show-mobile">
         <button className={`bottom-nav-item${tab === 'today' ? ' active' : ''}`} onClick={() => setTab('today')}>
-          <div className="bottom-nav-icon"><Sun size={20} /></div>
+          <div className="bottom-nav-icon"><Sun size={22} strokeWidth={2.5} /></div>
           <span className="bottom-nav-label">Today</span>
         </button>
         <button className={`bottom-nav-item${tab === 'pipeline' ? ' active' : ''}`} onClick={() => setTab('pipeline')}>
-          <div className="bottom-nav-icon"><LayoutDashboard size={20} /></div>
+          <div className="bottom-nav-icon"><LayoutDashboard size={22} strokeWidth={2.5} /></div>
           <span className="bottom-nav-label">Pipeline</span>
         </button>
         <button className={`bottom-nav-item${tab === 'log' ? ' active' : ''}`} onClick={() => setTab('log')}>
-          <div className="bottom-nav-icon"><ScrollText size={20} /></div>
+          <div className="bottom-nav-icon"><ScrollText size={22} strokeWidth={2.5} /></div>
           <span className="bottom-nav-label">Logs</span>
         </button>
         <button className={`bottom-nav-item${tab === 'profile' ? ' active' : ''}`} onClick={() => setTab('profile')}>
-          <div className="bottom-nav-icon"><User size={20} /></div>
+          <div className="bottom-nav-icon"><User size={22} strokeWidth={2.5} /></div>
           <span className="bottom-nav-label">Profile</span>
         </button>
       </div>
@@ -188,7 +188,7 @@ export default function App() {
       {/* Floating Action Button for Mobile */}
       <div className="fab-container show-mobile">
         <button className="fab" onClick={() => setModalState('new')}>
-          <Plus size={28} />
+          <Plus size={24} strokeWidth={3} />
         </button>
       </div>
     </div>

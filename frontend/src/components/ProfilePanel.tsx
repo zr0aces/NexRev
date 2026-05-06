@@ -143,7 +143,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
   return (
     <div className="profile-panel">
       <div className="section-label" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        User Profile: {username}
+        User Profile: {username.toUpperCase()}
       </div>
 
       <div className="profile-section">
@@ -164,9 +164,9 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
             borderRadius: '20px', 
             fontSize: '12px', 
             fontWeight: 600,
-            background: telegramChatId ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
-            color: telegramChatId ? '#4ade80' : '#f87171',
-            border: `1px solid ${telegramChatId ? 'rgba(74, 222, 128, 0.2)' : 'rgba(248, 113, 113, 0.2)'}`
+            background: telegramChatId ? 'var(--bg-success)' : 'var(--bg-error)',
+            color: telegramChatId ? 'var(--text-success)' : 'var(--text-error)',
+            border: `1px solid ${telegramChatId ? 'var(--text-success)' : 'var(--text-error)'}22`
           }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }} />
             {telegramChatId ? 'Linked' : 'Not Linked'}
@@ -174,8 +174,8 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
         </div>
 
         <div style={{ 
-          background: 'rgba(255,255,255,0.03)', 
-          border: '1px solid var(--border-color)', 
+          background: 'var(--bg-secondary)', 
+          border: '1px solid var(--border)', 
           borderRadius: '12px', 
           padding: '20px',
           textAlign: 'center'
@@ -186,12 +186,12 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
                 width: 48, 
                 height: 48, 
                 borderRadius: '50%', 
-                background: 'rgba(74, 222, 128, 0.1)', 
+                background: 'var(--bg-success)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 margin: '0 auto 12px',
-                color: '#4ade80'
+                color: 'var(--text-success)'
               }}>
                 <Check size={24} />
               </div>
@@ -216,7 +216,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
                     handleSaveTelegram('');
                   }}
                   disabled={saving}
-                  style={{ fontSize: 13, padding: '8px 16px', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)', background: 'transparent' }}
+                  style={{ fontSize: 13, padding: '8px 16px', color: 'var(--text-error)', border: '1px solid var(--bg-error)', background: 'transparent' }}
                 >
                   Unlink
                 </button>
@@ -228,7 +228,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
                 width: 48, 
                 height: 48, 
                 borderRadius: '50%', 
-                background: 'rgba(255,255,255,0.05)', 
+                background: 'var(--bg-secondary)', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center', 
@@ -245,7 +245,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
                 className="btn btn-primary" 
                 onClick={handleAutoLink} 
                 disabled={linking}
-                style={{ fontSize: 14, padding: '10px 24px', borderRadius: '8px', background: 'var(--brand-gradient)' }}
+                style={{ fontSize: 14, padding: '10px 24px', borderRadius: '8px' }}
               >
                 {linking ? <RefreshCw size={14} className="spinner" /> : <LinkIcon size={14} />}
                 {linking ? 'Linking…' : 'Link Telegram Account'}
@@ -308,7 +308,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       <div className="profile-section" style={{ marginTop: 30, textAlign: 'center', background: 'transparent', border: 'none', padding: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-tertiary)' }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: aiEnabled ? '#4ade80' : '#f87171' }} />
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: aiEnabled ? 'var(--text-success)' : 'var(--text-error)' }} />
             AI Service: {aiEnabled ? 'Active' : 'Not Configured (Ollama)'}
           </div>
         </div>

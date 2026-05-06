@@ -235,7 +235,10 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
   `);
 
   const tx = db.transaction((value: Opportunity) => {
-    upsertOpportunity.run(value);
+    upsertOpportunity.run({
+      ...value,
+      updatedBy: value.updatedBy ?? null
+    });
 
     deleteSteps.run(value.id);
     value.nextSteps.forEach((step, index) => {

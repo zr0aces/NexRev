@@ -110,6 +110,7 @@ function parseLegacyOpportunity(id: string, raw: string): Opportunity {
     })),
     createdAt: normalizeDate(data.createdAt) || new Date().toISOString(),
     updatedAt: normalizeDate(data.updatedAt) || new Date().toISOString(),
+    updatedBy: data.updatedBy ? String(data.updatedBy) : 'admin',
   };
 }
 
@@ -257,7 +258,10 @@ function insertOpportunityFromLegacy(db: Database.Database, opp: Opportunity): b
   `);
 
   const transaction = db.transaction((value: Opportunity) => {
-    const oppResult = insertOpp.run(value);
+    const oppResult = insertOpp.run({
+      ...value,
+      updatedBy: value.updatedBy ?? 'admin'
+    });
     if (oppResult.changes === 0) return false;
 
     value.nextSteps.forEach((step, index) => {

@@ -43,10 +43,11 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
     }).catch(() => setLoading(false));
   }, []);
 
-  const handleSaveTelegram = async () => {
+  const handleSaveTelegram = async (id?: string) => {
     setSaving(true);
+    const value = id !== undefined ? id : telegramChatId;
     try {
-      await api.auth.updateTelegram(telegramChatId.trim() || null);
+      await api.auth.updateTelegram(value.trim() || null);
       addToast('Telegram settings updated!', 'success');
     } catch (err) {
       addToast('Failed to update Telegram settings.', 'error');
@@ -146,34 +147,111 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
       </div>
 
       <div className="profile-section">
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Send size={18} /> Telegram Integration
-        </h3>
-        <p className="text-secondary" style={{ fontSize: 13, marginBottom: 15 }}>
-          Receive daily reminders at 8:30 AM directly on Telegram.
-        </p>
-        <div className="form-group">
-          <label>Telegram Chat ID</label>
-          <div className="profile-actions-row">
-            <input 
-              type="text" 
-              value={telegramChatId} 
-              placeholder="e.g. 123456789" 
-              onChange={e => setTelegramChatId(e.target.value)} 
-              style={{ flex: 1 }}
-            />
-            <button className="btn" onClick={handleAutoLink} disabled={linking} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {linking ? <RefreshCw size={14} className="spinner" /> : <LinkIcon size={14} />}
-              {linking ? 'Linking…' : 'Link Automatically'}
-            </button>
-            <button className="btn btn-primary" onClick={handleSaveTelegram} disabled={saving} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {saving ? <RefreshCw size={14} className="spinner" /> : <Check size={14} />}
-              Update Manually
-            </button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 15 }}>
+          <div>
+            <h3 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+              <Send size={18} /> Telegram Notifications
+            </h3>
+            <p className="text-secondary" style={{ fontSize: 13, marginTop: 4 }}>
+              Receive AI-powered daily digests at 8:30 AM.
+            </p>
           </div>
-          <p className="text-tertiary" style={{ fontSize: 11, marginTop: 8 }}>
-            Click <strong>Link Automatically</strong> to connect via Telegram app, or enter your Chat ID manually.
-          </p>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 6, 
+            padding: '4px 10px', 
+            borderRadius: '20px', 
+            fontSize: '12px', 
+            fontWeight: 600,
+            background: telegramChatId ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
+            color: telegramChatId ? '#4ade80' : '#f87171',
+            border: `1px solid ${telegramChatId ? 'rgba(74, 222, 128, 0.2)' : 'rgba(248, 113, 113, 0.2)'}`
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }} />
+            {telegramChatId ? 'Linked' : 'Not Linked'}
+          </div>
+        </div>
+
+        <div style={{ 
+          background: 'rgba(255,255,255,0.03)', 
+          border: '1px solid var(--border-color)', 
+          borderRadius: '12px', 
+          padding: '20px',
+          textAlign: 'center'
+        }}>
+          {telegramChatId ? (
+            <div>
+              <div style={{ 
+                width: 48, 
+                height: 48, 
+                borderRadius: '50%', 
+                background: 'rgba(74, 222, 128, 0.1)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                margin: '0 auto 12px',
+                color: '#4ade80'
+              }}>
+                <Check size={24} />
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Connected to Telegram</p>
+              <p className="text-tertiary" style={{ fontSize: 12, marginBottom: 20 }}>
+                ID: {telegramChatId.slice(0, 4)}••••{telegramChatId.slice(-4)}
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+                <button 
+                  className="btn" 
+                  onClick={handleAutoLink} 
+                  disabled={linking}
+                  style={{ fontSize: 13, padding: '8px 16px' }}
+                >
+                  {linking ? <RefreshCw size={14} className="spinner" /> : <RefreshCw size={14} />}
+                  Re-link Account
+                </button>
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => {
+                    setTelegramChatId('');
+                    handleSaveTelegram('');
+                  }}
+                  disabled={saving}
+                  style={{ fontSize: 13, padding: '8px 16px', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)', background: 'transparent' }}
+                >
+                  Unlink
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <div style={{ 
+                width: 48, 
+                height: 48, 
+                borderRadius: '50%', 
+                background: 'rgba(255,255,255,0.05)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                margin: '0 auto 12px',
+                color: 'var(--text-tertiary)'
+              }}>
+                <Bell size={24} />
+              </div>
+              <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Never miss an update</p>
+              <p className="text-tertiary" style={{ fontSize: 12, marginBottom: 20 }}>
+                Link your Telegram to get daily pipeline summaries and action reminders.
+              </p>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleAutoLink} 
+                disabled={linking}
+                style={{ fontSize: 14, padding: '10px 24px', borderRadius: '8px', background: 'var(--brand-gradient)' }}
+              >
+                {linking ? <RefreshCw size={14} className="spinner" /> : <LinkIcon size={14} />}
+                {linking ? 'Linking…' : 'Link Telegram Account'}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

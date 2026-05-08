@@ -78,7 +78,7 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
    - Frontend polls `/api/auth/telegram/poll-link` to confirm success.
    - The `telegram_chat_id` is persisted in the `users` table.
 2. **Daily Reminders**:
-   - A `node-cron` job runs daily at 8:30 AM.
+   - A `node-cron` job runs on weekdays (Mon-Fri) at 8:30 AM.
    - Filters opportunities for those due today or overdue.
    - Sends a formatted HTML "Daily Digest" message to all users with a linked `telegram_chat_id`.
 

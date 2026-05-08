@@ -17,7 +17,7 @@ NexRev is designed for individual account executives and sales professionals who
 | **AI Task Extraction** | **[NEW]** Instantly scan activity logs to extract and populate Kanban tasks automatically. |
 | **AI Activity Summary** | Generate concise summaries of meeting notes and activity logs using local LLMs. |
 | **SF Update Note** | Generate Salesforce-ready activity summaries reflecting developments since your last sync. |
-| **Telegram Integration** | **[NEW]** Daily reminders at 8:30 AM for due/overdue tasks. Link your account via `/start` in the Telegram bot. |
+| **Telegram Integration** | **[NEW]** Weekday reminders at 8:30 AM for due/overdue tasks (weekends skipped). Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
 | **AI Provider Flexibility** | Run AI features with Ollama (local), OpenRouter (cloud), or LiteLLM proxy using a unified backend interface. |

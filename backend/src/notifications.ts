@@ -288,12 +288,12 @@ export function initNotifications() {
   // Start polling for /start commands (linking)
   pollTelegramUpdates();
 
-  // Schedule for 8:30 AM every day
-  cron.schedule('30 8 * * *', async () => {
+  // Schedule for 8:30 AM on weekdays (Mon-Fri)
+  cron.schedule('30 8 * * 1-5', async () => {
     await sendDailyReminders();
   }, {
     timezone: getReminderTimezone()
   });
 
-   console.log(`✅ Daily Telegram reminders scheduled for 08:30 (${getReminderTimezone()}).`);
+   console.log(`✅ Daily Telegram reminders scheduled for weekdays at 08:30 (${getReminderTimezone()}).`);
 }

@@ -12,6 +12,7 @@ import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
 import { initNotifications, stopNotifications } from './notifications.js';
 import { isAiConfigured } from './ai-service.js';
+import { validateWebAuthnConfig } from './webauthn.js';
 
 // Simple .env loader to keep a single source of truth for Telegram/AI tokens
 if (!process.env.TELEGRAM_BOT_TOKEN) {
@@ -39,12 +40,20 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
   }
 }
 
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
 const server = Fastify({
-  logger: { level: process.env.NODE_ENV === 'production' ? 'warn' : 'info' },
+  logger: {
+    level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'warn' : 'info'),
+  },
 });
 
 await server.register(cors, {
-  origin: process.env.NODE_ENV !== 'production',
+  origin: process.env.NODE_ENV !== 'production'
+    ? true
+    : (corsOrigins.length > 0 ? corsOrigins : false),
 });
 
 // Global rate limiting — individual routes may override via config.rateLimit
@@ -112,6 +121,7 @@ server.get('/api/health', async () => ({
 }));
 
 const dbInit = await initDatabase();
+validateWebAuthnConfig();
 server.log.info(
   {
     schemaVersion: dbInit.schemaVersion,

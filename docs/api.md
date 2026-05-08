@@ -13,6 +13,10 @@ Authentication and profile metadata are persisted in SQLite `users`.
 ```json
 { "token": "<jwt>", "username": "admin" }
 ```
+**Common errors**
+- `400` missing username or password
+- `401` invalid credentials
+- `429` too many login attempts
 
 ### GET `/api/auth/me`
 Returns current user profile and Telegram link status.
@@ -34,6 +38,9 @@ Update user password (minimum 8 characters).
 ```json
 { "password": "new-secure-password" }
 ```
+**Common errors**
+- `400` missing password or password too short
+- `401` missing/invalid bearer token
 
 ### POST `/api/auth/telegram`
 Manually set or clear the Telegram `chatId` for the current user.
@@ -135,6 +142,10 @@ Summarize raw meeting notes for a specific opportunity.
 ```json
 { "summary": "Concise summary of the meeting notes." }
 ```
+**Common errors**
+- `400` missing `id` or `raw`
+- `404` opportunity not found
+- `503` AI provider unavailable or misconfigured
 
 ### POST `/api/ai/sf-note`
 Generate a Salesforce CRM-ready activity note from recent activities since the last SF sync.
@@ -147,6 +158,11 @@ Generate a Salesforce CRM-ready activity note from recent activities since the l
 ```json
 { "note": "DATE: ...\nACTIVITY TYPE: ...\nSUMMARY: ...\nNEXT STEP: ..." }
 ```
+**Common errors**
+- `400` missing `id`
+- `404` opportunity not found
+- `422` no new activities since the last SF note
+- `503` AI provider unavailable or misconfigured
 
 ### POST `/api/ai/extract-tasks`
 Extract Kanban tasks from recent activity logs and add them to the opportunity board.
@@ -156,6 +172,11 @@ Extract Kanban tasks from recent activity logs and add them to the opportunity b
 ```
 `context` is optional.
 **Response `200`** — Returns the updated opportunity object with new tasks added to `nextSteps`.
+**Common errors**
+- `400` missing `id`
+- `404` opportunity not found
+- `422` no new activities to extract tasks from
+- `503` AI provider unavailable or misconfigured
 
 ---
 

@@ -62,6 +62,25 @@ function incrementVersion(current, type) {
   return `${y}.${m}.${p}`;
 }
 
+async function verifySyncedVersions(expectedVersion) {
+  const packageFiles = [
+    path.join(rootDir, 'backend', 'package.json'),
+    path.join(rootDir, 'frontend', 'package.json'),
+  ];
+
+  for (const pkgPath of packageFiles) {
+    const pkg = JSON.parse(await fs.readFile(pkgPath, 'utf8'));
+    if (pkg.version !== expectedVersion) {
+      throw new Error(`Version sync mismatch in ${path.relative(rootDir, pkgPath)}: expected ${expectedVersion}, got ${pkg.version}`);
+    }
+  }
+
+  const envExample = await fs.readFile(path.join(rootDir, '.env.example'), 'utf8');
+  if (!envExample.includes(`NEXREV_VERSION=${expectedVersion}`)) {
+    throw new Error('.env.example was not updated with the new NEXREV_VERSION.');
+  }
+}
+
 async function release() {
   const args = process.argv.slice(2);
   const arg = args[0] || 'patch';
@@ -92,6 +111,8 @@ async function release() {
     console.log('🔄 Synchronizing package configurations...');
     try {
       execSync(`node ${path.join(__dirname, 'sync-version.mjs')}`, { stdio: 'inherit' });
+      await verifySyncedVersions(newVersion);
+      console.log('✅ Verified synced package and environment versions.');
     } catch (err) {
       console.error('❌ Synchronization failed. Please check sync-version.mjs.');
       process.exit(1);

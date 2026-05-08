@@ -2,11 +2,35 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? 'dev-secret-change-in-production';
+const DEV_JWT_SECRET = 'dev-secret-change-in-production';
+const INSECURE_JWT_SECRETS = new Set([
+  DEV_JWT_SECRET,
+  'change-me-in-production',
+  'replace-with-a-long-random-secret',
+]);
 
-if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
-  console.warn('⚠️  JWT_SECRET env var not set — using insecure default. Set it in production!');
+function getJwtSecret(): string {
+  const envSecret = process.env.JWT_SECRET?.trim();
+  const secret = envSecret || DEV_JWT_SECRET;
+
+  if (process.env.NODE_ENV === 'production') {
+    if (!envSecret) {
+      throw new Error('JWT_SECRET must be set in production.');
+    }
+    if (INSECURE_JWT_SECRETS.has(secret)) {
+      throw new Error('JWT_SECRET must not use the documented placeholder value in production.');
+    }
+    if (secret.length < 32) {
+      throw new Error('JWT_SECRET must be at least 32 characters in production.');
+    }
+  } else if (!envSecret) {
+    console.warn('⚠️  JWT_SECRET env var not set — using development fallback secret.');
+  }
+
+  return secret;
 }
+
+const JWT_SECRET = getJwtSecret();
 
 interface User {
   username: string;

@@ -66,7 +66,7 @@ Backup and restore:
 ### 1. Setup Environment
 ```bash
 cp .env.example .env
-# Edit .env to set TELEGRAM_BOT_TOKEN and AI provider variables (AI_PROVIDER + provider-specific settings).
+# Edit .env to set JWT_SECRET, TELEGRAM_BOT_TOKEN, and AI provider variables.
 ```
 
 ### 2. Pull AI Model
@@ -79,6 +79,11 @@ ollama pull llama3.2
 docker compose up -d --build
 ```
 Access the application at **http://localhost:8088**.
+
+Production notes:
+- Set a **strong** `JWT_SECRET` (32+ characters). The backend now refuses to start in production with missing or placeholder secrets.
+- Set `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` for your real domain before enabling passkeys in production.
+- Set `CORS_ORIGIN` to the exact browser origin(s) that should reach the API.
 
 ### 4. Initial Credentials
 - **Username**: `admin`
@@ -93,7 +98,9 @@ Access the application at **http://localhost:8088**.
 - [**คู่มือการใช้งาน (Thai)**](frontend/public/docs/user_guide_th.html) - คู่มือการใช้งานฉบับสมบูรณ์ภาษาไทย.
 - [**Architecture**](docs/architecture.md) - Deep dive into system design and data models.
 - [**API Reference**](docs/api.md) - Documentation of available endpoints.
+- [**Configuration Guide**](docs/configuration.md) - Required and optional environment variables for local and production deployments.
 - [**Docker Compose (GHCR)**](docs/docker-compose.yml) - Sample for deploying with pre-built images.
+- [**Changelog**](CHANGELOG.md) - Release history and notable operational changes.
 
 ---
 
@@ -124,6 +131,7 @@ NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.
    ```bash
    node scripts/release.mjs
    ```
+   The script updates `VERSION`, synchronizes package/environment versions, and verifies the sync before finishing.
 2. **Runtime Access**:
   - The **Backend** reads the `VERSION` file at startup (either from the image or a volume mount) and exposes it via the `/api/health` endpoint.
   - The **Frontend** fetches this version dynamically from the API and displays it on the Login page and Profile panel, ensuring consistency with the running backend.
@@ -143,8 +151,16 @@ npm install
 npm test
 ```
 
+Build both applications before release:
+```bash
+cd backend && npm run build
+cd ../frontend && npm install && npm run build
+```
+
 ## 🔒 Security Notes
 
-- **JWT_SECRET**: Must be set to a long random string in production via `.env`. The server logs a warning at startup if this is missing.
+- **JWT_SECRET**: Must be set to a long random string in production via `.env`. Placeholder or short secrets are rejected at startup.
 - **Default credentials**: On first run, a default `admin/admin` account is created. Change the password immediately via the Profile tab or `node backend/scripts/manage-users.mjs passwd admin <newpassword>`. The default account is automatically removed once any other user account is defined.
 - **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints return `503` when the configured AI provider is unavailable or misconfigured.
+- **Passkeys / WebAuthn**: In production, `WEBAUTHN_ORIGIN` must be HTTPS and must match `WEBAUTHN_RP_ID`. Invalid production config now fails fast at startup.
+- **Docker deployment**: Compose samples now pin the nginx image and add service health checks so the reverse proxy waits for healthy backend/frontend services.

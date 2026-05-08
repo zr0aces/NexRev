@@ -288,7 +288,7 @@ export function initNotifications() {
   // Start polling for /start commands (linking)
   pollTelegramUpdates();
 
-  // Schedule for 8:30 AM on weekdays (Mon-Fri)
+  // Schedule for 8:30 AM on weekdays (Mon-Fri; node-cron uses 1=Monday, 5=Friday)
   cron.schedule('30 8 * * 1-5', async () => {
     await sendDailyReminders();
   }, {

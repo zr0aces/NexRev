@@ -10,6 +10,7 @@ import { AiService } from './ai-service.js';
 const ai = new AiService();
 const DIGEST_CACHE_RETENTION_DAYS = 7;
 const DIGEST_CACHE_PATTERN = /^daily-digest-(\d{4}-\d{2}-\d{2})\.txt$/;
+const NON_RETRYABLE_TELEGRAM_STATUSES = new Set([400, 401, 403, 404]);
 
 // Token-to-ChatID mapping for automatic linking
 const pendingLinks = new Map<string, string>();
@@ -86,7 +87,7 @@ export async function sendTelegramMessage(chatId: string, text: string, retryCou
         if (fallbackRes.ok) return;
       }
 
-      if (res.status < 500 && res.status !== 429) {
+      if (NON_RETRYABLE_TELEGRAM_STATUSES.has(res.status)) {
         throw new Error(`Telegram API rejected request with status ${res.status}: ${errorData}`);
       }
       
@@ -163,7 +164,7 @@ function getReminderTimezone(): string {
 }
 
 function getCacheDir(): string {
-  return process.env.DATA_DIR || './data';
+  return path.resolve(process.env.DATA_DIR ?? path.join(process.cwd(), '..', 'data'));
 }
 
 async function ensureDigestCacheDir(): Promise<void> {

@@ -76,7 +76,7 @@ async function verifySyncedVersions(expectedVersion) {
   }
 
   const envExample = await fs.readFile(path.join(rootDir, '.env.example'), 'utf8');
-  if (!envExample.includes(`NEXREV_VERSION=${expectedVersion}`)) {
+  if (!new RegExp(`^NEXREV_VERSION=${expectedVersion}$`, 'm').test(envExample)) {
     throw new Error('.env.example was not updated with the new NEXREV_VERSION.');
   }
 }

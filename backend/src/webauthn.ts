@@ -47,11 +47,17 @@ function getExpectedOrigin(): string | string[] {
   return parts.length === 1 ? parts[0] : parts;
 }
 
+const VALID_TRANSPORTS = new Set<AuthenticatorTransportFuture>(['ble', 'cable', 'hybrid', 'internal', 'nfc', 'smart-card', 'usb']);
+
 function safeParseTransports(transports: string | null, passkeyId: string): AuthenticatorTransportFuture[] | undefined {
   if (!transports) return undefined;
   try {
     const parsed = JSON.parse(transports) as unknown;
-    return Array.isArray(parsed) ? parsed as AuthenticatorTransportFuture[] : undefined;
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter(
+      (value): value is AuthenticatorTransportFuture =>
+        typeof value === 'string' && VALID_TRANSPORTS.has(value as AuthenticatorTransportFuture)
+    );
   } catch (err) {
     console.warn(`⚠️ Invalid passkey transports JSON for ${passkeyId}:`, err);
     return undefined;

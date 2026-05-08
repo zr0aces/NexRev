@@ -43,6 +43,7 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    # Uses the Node 20 runtime bundled in the image for fetch()-based health checks.
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
       interval: 30s
@@ -57,6 +58,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    # Uses the Node 20 runtime bundled in the image for fetch()-based health checks.
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r => { if (!r.ok) process.exit(1); }).catch(() => process.exit(1))"]
       interval: 30s

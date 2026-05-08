@@ -29,6 +29,7 @@ interface AiConfig {
 }
 
 const DEFAULT_TIMEOUT_MS = 90000;
+const DEFAULT_OPENROUTER_OPENAI_FALLBACK = 'true';
 
 function normalizeBaseUrl(url: string): string {
   return url.replace(/\/$/, '');
@@ -108,7 +109,8 @@ export async function verifyAiProviderAvailability(): Promise<void> {
 
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
   const candidates =
-    config.provider === 'openrouter' && (process.env.OPENROUTER_OPENAI_FALLBACK ?? 'true').toLowerCase() === 'true'
+    config.provider === 'openrouter' &&
+      (process.env.OPENROUTER_OPENAI_FALLBACK ?? DEFAULT_OPENROUTER_OPENAI_FALLBACK).toLowerCase() === 'true'
       ? [config.model, config.model.replace(/^openrouter\//, 'openai/')]
       : [config.model];
 

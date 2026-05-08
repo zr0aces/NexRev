@@ -9,6 +9,7 @@ import { AiService } from './ai-service.js';
 
 const ai = new AiService();
 const DIGEST_CACHE_RETENTION_DAYS = 7;
+const DIGEST_CACHE_PATTERN = /^daily-digest-(\d{4}-\d{2}-\d{2})\.txt$/;
 
 // Token-to-ChatID mapping for automatic linking
 const pendingLinks = new Map<string, string>();
@@ -86,7 +87,7 @@ export async function sendTelegramMessage(chatId: string, text: string, retryCou
       }
 
       if (res.status < 500 && res.status !== 429) {
-        throw new Error(`Telegram API rejected request with status ${res.status}`);
+        throw new Error(`Telegram API rejected request with status ${res.status}: ${errorData}`);
       }
       
     } catch (err: any) {
@@ -176,9 +177,11 @@ async function cleanupOldDigestCache(): Promise<void> {
     cutoff.setDate(cutoff.getDate() - DIGEST_CACHE_RETENTION_DAYS);
 
     await Promise.all(entries
-      .filter((entry) => /^daily-digest-\d{4}-\d{2}-\d{2}\.txt$/.test(entry))
+      .filter((entry) => DIGEST_CACHE_PATTERN.test(entry))
       .map(async (entry) => {
-        const fileDate = new Date(`${entry.slice(13, 23)}T00:00:00Z`);
+        const match = entry.match(DIGEST_CACHE_PATTERN);
+        if (!match) return;
+        const fileDate = new Date(`${match[1]}T00:00:00Z`);
         if (Number.isNaN(fileDate.getTime()) || fileDate >= cutoff) return;
         await fs.unlink(path.join(getCacheDir(), entry)).catch(() => undefined);
       }));

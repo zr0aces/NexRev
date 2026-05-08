@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply } from 'fastify';
 import * as storage from '../storage.js';
 import { AiService, NoActivitiesError, verifyAiProviderAvailability } from '../ai-service.js';
 import type { ActivityContext } from '../ai-service.js';
@@ -6,19 +6,23 @@ import type { ActivityContext } from '../ai-service.js';
 const service = new AiService();
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.addHook('onRequest', async (_req, reply) => {
+  const ensureProviderReady = async (reply: FastifyReply): Promise<FastifyReply | null> => {
     try {
       await verifyAiProviderAvailability();
+      return null;
     } catch (err) {
       return reply.code(503).send({
         error: err instanceof Error ? err.message : 'AI provider is not available.',
       });
     }
-  });
+  };
 
   fastify.post<{ Body: { raw: string; id: string } }>(
     '/ai/summarize',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { raw, id } = req.body ?? ({} as { raw?: string; id?: string });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       if (!raw) return reply.code(400).send({ error: 'raw is required' });
@@ -36,7 +40,10 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/sf-note',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       try {
@@ -53,7 +60,10 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/extract-tasks',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       try {

@@ -94,7 +94,7 @@ async function runWithTimeout<T>(promise: Promise<T>, timeoutMs: number, message
 }
 
 export function isAiConfigured(): boolean {
-  return getAiConfigError(getAiConfig()) == null;
+  return getAiConfigError(getAiConfig()) === null;
 }
 
 export async function verifyAiProviderAvailability(): Promise<void> {
@@ -108,7 +108,7 @@ export async function verifyAiProviderAvailability(): Promise<void> {
 
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
   const candidates =
-    config.provider === 'openrouter'
+    config.provider === 'openrouter' && (process.env.OPENROUTER_OPENAI_FALLBACK ?? 'true').toLowerCase() === 'true'
       ? [config.model, config.model.replace(/^openrouter\//, 'openai/')]
       : [config.model];
 
@@ -128,14 +128,14 @@ async function runCompletion(config: AiConfig, system: string, user: string): Pr
       if (response && typeof response === 'object' && 'choices' in response) {
         return response.choices[0]?.message ?? {};
       }
-      throw new Error('Unexpected streaming response');
+      throw new Error('Unexpected response format from AI provider');
     } catch (err) {
       lastError = err;
       const message = err instanceof Error ? err.message.toLowerCase() : '';
       const canRetryWithFallback =
         config.provider === 'openrouter' &&
         candidate.startsWith('openrouter/') &&
-        message.includes('not supported');
+        (message.includes('cannot find a handler') || message.includes('not supported'));
       if (!canRetryWithFallback) break;
     }
   }

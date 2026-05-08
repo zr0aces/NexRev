@@ -47,22 +47,22 @@ function activeProvider(): AiProvider {
 function getAiConfig(): AiConfig {
   const provider = activeProvider();
   if (provider === 'openrouter') {
-    const model = (process.env.OPENROUTER_MODEL ?? process.env.AI_MODEL ?? '').trim();
+    const modelRaw = (process.env.OPENROUTER_MODEL ?? process.env.AI_MODEL ?? '').trim();
     return {
       provider,
       baseUrl: normalizeBaseUrl(process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'),
-      model: ensureModelPrefix(model, 'openrouter/'),
+      model: modelRaw ? ensureModelPrefix(modelRaw, 'openrouter/') : '',
       apiKey: process.env.OPENROUTER_API_KEY,
     };
   }
   if (provider === 'litellm') {
-    const model = (process.env.LITELLM_MODEL ?? process.env.AI_MODEL ?? '').trim();
+    const modelRaw = (process.env.LITELLM_MODEL ?? process.env.AI_MODEL ?? '').trim();
     const rawPrefix = (process.env.LITELLM_MODEL_PREFIX ?? '').trim();
     const prefix = rawPrefix ? (rawPrefix.endsWith('/') ? rawPrefix : `${rawPrefix}/`) : '';
     return {
       provider,
       baseUrl: normalizeBaseUrl(process.env.LITELLM_BASE_URL ?? 'http://localhost:4000'),
-      model: prefix ? ensureModelPrefix(model, prefix) : model,
+      model: modelRaw ? (prefix ? ensureModelPrefix(modelRaw, prefix) : modelRaw) : '',
       apiKey: process.env.LITELLM_API_KEY,
     };
   }
@@ -153,7 +153,7 @@ async function chat(system: string, user: string): Promise<string> {
       `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
     );
     const content = message.content;
-    if (!content) throw new Error('Empty response from Ollama');
+    if (!content) throw new Error('Empty response from AI provider');
     return content;
   } catch (err) {
     throw err;

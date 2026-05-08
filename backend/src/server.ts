@@ -11,6 +11,7 @@ import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
 import { initNotifications, stopNotifications } from './notifications.js';
+import { isAiConfigured } from './ai-service.js';
 
 // Simple .env loader to keep a single source of truth for Telegram/AI tokens
 if (!process.env.TELEGRAM_BOT_TOKEN) {
@@ -107,7 +108,7 @@ try {
 server.get('/api/health', async () => ({ 
   status: 'ok', 
   version: appVersion,
-  aiEnabled: !!process.env.OLLAMA_BASE_URL
+  aiEnabled: isAiConfigured()
 }));
 
 const dbInit = await initDatabase();

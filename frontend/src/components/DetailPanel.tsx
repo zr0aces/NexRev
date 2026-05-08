@@ -235,7 +235,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             style={{ height: 34 }}
             onClick={logWithAI} 
             disabled={!aiEnabled || !logInput.trim()} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Start here to generate a concise summary of the logged note"}
+            title={!aiEnabled ? "AI Service is not configured" : "Start here to generate a concise summary of the logged note"}
           >
             <Sparkles size={14} /> AI summarize
           </button>
@@ -244,7 +244,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             style={{ height: 34 }}
             onClick={extractTasks} 
             disabled={!aiEnabled || (!logInput.trim() && (!aiOutput || aiOutput.type !== 'ai')) && (opp.activities?.length === 0)} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Identify and populate actionable items into the Kanban Board"}
+            title={!aiEnabled ? "AI Service is not configured" : "Identify and populate actionable items into the Kanban Board"}
           >
             <ClipboardList size={14} /> Extract tasks
           </button>
@@ -253,7 +253,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             style={{ height: 34 }}
             onClick={genSfNote} 
             disabled={!aiEnabled || (opp.activities?.length === 0)} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Synchronize notes with Salesforce (SFDC)"}
+            title={!aiEnabled ? "AI Service is not configured" : "Synchronize notes with Salesforce (SFDC)"}
           >
             <Cloud size={14} /> SF update note
           </button>

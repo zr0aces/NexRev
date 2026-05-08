@@ -1,4 +1,5 @@
 import type { Activity, Opportunity } from './types.js';
+import { completion } from 'litellm';
 
 export interface ActivityContext {
   indices?: number[];
@@ -18,42 +19,143 @@ export class NoActivitiesError extends Error {
   }
 }
 
-const baseUrl = () => (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434').replace(/\/$/, '');
-const model   = () => process.env.OLLAMA_MODEL ?? 'llama3.2';
+type AiProvider = 'ollama' | 'openrouter' | 'litellm';
 
-async function chat(system: string, user: string): Promise<string> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000); // 90s timeout (better for local CPU-based LLMs)
+interface AiConfig {
+  provider: AiProvider;
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+}
 
-  try {
-    const res = await fetch(`${baseUrl()}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: model(),
+const DEFAULT_TIMEOUT_MS = 90000;
+
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/$/, '');
+}
+
+function ensureModelPrefix(model: string, prefix: string): string {
+  return model.startsWith(prefix) ? model : `${prefix}${model}`;
+}
+
+function activeProvider(): AiProvider {
+  const provider = (process.env.AI_PROVIDER ?? 'ollama').trim().toLowerCase();
+  if (provider === 'openrouter' || provider === 'litellm' || provider === 'ollama') return provider;
+  return 'ollama';
+}
+
+function getAiConfig(): AiConfig {
+  const provider = activeProvider();
+  if (provider === 'openrouter') {
+    const model = (process.env.OPENROUTER_MODEL ?? process.env.AI_MODEL ?? '').trim();
+    return {
+      provider,
+      baseUrl: normalizeBaseUrl(process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'),
+      model: ensureModelPrefix(model, 'openrouter/'),
+      apiKey: process.env.OPENROUTER_API_KEY,
+    };
+  }
+  if (provider === 'litellm') {
+    const model = (process.env.LITELLM_MODEL ?? process.env.AI_MODEL ?? '').trim();
+    const rawPrefix = (process.env.LITELLM_MODEL_PREFIX ?? '').trim();
+    const prefix = rawPrefix ? (rawPrefix.endsWith('/') ? rawPrefix : `${rawPrefix}/`) : '';
+    return {
+      provider,
+      baseUrl: normalizeBaseUrl(process.env.LITELLM_BASE_URL ?? 'http://localhost:4000'),
+      model: prefix ? ensureModelPrefix(model, prefix) : model,
+      apiKey: process.env.LITELLM_API_KEY,
+    };
+  }
+  const model = (process.env.OLLAMA_MODEL ?? process.env.AI_MODEL ?? 'llama3.2').trim();
+  return {
+    provider: 'ollama',
+    baseUrl: normalizeBaseUrl(process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'),
+    model: ensureModelPrefix(model, 'ollama/'),
+  };
+}
+
+function getAiConfigError(config: AiConfig): string | null {
+  if (!config.model) {
+    if (config.provider === 'openrouter') return 'OPENROUTER_MODEL (or AI_MODEL) is required.';
+    if (config.provider === 'litellm') return 'LITELLM_MODEL (or AI_MODEL) is required.';
+    return 'OLLAMA_MODEL (or AI_MODEL) is required.';
+  }
+  if (config.provider === 'openrouter' && !config.apiKey) {
+    return 'OPENROUTER_API_KEY is required when AI_PROVIDER=openrouter.';
+  }
+  return null;
+}
+
+async function runWithTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return await Promise.race<T>([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(message)), timeoutMs)),
+  ]);
+}
+
+export function isAiConfigured(): boolean {
+  return getAiConfigError(getAiConfig()) == null;
+}
+
+export async function verifyAiProviderAvailability(): Promise<void> {
+  const config = getAiConfig();
+  const configError = getAiConfigError(config);
+  if (configError) throw new Error(configError);
+  if (config.provider !== 'ollama') return;
+  const res = await fetch(`${config.baseUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
+  if (!res.ok) throw new Error(`Ollama is not reachable at ${config.baseUrl}.`);
+}
+
+async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
+  const candidates =
+    config.provider === 'openrouter'
+      ? [config.model, config.model.replace(/^openrouter\//, 'openai/')]
+      : [config.model];
+
+  let lastError: unknown;
+  for (const candidate of candidates) {
+    try {
+      const response = await completion({
+        model: candidate,
+        baseUrl: config.baseUrl,
+        apiKey: config.apiKey,
         stream: false,
         messages: [
           { role: 'system', content: system },
-          { role: 'user',   content: user   },
+          { role: 'user', content: user },
         ],
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
-    if (!res.ok) {
-      const text = await res.text().catch(() => res.statusText);
-      throw new Error(`Ollama error ${res.status}: ${text}`);
+      });
+      if (response && typeof response === 'object' && 'choices' in response) {
+        return response.choices[0]?.message ?? {};
+      }
+      throw new Error('Unexpected streaming response');
+    } catch (err) {
+      lastError = err;
+      const message = err instanceof Error ? err.message.toLowerCase() : '';
+      const canRetryWithFallback =
+        config.provider === 'openrouter' &&
+        candidate.startsWith('openrouter/') &&
+        message.includes('not supported');
+      if (!canRetryWithFallback) break;
     }
-    const data = await res.json() as { message?: { content?: string }; error?: string };
-    if (data.error) throw new Error(`Ollama: ${data.error}`);
-    const content = data.message?.content;
+  }
+  throw lastError instanceof Error ? lastError : new Error('AI completion failed');
+}
+
+async function chat(system: string, user: string): Promise<string> {
+  const config = getAiConfig();
+  const configError = getAiConfigError(config);
+  if (configError) throw new Error(configError);
+  try {
+    const message = await runWithTimeout(
+      runCompletion(config, system, user),
+      DEFAULT_TIMEOUT_MS,
+      `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
+    );
+    const content = message.content;
     if (!content) throw new Error('Empty response from Ollama');
     return content;
-  } catch (err: any) {
-    clearTimeout(timeout);
-    if (err.name === 'AbortError') {
-      throw new Error('Ollama request timed out after 90 seconds');
-    }
+  } catch (err) {
     throw err;
   }
 }

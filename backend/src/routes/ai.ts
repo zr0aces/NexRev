@@ -1,19 +1,17 @@
 import type { FastifyPluginAsync } from 'fastify';
 import * as storage from '../storage.js';
-import { AiService, NoActivitiesError } from '../ai-service.js';
+import { AiService, NoActivitiesError, verifyAiProviderAvailability } from '../ai-service.js';
 import type { ActivityContext } from '../ai-service.js';
 
-const baseUrl = () => (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434').replace(/\/$/, '');
 const service = new AiService();
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('onRequest', async (_req, reply) => {
     try {
-      const res = await fetch(`${baseUrl()}/api/tags`, { signal: AbortSignal.timeout(3000) });
-      if (!res.ok) throw new Error(`status ${res.status}`);
-    } catch {
+      await verifyAiProviderAvailability();
+    } catch (err) {
       return reply.code(503).send({
-        error: `Ollama is not reachable at ${baseUrl()}. Ensure Ollama is running and OLLAMA_BASE_URL is correct.`,
+        error: err instanceof Error ? err.message : 'AI provider is not available.',
       });
     }
   });

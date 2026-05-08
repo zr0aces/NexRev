@@ -20,7 +20,7 @@ NexRev is designed for individual account executives and sales professionals who
 | **Telegram Integration** | **[NEW]** Daily reminders at 8:30 AM for due/overdue tasks. Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
-| **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for private, on-device intelligence. |
+| **AI Provider Flexibility** | Run AI features with Ollama (local), OpenRouter (cloud), or LiteLLM proxy using a unified backend interface. |
 | **Manual Digest** | **[NEW]** Trigger the daily Telegram digest manually via CLI in production. |
 
 ---
@@ -32,7 +32,7 @@ NexRev is designed for individual account executives and sales professionals who
 - **Reverse Proxy**: Nginx (handling both frontend and backend).
 - **Storage**: SQLite (single local database file).
 - **Authentication**: JWT-based secure login with bcrypt hashing.
-- **AI Engine**: Ollama (Local LLM Integration).
+- **AI Engine**: LiteLLM-based unified integration (Ollama, OpenRouter, or LiteLLM proxy).
 - **Deployment**: Docker Compose.
 
 ## 🗄 Data Storage
@@ -61,12 +61,12 @@ Backup and restore:
 
 ### Prerequisites
 - Docker & Docker Compose.
-- [Ollama](https://ollama.com) installed and running locally.
+- One AI provider configured: Ollama, OpenRouter, or LiteLLM proxy.
 
 ### 1. Setup Environment
 ```bash
 cp .env.example .env
-# Edit .env to set TELEGRAM_BOT_TOKEN, OLLAMA_BASE_URL, etc.
+# Edit .env to set TELEGRAM_BOT_TOKEN and AI provider variables (AI_PROVIDER + provider-specific settings).
 ```
 
 ### 2. Pull AI Model
@@ -147,4 +147,4 @@ npm test
 
 - **JWT_SECRET**: Must be set to a long random string in production via `.env`. The server logs a warning at startup if this is missing.
 - **Default credentials**: On first run, a default `admin/admin` account is created. Change the password immediately via the Profile tab or `node backend/scripts/manage-users.mjs passwd admin <newpassword>`. The default account is automatically removed once any other user account is defined.
-- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints at 503 if Ollama is unreachable.
+- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints return `503` when the configured AI provider is unavailable or misconfigured.

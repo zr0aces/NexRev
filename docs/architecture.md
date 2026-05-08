@@ -2,7 +2,7 @@
 
 ## Core Principles
 1. **Local-First**: Data belongs to the user, stored in a local SQLite database file.
-2. **AI-Enhanced**: Uses local LLMs (Ollama) to reduce manual data entry and CRM reporting friction.
+2. **AI-Enhanced**: Uses a unified AI integration (Ollama, OpenRouter, or LiteLLM) to reduce manual data entry and CRM reporting friction.
 3. **Speed**: Lightweight stack (React + Fastify) with no heavy UI libraries for instant responsiveness.
 
 ---
@@ -14,7 +14,7 @@
 | **Frontend** | React 18, Vite | TypeScript, Vanilla CSS (GitHub-Dark inspired theme). |
 | **Backend** | Fastify 5 | TypeScript, JWT Auth, bcrypt hashing. |
 | **Storage** | SQLite | Uses `better-sqlite3`; primary file is `data/nexrev.sqlite3`. |
-| **AI** | Ollama | Integrates via REST API with `llama3.2` (default). |
+| **AI** | LiteLLM integration | Unified completion interface across Ollama, OpenRouter, and LiteLLM proxy. |
 | **Proxy** | Nginx | Reverse proxy for routing and service orchestration. |
 
 ---

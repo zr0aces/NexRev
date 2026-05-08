@@ -123,7 +123,7 @@ Bulk import opportunities from an array (max 500 items). Existing IDs are skippe
 
 ## AI Endpoints
 
-All AI endpoints require Ollama to be running. Returns `503` if Ollama is unreachable.
+AI endpoints use the configured provider (`AI_PROVIDER=ollama|openrouter|litellm`). Returns `503` if the configured provider is unavailable or misconfigured.
 
 ### POST `/api/ai/summarize`
 Summarize raw meeting notes for a specific opportunity.

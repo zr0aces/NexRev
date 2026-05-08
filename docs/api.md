@@ -186,5 +186,5 @@ Extract Kanban tasks from recent activity logs and add them to the opportunity b
 Returns `200 OK`, the current application version, and whether the AI service is configured.
 **Response `200`**
 ```json
-{ "status": "ok", "version": "2026.5.13", "aiEnabled": true }
+{ "status": "ok", "version": "2026.5.16", "aiEnabled": true }
 ```

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 2026.5.16
 
 ### Security
 - Enforced strong `JWT_SECRET` requirements in production and rejected placeholder secrets at startup.

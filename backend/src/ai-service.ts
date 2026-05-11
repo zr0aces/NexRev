@@ -29,7 +29,6 @@ interface AiConfig {
 }
 
 const DEFAULT_TIMEOUT_MS = 90000;
-const DEFAULT_OPENROUTER_OPENAI_FALLBACK = 'true';
 
 function normalizeBaseUrl(url: string): string {
   return url.replace(/\/$/, '');
@@ -52,7 +51,7 @@ function getAiConfig(): AiConfig {
     return {
       provider,
       baseUrl: normalizeBaseUrl(process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'),
-      model: modelRaw ? ensureModelPrefix(modelRaw, 'openrouter/') : '',
+      model: modelRaw,
       apiKey: process.env.OPENROUTER_API_KEY,
     };
   }
@@ -108,12 +107,39 @@ export async function verifyAiProviderAvailability(): Promise<void> {
 }
 
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
-  const candidates =
-    config.provider === 'openrouter' &&
-      (process.env.OPENROUTER_OPENAI_FALLBACK ?? DEFAULT_OPENROUTER_OPENAI_FALLBACK).toLowerCase() === 'true'
-      ? [config.model, config.model.replace(/^openrouter\//, 'openai/')]
-      : [config.model];
+  if (config.provider === 'openrouter') {
+    try {
+      const res = await fetch(`${config.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://nexrev.ai',
+          'X-Title': 'NexRev',
+        },
+        body: JSON.stringify({
+          model: config.model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: user },
+          ],
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        if (res.status === 429) {
+          throw new Error('AI rate limit exceeded. Please wait a few seconds and try again.');
+        }
+        throw new Error(`OpenRouter error: ${err.error?.message || res.statusText}`);
+      }
+      const data = await res.json();
+      return data.choices[0]?.message ?? {};
+    } catch (err) {
+      throw err;
+    }
+  }
 
+  const candidates = [config.model];
   let lastError: unknown;
   for (const candidate of candidates) {
     try {
@@ -133,12 +159,7 @@ async function runCompletion(config: AiConfig, system: string, user: string): Pr
       throw new Error('Unexpected response format from AI provider');
     } catch (err) {
       lastError = err;
-      const message = err instanceof Error ? err.message.toLowerCase() : '';
-      const canRetryWithFallback =
-        config.provider === 'openrouter' &&
-        candidate.startsWith('openrouter/') &&
-        (message.includes('cannot find a handler') || message.includes('not supported'));
-      if (!canRetryWithFallback) break;
+      break;
     }
   }
   throw lastError instanceof Error ? lastError : new Error('AI completion failed');

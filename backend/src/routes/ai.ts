@@ -17,6 +17,19 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
     }
   };
 
+  const handleError = (e: unknown, reply: FastifyReply, route: string) => {
+    console.error(`❌ Error in ${route}:`, e);
+    if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
+    if (e instanceof Error) {
+      if (e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
+      if (e.message.includes('rate limit exceeded')) return reply.code(429).send({ error: e.message });
+    }
+    return reply.code(500).send({ 
+      error: 'Internal server error', 
+      details: e instanceof Error ? e.message : String(e) 
+    });
+  };
+
   fastify.post<{ Body: { raw: string; id: string } }>(
     '/ai/summarize',
     { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
@@ -31,9 +44,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         const summary = await service.summarize(raw, opp);
         return { summary };
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/summarize');
       }
     }
   );
@@ -51,9 +62,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         const note = await service.buildSfNote(opp, context);
         return { note };
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/sf-note');
       }
     }
   );
@@ -79,9 +88,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         await storage.writeOpportunity(opp);
         return opp;
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/extract-tasks');
       }
     }
   );

@@ -656,6 +656,9 @@ html, body {
   /* Subtract nav (72px) + #app padding top (24px) = 96px. Bottom pad handles mobile nav. */
   height: calc(100vh - 96px);
   overflow: hidden;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
 }
 
 .pipeline-toolbar {
@@ -944,9 +947,9 @@ html, body {
 
 /* ── Log Panel (full-page Activity Log tab) ───────────── */
 .log-panel {
-  max-width: 900px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 4px 0 40px;
+  padding: 4px 40px 40px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -1411,6 +1414,13 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
   align-items: center;
 }
 
+.today-panel {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px 40px;
+  animation: fadeIn 0.3s ease;
+}
+
 .today-card-dot {
   width: 10px;
   height: 10px;
@@ -1519,9 +1529,9 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
 
 /* ── Profile Panel ───────────────────────────────────── */
 .profile-panel {
-  max-width: 900px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 28px 24px;
+  padding: 28px 40px;
   animation: fadeIn 0.3s ease;
 }
 
@@ -2212,6 +2222,11 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
     height: 64px;
     padding: 0 16px;
     background: var(--bg-card);
+  }
+
+  .log-panel, .profile-panel, .pipeline-wrapper, .today-panel {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .nav-center {

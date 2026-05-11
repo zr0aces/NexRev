@@ -85,7 +85,7 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
   });
 
   return (
-    <div>
+    <div className="today-panel">
       <MetricsRow opps={opps} />
 
       <div className="today-grid-wrapper">

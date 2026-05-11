@@ -23,13 +23,12 @@ interface FormData {
   stage: Stage;
   close: string;
   followup: string;
-  nextStep: string;
-  notes: string;
+
 }
 
 const empty: FormData = {
   name: '', contact: '', contactEmail: '', contactMobile: '', contactTitle: '',
-  value: '', stage: 'Prospecting', close: '', followup: '', nextStep: '', notes: '',
+  value: '', stage: 'Prospecting', close: '', followup: '',
 };
 
 function isValidEmail(email: string): boolean {
@@ -54,8 +53,7 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
         stage: editOpp.stage,
         close: editOpp.close ?? '',
         followup: editOpp.followup ?? '',
-        nextStep: editOpp.nextStep ?? '',
-        notes: editOpp.notes ?? '',
+
       });
     }
   }, [editOpp]);
@@ -95,8 +93,7 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
         stage: form.stage,
         close: form.close,
         followup: form.followup,
-        nextStep: form.nextStep.trim(),
-        notes: form.notes.trim(),
+
       };
       if (editOpp) {
         await api.opportunities.update(editOpp.id, payload);
@@ -219,15 +216,7 @@ export default function OppModal({ opps, editOpp, onClose, onSaved, onSelectExis
           </div>
         </div>
 
-        <div className="form-group">
-          <label>Next step</label>
-          <input type="text" value={form.nextStep} placeholder="e.g. Send proposal draft by Friday" onChange={e => set('nextStep', e.target.value)} />
-        </div>
 
-        <div className="form-group">
-          <label>Initial notes</label>
-          <textarea value={form.notes} placeholder="Context, background, key contacts…" onChange={e => set('notes', e.target.value)} />
-        </div>
 
         <div className="modal-footer">
           <button className="btn" onClick={onClose}>Cancel</button>

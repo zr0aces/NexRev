@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  Edit3, 
-  Trash2, 
-  MessageSquare, 
-  Sparkles, 
-  Cloud, 
+import {
+  Edit3,
+  Trash2,
+  MessageSquare,
+  Sparkles,
+  Cloud,
   ClipboardList,
   Mail,
   Phone,
@@ -31,9 +31,9 @@ interface Props {
 
 export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnabled }: Props) {
   const { addToast } = useToast();
-  const [logInput,   setLogInput]   = useState('');
-  const [aiOutput,   setAiOutput]   = useState<{ type: 'ai' | 'sf'; text: string } | null>(null);
-  const [aiLoading,  setAiLoading]  = useState<string | null>(null);
+  const [logInput, setLogInput] = useState('');
+  const [aiOutput, setAiOutput] = useState<{ type: 'ai' | 'sf'; text: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState<string | null>(null);
   const [nextFollowup, setNextFollowup] = useState(opp.followup || '');
 
   const logRaw = async () => {
@@ -47,7 +47,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
       // First update the opportunity with the new follow-up date
       const updatedOpp = await api.opportunities.update(opp.id, { followup: nextFollowup });
       onUpdate(updatedOpp);
-      
+
       const updated = await api.activities.add(opp.id, { raw, ai: false });
       setLogInput('');
       setAiOutput(null);
@@ -73,7 +73,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
 
       // 2. Generate summary
       const { summary } = await api.ai.summarize(raw, opp.id);
-      
+
       // 3. Log activity with summary
       const updatedWithActivity = await api.activities.add(opp.id, { raw, summary, ai: true });
       setAiOutput({ type: 'ai', text: summary });
@@ -83,7 +83,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
       // 4. Automatically extract tasks from the new activity (and recent history)
       const finalOpp = await api.ai.extractTasks(opp.id);
       onUpdate(finalOpp);
-      
+
       addToast('AI summary generated and tasks extracted successfully.', 'success');
     } catch (e) {
       addToast('AI process failed: ' + (e as Error).message, 'error');
@@ -109,18 +109,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
     }
   };
 
-  const extractTasks = async () => {
-    setAiLoading('Extracting tasks with AI…');
-    try {
-      const updated = await api.ai.extractTasks(opp.id);
-      onUpdate(updated);
-      addToast('Board updated with new tasks extracted from activities.', 'success');
-    } catch (e) {
-      addToast('Extraction failed: ' + (e as Error).message, 'error');
-    } finally {
-      setAiLoading(null);
-    }
-  };
+
 
 
   const deleteOpp = async () => {
@@ -156,164 +145,151 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
 
       {/* ── Scrollable body ── */}
       <div className="detail-body">
-      {/* ── Contact / deal meta ── */}
-      <div className="detail-meta-grid">
-        {opp.contact && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><UserIcon size={12} /> Contact</span>
-            <span>{opp.contact}{opp.contactTitle ? ` — ${opp.contactTitle}` : ''}</span>
-          </div>
-        )}
-        {opp.contactEmail && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><Mail size={12} /> Email</span>
-            <a href={`mailto:${opp.contactEmail}`} style={{ color: 'var(--orange-mid)' }}>{opp.contactEmail}</a>
-          </div>
-        )}
-        {opp.contactMobile && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><Phone size={12} /> Mobile</span>
-            <a href={`tel:${opp.contactMobile}`} style={{ color: 'inherit' }}>{opp.contactMobile}</a>
-          </div>
-        )}
-        {opp.value != null && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><DollarSign size={12} /> Value</span>
-            <span>${Number(opp.value).toLocaleString()}</span>
-          </div>
-        )}
-        {opp.close && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><Calendar size={12} /> Close</span>
-            <span>{fmtDate(opp.close)}</span>
-          </div>
-        )}
-        {opp.followup && (
-          <div className="detail-meta-item">
-            <span className="detail-meta-label"><Clock size={12} /> Follow-up</span>
-            <span className={opp.followup < todayStr() ? 'overdue' : ''}>{fmtDate(opp.followup)}</span>
-          </div>
-        )}
-        {opp.notes && (
-          <div className="detail-meta-item" style={{ gridColumn: '1 / -1' }}>
-            <span className="detail-meta-label"><MessageSquare size={12} /> Notes&nbsp;</span>
-            <span style={{ whiteSpace: 'pre-wrap' }}>{opp.notes}</span>
-          </div>
-        )}
-      </div>
-
-      {/* ── Kanban board ── */}
-      <div className="detail-section">
-        <div className="detail-section-title"><ClipboardList size={16} /> Board</div>
-        <OppKanban opp={opp} onUpdate={onUpdate} />
-      </div>
-
-      {/* ── Activity log input ── */}
-      <div className="detail-section">
-        <div className="detail-section-title"><MessageSquare size={16} /> Log activity / meeting notes</div>
-        
-        <textarea
-          value={logInput}
-          placeholder="Paste raw meeting notes, call summary, or any activity…"
-          onChange={e => setLogInput(e.target.value)}
-        />
-        <div className="log-actions" style={{ alignItems: 'flex-end' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--orange-text)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Follow-up</span>
-            <input 
-              type="date" 
-              value={nextFollowup} 
-              onChange={e => setNextFollowup(e.target.value)}
-              className="btn-sm"
-              style={{ 
-                background: 'var(--bg-input)', 
-                border: '1px solid var(--border)', 
-                color: 'var(--text)',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                fontSize: '12px',
-                height: '34px', /* Match button height */
-                width: '130px'
-              }}
-            />
-          </div>
-          <button className="btn btn-sm btn-primary" style={{ height: 34 }} onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
-            <MessageSquare size={14} /> Log note
-          </button>
-          <button 
-            className="btn btn-sm btn-ai" 
-            style={{ height: 34 }}
-            onClick={logWithAI} 
-            disabled={!aiEnabled || !logInput.trim()} 
-            title={!aiEnabled ? "AI Service is not configured" : "Generate summary AND extract tasks from this note"}
-          >
-            <Sparkles size={14} /> AI Summarize & Extract
-          </button>
-          <button 
-            className="btn btn-sm btn-teal" 
-            style={{ height: 34, opacity: 0.7 }}
-            onClick={extractTasks} 
-            disabled={!aiEnabled} 
-            title={!aiEnabled ? "AI Service is not configured" : "Manually re-run task extraction from all recent activities"}
-          >
-            <ClipboardList size={14} /> AI Extract Tasks
-          </button>
-          <button 
-            className="btn btn-sm btn-blue" 
-            style={{ height: 34 }}
-            onClick={genSfNote} 
-            disabled={!aiEnabled || (opp.activities?.length === 0)} 
-            title={!aiEnabled ? "AI Service is not configured" : "Synchronize notes with Salesforce (SFDC)"}
-          >
-            <Cloud size={14} /> AI SF Suggest Note
-          </button>
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>
-          Recommended: Start with <b>AI Summarize & Extract</b>, then <b>AI SF Suggest Note</b>.
-        </div>
-        {aiLoading && (
-          <div className="ai-box"><span className="spinner" />{aiLoading}</div>
-        )}
-        {!aiLoading && aiOutput && (
-          aiOutput.type === 'sf' ? (
-            <>
-              <div className="ai-label" style={{ marginTop: 10 }}>Salesforce-ready note — copy &amp; paste directly</div>
-              <div className="sf-box">{aiOutput.text}</div>
-            </>
-          ) : (
-            <>
-              <div className="ai-label" style={{ marginTop: 10 }}>AI Summary</div>
-              <div className="ai-box">{aiOutput.text}</div>
-            </>
-          )
-        )}
-      </div>
-
-      {/* ── Activity history ── */}
-      <div className="detail-section">
-        <div className="detail-section-title"><Clock size={16} /> Activity history ({activities.length})</div>
-        {activities.length === 0 ? (
-          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No activities yet</div>
-        ) : (
-          activities.map((a, i) => (
-            <div key={a.id || `${a.date}-${i}`} className="activity-item">
-              <div className="activity-meta">
-                {a.sf && <span className="badge badge-sf" title="Salesforce Source"><Cloud size={10} /> SF</span>}
-                {a.ai && !a.sf && <span className="badge badge-ai" title="AI Generated"><Sparkles size={10} /> AI</span>}
-              </div>
-              <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', marginTop: 4, color: 'var(--text)' }}>
-                {a.summary ?? a.raw}
-              </div>
-              {a.summary && !a.sf && a.raw !== a.summary && (
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                  Raw: {a.raw.slice(0, 80)}{a.raw.length > 80 ? '…' : ''}
-                </div>
-              )}
-              <div className="activity-date">{a.date}</div>
+        {/* ── Contact / deal meta ── */}
+        <div className="detail-meta-grid">
+          {opp.contact && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><UserIcon size={12} /> Contact</span>
+              <span>{opp.contact}{opp.contactTitle ? ` — ${opp.contactTitle}` : ''}</span>
             </div>
-          ))
-        )}
-      </div>
+          )}
+          {opp.contactEmail && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><Mail size={12} /> Email</span>
+              <a href={`mailto:${opp.contactEmail}`} style={{ color: 'var(--orange-mid)' }}>{opp.contactEmail}</a>
+            </div>
+          )}
+          {opp.contactMobile && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><Phone size={12} /> Mobile</span>
+              <a href={`tel:${opp.contactMobile}`} style={{ color: 'inherit' }}>{opp.contactMobile}</a>
+            </div>
+          )}
+          {opp.value != null && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><DollarSign size={12} /> Value</span>
+              <span>${Number(opp.value).toLocaleString()}</span>
+            </div>
+          )}
+          {opp.close && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><Calendar size={12} /> Close</span>
+              <span>{fmtDate(opp.close)}</span>
+            </div>
+          )}
+          {opp.followup && (
+            <div className="detail-meta-item">
+              <span className="detail-meta-label"><Clock size={12} /> Follow-up</span>
+              <span className={opp.followup < todayStr() ? 'overdue' : ''}>{fmtDate(opp.followup)}</span>
+            </div>
+          )}
+
+        </div>
+
+        {/* ── Kanban board ── */}
+        <div className="detail-section">
+          <div className="detail-section-title"><ClipboardList size={16} /> Board</div>
+          <OppKanban opp={opp} onUpdate={onUpdate} />
+        </div>
+
+        {/* ── Activity log input ── */}
+        <div className="detail-section">
+          <div className="detail-section-title"><MessageSquare size={16} /> Log activity / meeting notes</div>
+
+          <textarea
+            value={logInput}
+            placeholder="Paste raw meeting notes, call summary, or any activity…"
+            onChange={e => setLogInput(e.target.value)}
+          />
+          <div className="log-actions" style={{ alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--orange-text)', textTransform: 'uppercase', letterSpacing: 0.5 }}>Next Follow-up</span>
+              <input
+                type="date"
+                value={nextFollowup}
+                onChange={e => setNextFollowup(e.target.value)}
+                className="btn-sm"
+                style={{
+                  background: 'var(--bg-input)',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text)',
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  height: '34px', /* Match button height */
+                  width: '130px'
+                }}
+              />
+            </div>
+            <button className="btn btn-sm btn-primary" style={{ height: 34 }} onClick={logRaw} disabled={!logInput.trim()} title="Log the raw note to history">
+              <MessageSquare size={14} /> Log note
+            </button>
+            <button
+              className="btn btn-sm btn-ai"
+              style={{ height: 34 }}
+              onClick={logWithAI}
+              disabled={!aiEnabled || !logInput.trim()}
+              title={!aiEnabled ? "AI Service is not configured" : "Generate summary AND extract tasks from this note"}
+            >
+              <Sparkles size={14} /> AI Summarize & Extract
+            </button>
+
+            <button
+              className="btn btn-sm btn-blue"
+              style={{ height: 34 }}
+              onClick={genSfNote}
+              disabled={!aiEnabled || (opp.activities?.length === 0)}
+              title={!aiEnabled ? "AI Service is not configured" : "Synchronize notes with Salesforce (SFDC)"}
+            >
+              <Cloud size={14} /> AI SF Suggest Note
+            </button>
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>
+            Recommended: Start with <b>AI Summarize & Extract</b>, then <b>AI SF Suggest Note</b>.
+          </div>
+          {aiLoading && (
+            <div className="ai-box"><span className="spinner" />{aiLoading}</div>
+          )}
+          {!aiLoading && aiOutput && (
+            aiOutput.type === 'sf' ? (
+              <>
+                <div className="ai-label" style={{ marginTop: 10 }}>Salesforce-ready note — copy &amp; paste directly</div>
+                <div className="sf-box">{aiOutput.text}</div>
+              </>
+            ) : (
+              <>
+                <div className="ai-label" style={{ marginTop: 10 }}>AI Summary</div>
+                <div className="ai-box">{aiOutput.text}</div>
+              </>
+            )
+          )}
+        </div>
+
+        {/* ── Activity history ── */}
+        <div className="detail-section">
+          <div className="detail-section-title"><Clock size={16} /> Activity history ({activities.length})</div>
+          {activities.length === 0 ? (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>No activities yet</div>
+          ) : (
+            activities.map((a, i) => (
+              <div key={a.id || `${a.date}-${i}`} className="activity-item">
+                <div className="activity-meta">
+                  {a.sf && <span className="badge badge-sf" title="Salesforce Source"><Cloud size={10} /> SF</span>}
+                  {a.ai && !a.sf && <span className="badge badge-ai" title="AI Generated"><Sparkles size={10} /> AI</span>}
+                </div>
+                <div style={{ fontSize: 13, whiteSpace: 'pre-wrap', marginTop: 4, color: 'var(--text)' }}>
+                  {a.summary ?? a.raw}
+                </div>
+                {a.summary && !a.sf && a.raw !== a.summary && (
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                    Raw: {a.raw.slice(0, 80)}{a.raw.length > 80 ? '…' : ''}
+                  </div>
+                )}
+                <div className="activity-date">{a.date}</div>
+              </div>
+            ))
+          )}
+        </div>
       </div>{/* end detail-body */}
     </div>
   );

@@ -31,8 +31,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
     const q = search.toLowerCase();
     list = list.filter(o =>
       o.name.toLowerCase().includes(q) ||
-      (o.contact ?? '').toLowerCase().includes(q) ||
-      (o.notes ?? '').toLowerCase().includes(q)
+      (o.contact ?? '').toLowerCase().includes(q)
     );
   }
   if (sort === 'value') list.sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
@@ -164,12 +163,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                     </div>
 
                     {/* Row 3: next step preview */}
-                    {o.nextStep && (
-                      <div className="opp-next-step">
-                        <ChevronDown size={10} style={{ flexShrink: 0, opacity: 0.5 }} />
-                        <span>{o.nextStep}</span>
-                      </div>
-                    )}
+
 
                     {/* Row 4: counters */}
                     {(activityCount > 0 || pendingCount > 0) && (

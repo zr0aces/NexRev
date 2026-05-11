@@ -94,8 +94,7 @@ function parseLegacyOpportunity(id: string, raw: string): Opportunity {
     stage: normalizeStage(data.stage),
     close: normalizeDate(data.close),
     followup: normalizeDate(data.followup),
-    nextStep: String(data.nextStep ?? ''),
-    notes: body.trim(),
+
     nextSteps: ((data.nextSteps ?? []) as Opportunity['nextSteps']).map((s) => ({
       text: String(s.text ?? ''),
       done: Boolean(s.done),
@@ -146,8 +145,7 @@ function createSchema(db: Database.Database): void {
       stage TEXT NOT NULL CHECK(stage IN (${stages})),
       close_date TEXT NOT NULL DEFAULT '',
       followup_date TEXT NOT NULL DEFAULT '',
-      next_step TEXT NOT NULL DEFAULT '',
-      notes TEXT NOT NULL DEFAULT '',
+
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       updated_by TEXT
@@ -258,10 +256,10 @@ function insertOpportunityFromLegacy(db: Database.Database, opp: Opportunity): b
   const insertOpp = db.prepare(`
     INSERT INTO opportunities (
       id, name, contact, contact_email, contact_mobile, contact_title,
-      value, stage, close_date, followup_date, next_step, notes, created_at, updated_at, updated_by
+      value, stage, close_date, followup_date, created_at, updated_at, updated_by
     ) VALUES (
       @id, @name, @contact, @contactEmail, @contactMobile, @contactTitle,
-      @value, @stage, @close, @followup, @nextStep, @notes, @createdAt, @updatedAt, @updatedBy
+      @value, @stage, @close, @followup, @createdAt, @updatedAt, @updatedBy
     )
     ON CONFLICT(id) DO NOTHING
   `);

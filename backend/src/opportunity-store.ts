@@ -173,8 +173,7 @@ export class OpportunityStore {
           stage: (raw.stage as Opportunity['stage']) ?? 'Prospecting',
           close: typeof raw.close === 'string' ? raw.close : '',
           followup: typeof raw.followup === 'string' ? raw.followup : '',
-          nextStep: typeof raw.nextStep === 'string' ? raw.nextStep : '',
-          notes: typeof raw.notes === 'string' ? raw.notes : '',
+
           nextSteps: Array.isArray(raw.nextSteps)
             ? (raw.nextSteps as Record<string, unknown>[]).map(s => ({
                 text: typeof s.text === 'string' ? s.text : '',

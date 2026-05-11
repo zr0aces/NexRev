@@ -64,8 +64,7 @@ function exportMd(opps: Opportunity[], addToast: (message: string, type?: ToastT
     if (o.value)        lines.push(`- **Value:** $${Number(o.value).toLocaleString()}`);
     if (o.close)        lines.push(`- **Close date:** ${fmtDate(o.close)}`);
     if (o.followup)     lines.push(`- **Follow-up:** ${fmtDate(o.followup)}${isOverdue(o.followup) ? ' ⚠️ OVERDUE' : ''}`);
-    if (o.nextStep)     lines.push(`- **Next step:** ${o.nextStep}`);
-    if (o.notes)        lines.push('', '**Notes:**', '', o.notes);
+
     if (o.nextSteps?.length) {
       lines.push('', '**Board:**', '');
       ['todo', 'followup', 'done'].forEach(col => {

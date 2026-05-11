@@ -69,8 +69,7 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
     const q = search.toLowerCase();
     pending = pending.filter(o =>
       o.name.toLowerCase().includes(q) ||
-      (o.contact ?? '').toLowerCase().includes(q) ||
-      (o.notes ?? '').toLowerCase().includes(q)
+      (o.contact ?? '').toLowerCase().includes(q)
     );
   }
 
@@ -182,13 +181,7 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
                       )}
                     </div>
                   </div>
-                  {o.nextStep && (
-                    <div className="today-card-footer">
-                      <div className="today-card-next" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <CheckCircle2 size={12} /> Next: {o.nextStep}
-                      </div>
-                    </div>
-                  )}
+
                   <div className="today-card-accent" />
                 </div>
               );

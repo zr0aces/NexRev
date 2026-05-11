@@ -12,8 +12,7 @@ interface OpportunityRow {
   stage: Stage;
   close_date: string;
   followup_date: string;
-  next_step: string;
-  notes: string;
+
   created_at: string;
   updated_at: string;
   updated_by: string | null;
@@ -50,8 +49,7 @@ function buildOpportunity(
     stage: row.stage,
     close: row.close_date,
     followup: row.followup_date,
-    nextStep: row.next_step,
-    notes: row.notes,
+
     nextSteps: steps.map((step) => ({
       text: step.text,
       done: Boolean(step.done),
@@ -107,7 +105,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
     .prepare(`
       SELECT
         id, name, contact, contact_email, contact_mobile, contact_title,
-        value, stage, close_date, followup_date, next_step, notes,
+        value, stage, close_date, followup_date,
         created_at, updated_at, updated_by
       FROM opportunities
       ORDER BY name COLLATE NOCASE ASC
@@ -174,7 +172,7 @@ export async function readOpportunity(id: string): Promise<Opportunity> {
     .prepare(`
       SELECT
         id, name, contact, contact_email, contact_mobile, contact_title,
-        value, stage, close_date, followup_date, next_step, notes,
+        value, stage, close_date, followup_date,
         created_at, updated_at, updated_by
       FROM opportunities
       WHERE id = ?
@@ -193,11 +191,11 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
   const upsertOpportunity = db.prepare(`
     INSERT INTO opportunities (
       id, name, contact, contact_email, contact_mobile, contact_title,
-      value, stage, close_date, followup_date, next_step, notes,
+      value, stage, close_date, followup_date,
       created_at, updated_at, updated_by
     ) VALUES (
       @id, @name, @contact, @contactEmail, @contactMobile, @contactTitle,
-      @value, @stage, @close, @followup, @nextStep, @notes,
+      @value, @stage, @close, @followup,
       @createdAt, @updatedAt, @updatedBy
     )
     ON CONFLICT(id) DO UPDATE SET
@@ -210,8 +208,6 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
       stage = excluded.stage,
       close_date = excluded.close_date,
       followup_date = excluded.followup_date,
-      next_step = excluded.next_step,
-      notes = excluded.notes,
       updated_at = excluded.updated_at,
       updated_by = excluded.updated_by
   `);

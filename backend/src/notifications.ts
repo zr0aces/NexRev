@@ -237,7 +237,7 @@ export async function sendDailyReminders() {
         message += `<b>📅 Due Today:</b>\n`;
         dueToday.forEach(o => {
           message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
-          if (o.nextStep) message += `  <i>Next: ${escapeHtml(o.nextStep)}</i>\n`;
+
         });
         message += `\n`;
       }

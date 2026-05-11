@@ -57,8 +57,7 @@ export interface Opportunity {
   stage: Stage;
   close: string;
   followup: string;
-  nextStep: string;
-  notes: string;
+
   nextSteps: NextStep[];
   activities: Activity[];
   createdAt: string;

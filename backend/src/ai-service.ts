@@ -215,7 +215,7 @@ export class AiService {
     const kanbanSection = opp.nextSteps.length ? `\n${formatKanban(opp)}` : '';
     return chat(
       'You are a sales assistant. Given recent activities and the current board state, produce a concise one-line next-step update suitable for a Salesforce activity note. Focus on the immediate next action and what happened. Output ONLY the one-line summary, no headers or dates.',
-      `Account: ${opp.name}\nStage: ${opp.stage}\nContact: ${opp.contact || 'N/A'}\nRecent activities:\n${recentActs}\nNext step on file: ${opp.nextStep || 'None'}${kanbanSection}`,
+      `Account: ${opp.name}\nStage: ${opp.stage}\nContact: ${opp.contact || 'N/A'}\nRecent activities:\n${recentActs}\n${kanbanSection}`,
     );
   }
 
@@ -256,7 +256,7 @@ If no tasks are found for a category, return an empty array. No other text.`;
     if (data.dueToday.length > 0) {
       sections.push("DUE TODAY:\n" + data.dueToday.map(o => {
         let text = `- ${o.name} (${o.stage})`;
-        if (o.nextStep) text += `\n  Next: ${o.nextStep}`;
+
         const pending = o.nextSteps.filter(s => !s.done).map(s => s.text);
         if (pending.length > 0) text += `\n  Tasks: ${pending.join(', ')}`;
         return text;

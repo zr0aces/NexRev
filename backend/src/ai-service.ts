@@ -226,7 +226,7 @@ export class AiService {
     const recentActs = activities.map(a => a.summary ?? a.raw).join('\n---\n');
     const kanbanSection = opp.nextSteps.length ? `\n${formatKanban(opp)}` : '';
     return chat(
-      'You are a Salesforce CRM assistant. Given recent sales activity notes and the current task board, produce a Salesforce activity note in this exact format:\nDATE: [date]\nACTIVITY TYPE: [Call/Meeting/Email]\nSUMMARY: [1-2 sentences]\nNEXT STEP: [specific action, with date if known]\n\nUnder 80 words. Professional. CRM-ready.',
+      'You are a sales assistant. Given recent activities and the current board state, produce a concise one-line next-step update suitable for a Salesforce activity note. Focus on the immediate next action and what happened. Output ONLY the one-line summary, no headers or dates.',
       `Account: ${opp.name}\nStage: ${opp.stage}\nContact: ${opp.contact || 'N/A'}\nRecent activities:\n${recentActs}\nNext step on file: ${opp.nextStep || 'None'}${kanbanSection}`,
     );
   }

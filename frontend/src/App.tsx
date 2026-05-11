@@ -157,7 +157,13 @@ export default function App() {
             aiEnabled={aiEnabled}
           />
         )}
-        {tab === 'log' && <ActivityLogPanel opps={opps} />}
+        {tab === 'log' && (
+          <ActivityLogPanel
+            opps={opps}
+            onSelectOpp={(id) => { setSelectedId(id); setTab('pipeline'); }}
+          />
+        )}
+
         {tab === 'profile' && <ProfilePanel version={version} aiEnabled={aiEnabled} />}
       </div>
       {modalState !== null && (

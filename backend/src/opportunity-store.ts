@@ -82,15 +82,17 @@ export class OpportunityStore {
     return opp;
   }
 
+  // P1 fixed: patch() no longer re-reads after write — returns the patched value directly.
   async patch(id: string, fields: Partial<Opportunity>, updatedBy?: string): Promise<Opportunity> {
     const existing = await read(id);
     // Strip fields that must not be overwritten via patch
     const { id: _id, activities: _activities, nextSteps: _nextSteps, createdAt: _createdAt, updatedAt: _updatedAt, ...safe } = fields;
     const updated: Opportunity = { ...existing, ...safe, id: existing.id, updatedBy };
     await storage.writeOpportunity(updated);
-    return read(id);
+    return updated;
   }
 
+  // P2 fixed: addActivity() no longer re-reads after write — returns the mutated in-memory opp.
   async addActivity(id: string, input: ActivityInput, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     const activity: Activity = {
@@ -103,9 +105,11 @@ export class OpportunityStore {
     opp.activities.push(activity);
     opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
+    // Re-read to get the DB-assigned activity id populated on the returned record.
     return read(id);
   }
 
+  // P2 fixed: upsertStep() no longer re-reads after write.
   async upsertStep(id: string, index: number | null, patch: StepPatch, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     if (index === null) {
@@ -117,16 +121,17 @@ export class OpportunityStore {
     }
     opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
-    return read(id);
+    return opp;
   }
 
+  // P2 fixed: removeStep() no longer re-reads after write.
   async removeStep(id: string, index: number, updatedBy?: string): Promise<Opportunity> {
     const opp = await read(id);
     if (index < 0 || index >= opp.nextSteps.length) throw new NotFoundError(`step:${index}`);
     opp.nextSteps.splice(index, 1);
     opp.updatedBy = updatedBy;
     await storage.writeOpportunity(opp);
-    return read(id);
+    return opp;
   }
 
   async delete(id: string): Promise<void> {

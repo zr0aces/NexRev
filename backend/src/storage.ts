@@ -95,10 +95,6 @@ function hydrateOpportunity(row: OpportunityRow): Opportunity {
   return buildOpportunity(row, steps, activities);
 }
 
-export async function ensureDataDir(): Promise<void> {
-  await initDatabase();
-}
-
 export async function listIds(): Promise<Set<string>> {
   const db = getDb();
   const rows = db.prepare('SELECT id FROM opportunities').all() as Array<{ id: string }>;

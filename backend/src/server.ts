@@ -1,7 +1,6 @@
-import fs, { existsSync, readFileSync } from 'fs';
-import fsPromises from 'fs/promises';
+import { existsSync, readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -18,8 +17,8 @@ import { validateWebAuthnConfig } from './webauthn.js';
 if (!process.env.TELEGRAM_BOT_TOKEN) {
   try {
     const rootEnvPath = path.join(process.cwd(), '..', '.env');
-    if (fs.existsSync(rootEnvPath)) {
-      const envContent = fs.readFileSync(rootEnvPath, 'utf8');
+    if (existsSync(rootEnvPath)) {
+      const envContent = readFileSync(rootEnvPath, 'utf8');
       envContent.split('\n').forEach(line => {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#')) return;
@@ -104,7 +103,7 @@ try {
   
   for (const p of possiblePaths) {
     try {
-      appVersion = (await fsPromises.readFile(p, 'utf8')).trim();
+      appVersion = (await readFile(p, 'utf8')).trim();
       break;
     } catch {
       continue;

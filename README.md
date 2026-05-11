@@ -14,9 +14,9 @@ NexRev is designed for individual account executives and sales professionals who
 | **Today Dashboard** | A centralized view of pending follow-ups with smart urgency indicators and high-impact metrics. |
 | **Integrated Pipeline** | Manage your entire deal flow with instant search, stage filters, and streamlined navigation. |
 | **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
-| **AI Task Extraction** | **[NEW]** Instantly scan activity logs to extract and populate Kanban tasks automatically. |
-| **AI Activity Summary** | Generate concise summaries of meeting notes and activity logs using local LLMs. |
-| **SF Update Note** | Generate Salesforce-ready activity summaries reflecting developments since your last sync. |
+| **AI Extract Tasks** | Instantly scan activity logs to extract and populate Kanban tasks automatically. |
+| **AI Summarize** | Generate concise summaries of meeting notes and activity logs using local or cloud LLMs. |
+| **AI SF Suggest Note** | Generate a concise one-line Salesforce next-step note from all activities since the last SF sync. |
 | **Telegram Integration** | **[NEW]** Weekday reminders at 8:30 AM for due/overdue tasks (weekends skipped). Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
@@ -161,6 +161,6 @@ cd ../frontend && npm install && npm run build
 
 - **JWT_SECRET**: Must be set to a long random string in production via `.env`. Placeholder or short secrets are rejected at startup.
 - **Default credentials**: On first run, a default `admin/admin` account is created. Change the password immediately via the Profile tab or `node backend/scripts/manage-users.mjs passwd admin <newpassword>`. The default account is automatically removed once any other user account is defined.
-- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints return `503` when the configured AI provider is unavailable or misconfigured.
+- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints return `503` when the configured AI provider is unavailable or misconfigured, and `429` when the provider's rate limit is exceeded (common with free-tier cloud models).
 - **Passkeys / WebAuthn**: In production, `WEBAUTHN_ORIGIN` must be HTTPS and must match `WEBAUTHN_RP_ID`. Invalid production config now fails fast at startup.
 - **Docker deployment**: Compose samples now pin the nginx image and add service health checks so the reverse proxy waits for healthy backend/frontend services.

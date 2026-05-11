@@ -33,15 +33,13 @@ interface TelegramGetUpdatesResponse {
   result: TelegramUpdate[];
 }
 
+// Telegram HTML only requires &, <, > to be escaped.
+// Escaping " and ' is unnecessary and can corrupt Telegram entity parsing.
 function escapeHtml(text: string): string {
-  // IMPORTANT: '&' must be replaced first to prevent double-escaping
-  // (e.g. '&lt;' would otherwise become '&amp;lt;').
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+    .replace(/>/g, '&gt;');
 }
 
 export async function sendTelegramMessage(chatId: string, text: string, retryCount = 2) {

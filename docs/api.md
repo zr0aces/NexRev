@@ -66,6 +66,57 @@ Poll for the `chatId` associated with a link token. Returns `null` if not yet li
 
 ---
 
+## Passkeys / WebAuthn
+
+Passkeys allow password-free authentication using the WebAuthn/FIDO2 standard. The backend must be configured with `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN`.
+
+### POST `/api/auth/passkey/login-options`
+Get challenge options for passkey login. Must be called before `/passkey/login`.
+**Request**
+```json
+{ "username": "admin" }
+```
+
+### POST `/api/auth/passkey/login`
+Verify a passkey authentication response and issue a JWT.
+**Request**
+```json
+{ "username": "admin", "response": { ... } }
+```
+**Response `200`**
+```json
+{ "token": "<jwt>", "username": "admin" }
+```
+**Common errors**
+- `400` missing username or response
+- `401` passkey authentication failed
+
+### POST `/api/auth/passkey/register-options` *(requires auth)*
+Get challenge options for registering a new passkey.
+
+### POST `/api/auth/passkey/register` *(requires auth)*
+Verify and save a new passkey credential.
+**Request**
+```json
+{ "response": { ... }, "name": "My MacBook" }
+```
+
+### GET `/api/auth/passkey/credentials` *(requires auth)*
+List all registered passkeys for the current user.
+**Response `200`**
+```json
+[{ "id": "...", "name": "My MacBook", "createdAt": "...", "lastUsedAt": "...", "deviceType": "multiDevice", "backedUp": true }]
+```
+
+### DELETE `/api/auth/passkey/credentials/:id` *(requires auth)*
+Delete a specific passkey by its UUID.
+**Response `200`**
+```json
+{ "ok": true }
+```
+
+---
+
 ## Opportunities
 
 Opportunity aggregate data is persisted in SQLite across `opportunities`, `next_steps`, and `activities`.
@@ -132,6 +183,8 @@ Bulk import opportunities from an array (max 500 items). Existing IDs are skippe
 
 AI endpoints use the configured provider (`AI_PROVIDER=ollama|openrouter|litellm`). Returns `503` if the configured provider is unavailable or misconfigured.
 
+> **Rate limits**: Free/shared AI providers (e.g., OpenRouter `:free` models) may return `429 Too Many Requests`. The API surfaces this as a `429` with a human-readable error message rather than a generic 500.
+
 ### POST `/api/ai/summarize`
 Summarize raw meeting notes for a specific opportunity.
 **Request**
@@ -145,23 +198,25 @@ Summarize raw meeting notes for a specific opportunity.
 **Common errors**
 - `400` missing `id` or `raw`
 - `404` opportunity not found
+- `429` AI provider rate limit exceeded
 - `503` AI provider unavailable or misconfigured
 
 ### POST `/api/ai/sf-note`
-Generate a Salesforce CRM-ready activity note from recent activities since the last SF sync.
+Generate a concise one-line Salesforce next-step note from activities since the last SF sync.
 **Request**
 ```json
 { "id": "opp_id_here", "context": { "indices": [0, 1], "drafts": [] } }
 ```
-`context` is optional. Omit to use all activities since the last SF note.
+`context` is optional. Omit to use all activities since the last SF note automatically.
 **Response `200`**
 ```json
-{ "note": "DATE: ...\nACTIVITY TYPE: ...\nSUMMARY: ...\nNEXT STEP: ..." }
+{ "note": "Met with procurement team — send revised proposal by Friday." }
 ```
 **Common errors**
 - `400` missing `id`
 - `404` opportunity not found
 - `422` no new activities since the last SF note
+- `429` AI provider rate limit exceeded
 - `503` AI provider unavailable or misconfigured
 
 ### POST `/api/ai/extract-tasks`
@@ -176,6 +231,7 @@ Extract Kanban tasks from recent activity logs and add them to the opportunity b
 - `400` missing `id`
 - `404` opportunity not found
 - `422` no new activities to extract tasks from
+- `429` AI provider rate limit exceeded
 - `503` AI provider unavailable or misconfigured
 
 ---
@@ -186,5 +242,5 @@ Extract Kanban tasks from recent activity logs and add them to the opportunity b
 Returns `200 OK`, the current application version, and whether the AI service is configured.
 **Response `200`**
 ```json
-{ "status": "ok", "version": "2026.5.16", "aiEnabled": true }
+{ "status": "ok", "version": "2026.5.17", "aiEnabled": true }
 ```

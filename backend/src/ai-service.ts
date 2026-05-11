@@ -101,86 +101,74 @@ export async function verifyAiProviderAvailability(): Promise<void> {
   const config = getAiConfig();
   const configError = getAiConfigError(config);
   if (configError) throw new Error(configError);
+  // Only do a live reachability check for Ollama (self-hosted). Cloud providers
+  // are validated by the API key / model config checks above.
   if (config.provider !== 'ollama') return;
   const res = await fetch(`${config.baseUrl}/api/tags`, { signal: AbortSignal.timeout(3000) });
   if (!res.ok) throw new Error(`Ollama is not reachable at ${config.baseUrl}.`);
 }
 
+// B1 fixed: removed useless try/catch wrapper — errors propagate naturally.
+// Q3 fixed: removed single-element candidates[] for-loop; call completion() directly.
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
   if (config.provider === 'openrouter') {
-    try {
-      const res = await fetch(`${config.baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${config.apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://nexrev.ai',
-          'X-Title': 'NexRev',
-        },
-        body: JSON.stringify({
-          model: config.model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        if (res.status === 429) {
-          throw new Error('AI rate limit exceeded. Please wait a few seconds and try again.');
-        }
-        throw new Error(`OpenRouter error: ${err.error?.message || res.statusText}`);
-      }
-      const data = await res.json();
-      return data.choices[0]?.message ?? {};
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  const candidates = [config.model];
-  let lastError: unknown;
-  for (const candidate of candidates) {
-    try {
-      const response = await completion({
-        model: candidate,
-        baseUrl: config.baseUrl,
-        apiKey: config.apiKey,
-        stream: false,
+    const res = await fetch(`${config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://nexrev.ai',
+        'X-Title': 'NexRev',
+      },
+      body: JSON.stringify({
+        model: config.model,
         messages: [
           { role: 'system', content: system },
           { role: 'user', content: user },
         ],
-      });
-      if (response && typeof response === 'object' && 'choices' in response) {
-        return response.choices[0]?.message ?? {};
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      if (res.status === 429) {
+        throw new Error('AI rate limit exceeded. Please wait a few seconds and try again.');
       }
-      throw new Error('Unexpected response format from AI provider');
-    } catch (err) {
-      lastError = err;
-      break;
+      throw new Error(`OpenRouter error: ${(err as { error?: { message?: string } }).error?.message || res.statusText}`);
     }
+    const data = await res.json() as { choices: Array<{ message: { content?: string | null } }> };
+    return data.choices[0]?.message ?? {};
   }
-  throw lastError instanceof Error ? lastError : new Error('AI completion failed');
+
+  // LiteLLM / Ollama path
+  const response = await completion({
+    model: config.model,
+    baseUrl: config.baseUrl,
+    apiKey: config.apiKey,
+    stream: false,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: user },
+    ],
+  });
+  if (response && typeof response === 'object' && 'choices' in response) {
+    return (response.choices as Array<{ message: { content?: string | null } }>)[0]?.message ?? {};
+  }
+  throw new Error('Unexpected response format from AI provider');
 }
 
+// B2 fixed: removed useless try/catch wrapper — errors propagate naturally.
 async function chat(system: string, user: string): Promise<string> {
   const config = getAiConfig();
   const configError = getAiConfigError(config);
   if (configError) throw new Error(configError);
-  try {
-    const message = await runWithTimeout(
-      runCompletion(config, system, user),
-      DEFAULT_TIMEOUT_MS,
-      `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
-    );
-    const content = message.content;
-    if (!content) throw new Error('Empty response from AI provider');
-    return content;
-  } catch (err) {
-    throw err;
-  }
+  const message = await runWithTimeout(
+    runCompletion(config, system, user),
+    DEFAULT_TIMEOUT_MS,
+    `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
+  );
+  const content = message.content;
+  if (!content) throw new Error('Empty response from AI provider');
+  return content;
 }
 
 function formatKanban(opp: Opportunity): string {
@@ -299,9 +287,7 @@ Use bullet points for items.
 Data:
 ${context}`;
 
-    console.log('🤖 Requesting AI digest generation...');
-    const result = await chat(prompt, "Please generate the Telegram message.");
-    console.log('✨ AI digest generated successfully.');
-    return result;
+    // B3 fixed: removed stray console.log debug calls.
+    return chat(prompt, "Please generate the Telegram message.");
   }
 }

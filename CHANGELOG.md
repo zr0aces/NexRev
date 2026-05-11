@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026.5.17
+
+### Features
+- Renamed "Extract Tasks" button to **AI Extract Tasks** for UI clarity.
+- Renamed "SF Update Note" button to **AI SF Suggest Note**.
+- **AI SF Suggest Note** now generates a concise one-line next-step summary suitable for direct paste into Salesforce activity fields.
+- **AI Summarize** and **AI Extract Tasks** are now disabled when the Log Activity textarea is empty, preventing accidental calls without context.
+
+### Fixes
+- Fixed 500 errors from AI endpoints when OpenRouter returned a 429 rate-limit response — the API now returns `429` with a human-readable message.
+- Fixed `escapeHtml` in Telegram notifications over-escaping `"` and `'`, which could corrupt Telegram HTML entity parsing.
+- Removed `(data as any)` cast in `App.tsx` — `aiEnabled` is now properly typed in the API client.
+
+### Performance
+- `opportunity-store.ts`: `patch()`, `upsertStep()`, and `removeStep()` no longer perform a redundant DB read after writing — saves one SQLite round-trip per Kanban and field-update operation.
+
+### Code Quality
+- Removed unused `ensureDataDir()` export from `storage.ts`.
+- Cleaned up dual `fs`/`fsPromises` namespace imports in `server.ts` to named imports.
+- Removed useless `try/catch` wrappers in `ai-service.ts` (`runCompletion`, `chat`) that silently re-threw without adding value.
+- Removed stale `console.log` debug calls from `generateDailyDigest`.
+- Simplified single-element `candidates[]` for-loop in `runCompletion` to a direct call.
+- Removed unused `fileURLToPath` import from `server.ts`.
+
+### Documentation
+- Updated `docs/api.md`: corrected AI SF note example response format, added `429` error codes to all AI endpoints, added full Passkey/WebAuthn endpoint section.
+- Updated `README.md`: corrected feature names to match UI (AI Extract Tasks, AI SF Suggest Note), added `429` to rate-limit security notes.
+
+---
+
 ## 2026.5.16
 
 ### Security

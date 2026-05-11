@@ -10,12 +10,13 @@ NexRev is designed for individual account executives and sales professionals who
 
 | Feature | Description |
 |---------|-------------|
-| **Premium Mobile UX** | **[NEW]** Native-like mobile experience with bottom navigation, floating action buttons (FAB), and responsive master-detail views. |
+| **Premium Mobile UX** | Native-like mobile experience with bottom navigation, floating action buttons (FAB), and responsive master-detail views. |
 | **Today Dashboard** | A centralized view of pending follow-ups with smart urgency indicators and high-impact metrics. |
 | **Integrated Pipeline** | Manage your entire deal flow with instant search, stage filters, and streamlined navigation. |
 | **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
-| **AI Extract Tasks** | Instantly scan activity logs to extract and populate Kanban tasks automatically. |
-| **AI Summarize** | Generate concise summaries of meeting notes and activity logs using local or cloud LLMs. |
+| **AI Summarize & Extract**| **[NEW]** A combined workflow that generates a meeting summary AND populates the Kanban board in one step. |
+| **Activity Log Dashboard**| **[NEW]** Redesigned log with search, grouping (by Date or Account), and source-based visual accents. |
+| **Profile & Security** | **[NEW]** Centralized identity management with password strength indicators and integrated Passkey (WebAuthn) support. |
 | **AI SF Suggest Note** | Generate a concise one-line Salesforce next-step note from all activities since the last SF sync. |
 | **Telegram Integration** | **[NEW]** Weekday reminders at 8:30 AM for due/overdue tasks (weekends skipped). Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |

@@ -3,10 +3,13 @@
 ## 2026.5.17
 
 ### Features
-- Renamed "Extract Tasks" button to **AI Extract Tasks** for UI clarity.
+- Combined **AI Summarize** and **AI Extract Tasks** into a single streamlined **AI Summarize & Extract** button.
+- AI task extraction now automatically leverages the generated summary for higher accuracy.
 - Renamed "SF Update Note" button to **AI SF Suggest Note**.
 - **AI SF Suggest Note** now generates a concise one-line next-step summary suitable for direct paste into Salesforce activity fields.
-- **AI Summarize** and **AI Extract Tasks** are now disabled when the Log Activity textarea is empty, preventing accidental calls without context.
+- **AI Summarize & Extract** is now disabled when the Log Activity textarea is empty, preventing accidental calls without context.
+- Fully redesigned **Profile** and **Log** pages with modern layout, search, filtering, and responsive behavior.
+- Added clickable account names in the Log tab to jump directly to opportunities in the Pipeline.
 
 ### Fixes
 - Fixed 500 errors from AI endpoints when OpenRouter returned a 429 rate-limit response — the API now returns `429` with a human-readable message.

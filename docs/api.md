@@ -225,7 +225,8 @@ Extract Kanban tasks from recent activity logs and add them to the opportunity b
 ```json
 { "id": "opp_id_here", "context": { "indices": [0, 1] } }
 ```
-`context` is optional.
+`context` is optional. If omitted, it extracts from all activities since the last Salesforce note.
+> **Frontend Note**: This is automatically called by the frontend immediately after a successful `/ai/summarize` to ensure the board is always in sync with new notes.
 **Response `200`** — Returns the updated opportunity object with new tasks added to `nextSteps`.
 **Common errors**
 - `400` missing `id`

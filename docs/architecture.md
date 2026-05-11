@@ -56,8 +56,8 @@ Operational metadata:
 
 ## AI Workflows
 
-### Task Extraction (`/api/ai/extract-tasks`)
-Scans recent activity logs and returns a JSON object with categorized tasks. The frontend then merges these into the existing Kanban board while preventing duplicates.
+### Combined Summarize & Extract (`/api/ai/summarize` + `/api/ai/extract-tasks`)
+The primary entry point for meeting notes. The frontend triggers a summarization followed immediately by an extraction call. This ensures that as soon as a summary is generated, the Kanban board is populated with the corresponding action items.
 
 ### CRM Note Generation (`/api/ai/sf-note`)
 Identifies the index of the last activity marked as `sf: true`. It then slices the activity log from that point forward to ensure the generated note only covers new ground.

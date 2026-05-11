@@ -65,20 +65,28 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
       addToast('Please set a Next Follow-up Date before generating AI summary.', 'error');
       return;
     }
-    setAiLoading('Summarizing with AI…');
+    setAiLoading('Summarizing & extracting tasks…');
     try {
-      // First update the opportunity with the new follow-up date
+      // 1. Update follow-up date
       const updatedOpp = await api.opportunities.update(opp.id, { followup: nextFollowup });
       onUpdate(updatedOpp);
 
+      // 2. Generate summary
       const { summary } = await api.ai.summarize(raw, opp.id);
-      const updated = await api.activities.add(opp.id, { raw, summary, ai: true });
+      
+      // 3. Log activity with summary
+      const updatedWithActivity = await api.activities.add(opp.id, { raw, summary, ai: true });
       setAiOutput({ type: 'ai', text: summary });
       setLogInput('');
-      onUpdate(updated);
-      addToast('AI summary generated, activity logged, and follow-up updated.', 'success');
+      onUpdate(updatedWithActivity);
+
+      // 4. Automatically extract tasks from the new activity (and recent history)
+      const finalOpp = await api.ai.extractTasks(opp.id);
+      onUpdate(finalOpp);
+      
+      addToast('AI summary generated and tasks extracted successfully.', 'success');
     } catch (e) {
-      addToast('AI summarization failed: ' + (e as Error).message, 'error');
+      addToast('AI process failed: ' + (e as Error).message, 'error');
       setAiOutput({ type: 'ai', text: (e as Error).message });
     } finally {
       setAiLoading(null);
@@ -237,16 +245,16 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             style={{ height: 34 }}
             onClick={logWithAI} 
             disabled={!aiEnabled || !logInput.trim()} 
-            title={!aiEnabled ? "AI Service is not configured" : "Start here to generate a concise summary of the logged note"}
+            title={!aiEnabled ? "AI Service is not configured" : "Generate summary AND extract tasks from this note"}
           >
-            <Sparkles size={14} /> AI summarize
+            <Sparkles size={14} /> AI Summarize & Extract
           </button>
           <button 
             className="btn btn-sm btn-teal" 
-            style={{ height: 34 }}
+            style={{ height: 34, opacity: 0.7 }}
             onClick={extractTasks} 
-            disabled={!aiEnabled || !logInput.trim()} 
-            title={!aiEnabled ? "AI Service is not configured" : "Identify and populate actionable items into the Kanban Board"}
+            disabled={!aiEnabled} 
+            title={!aiEnabled ? "AI Service is not configured" : "Manually re-run task extraction from all recent activities"}
           >
             <ClipboardList size={14} /> AI Extract Tasks
           </button>
@@ -261,7 +269,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>
-          Recommended: Start with <b>AI Summarize</b>, then <b>AI Extract Tasks</b>, and finally <b>AI SF Suggest Note</b>.
+          Recommended: Start with <b>AI Summarize & Extract</b>, then <b>AI SF Suggest Note</b>.
         </div>
         {aiLoading && (
           <div className="ai-box"><span className="spinner" />{aiLoading}</div>

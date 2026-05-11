@@ -12,3 +12,10 @@ export function daysUntil(d: string): number | null {
   if (!d) return null;
   return Math.round((new Date(d).getTime() - new Date(todayStr()).getTime()) / 86400000);
 }
+
+export function daysSince(d: string): number | null {
+  if (!d) return null;
+  const target = new Date(d.split('T')[0]).getTime();
+  const today = new Date(todayStr()).getTime();
+  return Math.floor((today - target) / 86400000);
+}

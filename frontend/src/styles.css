@@ -57,6 +57,10 @@
   --text-success:  #56d364;
   --text-error:    #ff7b72;
   --text-warning:  #e3b341;
+  
+  --ice-bg: rgba(186, 230, 253, 0.05);
+  --ice-border: rgba(186, 230, 253, 0.15);
+  --ice-text: #7dd3fc;
 }
 
 /* ── Light Theme ───────────────────────────────────────── */
@@ -90,6 +94,10 @@
   --text-success:  #1a7f37;
   --text-error:    #cf222e;
   --text-warning:  #9a6700;
+
+  --ice-bg: rgba(186, 230, 253, 0.15);
+  --ice-border: rgba(186, 230, 253, 0.4);
+  --ice-text: #0284c7;
 }
 
 html, body {
@@ -2646,4 +2654,51 @@ input:focus, textarea:focus, select:focus {
   .metric-val {
     font-size: 1.25rem;
   }
+}
+/* ── Stagnation Effect ─────────────────────────────────── */
+.opp-card.stagnant {
+  background: linear-gradient(145deg, var(--bg-card) 0%, var(--ice-bg) 100%);
+  border-color: var(--ice-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.opp-card.stagnant::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.6' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23f)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+}
+
+.opp-card.stagnant::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; width: 60px; height: 60px;
+  background: radial-gradient(circle at top right, rgba(186, 230, 253, 0.2) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stagnant-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  background: var(--ice-bg);
+  color: var(--ice-text);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border: 1px solid var(--ice-border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  animation: icePulse 3s ease-in-out infinite;
+}
+
+@keyframes icePulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
 }

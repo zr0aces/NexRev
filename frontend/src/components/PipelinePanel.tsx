@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Search, ArrowUpDown, ArrowLeft, ChevronDown } from 'lucide-react';
+import { Search, ArrowUpDown, ArrowLeft, ChevronDown, Snowflake } from 'lucide-react';
 import type { Opportunity } from '../types';
 import { STAGES } from '../types';
 import Badge from './Badge';
 import DetailPanel from './DetailPanel';
-import { todayStr, fmtDate } from '../utils';
+import { todayStr, fmtDate, daysSince } from '../utils';
 
 interface Props {
   opps: Opportunity[];
@@ -129,6 +129,11 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                 const isOverdue = o.followup && o.followup < today;
                 const activityCount = o.activities?.length ?? 0;
                 const pendingCount = o.nextSteps?.filter(s => !s.done).length ?? 0;
+                const latestActivityDate = o.activities?.length 
+                  ? o.activities[o.activities.length - 1].date 
+                  : o.createdAt;
+                const stagnantDays = daysSince(latestActivityDate) ?? 0;
+                const isStagnant = stagnantDays >= 7;
 
                 return (
                   <div
@@ -137,7 +142,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                       if (el) cardRefs.current.set(o.id, el);
                       else cardRefs.current.delete(o.id);
                     }}
-                    className={`opp-card${selectedId === o.id ? ' selected' : ''}`}
+                    className={`opp-card${selectedId === o.id ? ' selected' : ''}${isStagnant ? ' stagnant' : ''}`}
                     onClick={() => onSelect(o.id)}
                     tabIndex={-1}
                     role="button"
@@ -146,7 +151,15 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                     {/* Row 1: name + stage badge */}
                     <div className="opp-header">
                       <span className="opp-name">{o.name}</span>
-                      <Badge stage={o.stage} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        {isStagnant && (
+                          <div className="stagnant-badge" title={`${stagnantDays} days since last activity`}>
+                            <Snowflake size={10} strokeWidth={3} />
+                            STAGNANT
+                          </div>
+                        )}
+                        <Badge stage={o.stage} />
+                      </div>
                     </div>
 
                     {/* Row 2: value • contact • followup date */}

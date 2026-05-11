@@ -1205,27 +1205,317 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
   }
 }
 
-/* Profile Panel */
+/* ── Profile Panel ───────────────────────────────────── */
 .profile-panel {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 28px 24px;
   animation: fadeIn 0.3s ease;
 }
 
+/* Identity card at the top */
+.profile-identity-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 24px 28px;
+  margin-bottom: 24px;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  position: relative;
+  overflow: hidden;
+}
+.profile-identity-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--orange-grad);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.profile-avatar-lg {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--orange-grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1px;
+  flex-shrink: 0;
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+}
+
+.profile-identity-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-identity-name {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.profile-identity-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+
+.profile-identity-sep { opacity: 0.4; }
+
+/* Status dots */
+.profile-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.profile-status-dot.active  { background: var(--green-mid); box-shadow: 0 0 6px rgba(86, 211, 100, 0.5); }
+.profile-status-dot.inactive { background: var(--text-tertiary); }
+
+/* Two-column grid */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.profile-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Section card */
 .profile-section {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
-  margin-bottom: 2rem;
+  padding: 20px;
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  transition: border-color var(--t);
+}
+.profile-section:hover {
+  border-color: var(--border-hover);
 }
 
-.profile-section h3 {
-  margin-top: 0;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+/* Section header row */
+.profile-section-hd {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.profile-section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.profile-section-sub {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* Status badge in section header */
+.profile-status-badge {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.profile-status-badge.connected {
+  background: var(--bg-success);
+  color: var(--text-success);
+  border: 1px solid rgba(63, 185, 80, 0.2);
+}
+.profile-status-badge.disconnected {
+  background: var(--bg-error);
+  color: var(--text-error);
+  border: 1px solid rgba(248, 81, 73, 0.2);
+}
+
+/* Telegram — connected state */
+.profile-telegram-connected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-success);
+  border: 1px solid rgba(63, 185, 80, 0.15);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+.profile-telegram-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.profile-telegram-icon.connected {
+  background: rgba(63, 185, 80, 0.15);
+  color: var(--text-success);
+}
+
+/* Telegram — disconnected state */
+.profile-telegram-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-hover);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+}
+
+/* Password strength indicator */
+.profile-pw-strength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+.profile-pw-bars {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+.profile-pw-bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+.profile-pw-fields { }
+
+/* Documentation links */
+.profile-doc-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.profile-doc-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all var(--t);
+}
+.profile-doc-link:hover {
+  border-color: var(--orange);
   color: var(--orange-text);
+  background: var(--orange-light);
+}
+.profile-doc-lang {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--text-tertiary);
+}
+
+/* Passkey list */
+.profile-passkey-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.profile-passkey-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  transition: border-color var(--t);
+}
+.profile-passkey-item:hover {
+  border-color: var(--border-hover);
+}
+.profile-passkey-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+  line-height: 1.5;
+}
+
+/* System footer */
+.profile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+.profile-footer-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.profile-footer-sep {
+  width: 1px;
+  height: 12px;
+  background: var(--border);
 }
 
 /* ── Toaster & Toasts ──────────────────────────────────── */
@@ -1770,22 +2060,40 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
   gap: 10px;
 }
 
+@media (max-width: 768px) {
   .profile-panel {
-    padding: 1rem;
+    padding: 16px;
   }
-
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+  .profile-identity-card {
+    padding: 18px;
+    gap: 14px;
+  }
+  .profile-avatar-lg {
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+  .profile-identity-name {
+    font-size: 18px;
+  }
+  .profile-telegram-connected,
+  .profile-telegram-empty {
+    flex-wrap: wrap;
+  }
   .profile-actions-row {
     flex-direction: column;
   }
-
   .profile-actions-row input {
     width: 100%;
   }
-
   .profile-actions-row .btn {
     width: 100%;
     justify-content: center;
   }
+}
 
   .modal {
     padding: 24px;

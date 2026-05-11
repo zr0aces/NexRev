@@ -129,8 +129,8 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
   const activities = [...(opp.activities ?? [])].reverse();
 
   return (
-    <div>
-      {/* ── Header ── */}
+    <div style={{ display: 'contents' }}>
+      {/* ── Sticky Header ── */}
       <div className="detail-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
           <span className="detail-name">{opp.name}</span>
@@ -146,6 +146,8 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
         </div>
       </div>
 
+      {/* ── Scrollable body ── */}
+      <div className="detail-body">
       {/* ── Contact / deal meta ── */}
       <div className="detail-meta-grid">
         {opp.contact && (
@@ -304,6 +306,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
           ))
         )}
       </div>
+      </div>{/* end detail-body */}
     </div>
   );
 }

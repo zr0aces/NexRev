@@ -648,7 +648,25 @@ html, body {
 }
 
 /* ── Pipeline ─────────────────────────────────────────── */
-.pipeline-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+
+/* Wrapper provides the top-level stacking context for the pipeline page */
+.pipeline-wrapper {
+  display: flex;
+  flex-direction: column;
+  /* Subtract nav (72px) + #app padding top (24px) = 96px. Bottom pad handles mobile nav. */
+  height: calc(100vh - 96px);
+  overflow: hidden;
+}
+
+.pipeline-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+/* 1. Fluid search bar — grows to fill available toolbar space */
 .search-bar {
   padding: 7px 12px;
   border-radius: var(--radius);
@@ -657,11 +675,13 @@ html, body {
   background: var(--bg-input);
   color: var(--text);
   outline: none;
-  width: 280px;
+  width: 100%;
+  min-width: 160px;
   transition: border-color var(--t), box-shadow var(--t);
 }
 .search-bar::placeholder { color: var(--text-tertiary); }
 .search-bar:focus { border-color: var(--orange); box-shadow: 0 0 0 3px var(--orange-light); }
+
 .select-sm {
   padding: 6px 10px;
   border-radius: var(--radius);
@@ -674,7 +694,35 @@ html, body {
   transition: border-color var(--t);
 }
 .select-sm:focus { border-color: var(--orange); }
-.stage-filter { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* Result count pill */
+.pipeline-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 10px;
+  flex-shrink: 0;
+}
+
+/* 8. Stage filter: horizontal scroll, never wrap */
+.stage-filter {
+  display: flex;
+  gap: 5px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  flex-shrink: 0;
+  /* Hide scrollbar but keep scroll functionality */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.stage-filter::-webkit-scrollbar { display: none; }
+
 .filter-chip {
   padding: 4px 12px;
   border-radius: 20px;
@@ -685,6 +733,8 @@ html, body {
   color: var(--text-tertiary);
   font-family: inherit;
   transition: all var(--t);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .filter-chip:hover { border-color: var(--border-hover); color: var(--text-secondary); }
 .filter-chip.active {
@@ -694,42 +744,141 @@ html, body {
   font-weight: 500;
 }
 
-.pipeline-split { display: grid; grid-template-columns: 300px 1fr; gap: 14px; align-items: start; }
-.opp-list-col { display: flex; flex-direction: column; gap: 8px; }
+/* 1. Pipeline split — both columns scroll independently */
+.pipeline-split {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 14px;
+  flex: 1;
+  min-height: 0; /* critical: allows children to shrink below natural height */
+  overflow: hidden;
+}
+
+/* List column — its own scroll context */
+.opp-list-col {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  gap: 4px;
+  padding-right: 2px; /* prevent shadow clipping */
+}
+
 .opp-list { display: flex; flex-direction: column; gap: 6px; }
+
+/* Keyboard hint below the list */
+.pipeline-kbd-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+}
+
+/* Opportunity cards */
 .opp-card {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 12px 16px;
   cursor: pointer;
-  transition: border-color var(--t), background var(--t);
+  transition: border-color var(--t), background var(--t), box-shadow var(--t);
+  position: relative;
+  /* Left accent strip */
+  border-left: 3px solid transparent;
 }
-.opp-card:hover { border-color: var(--border-hover); background: var(--bg-secondary); }
+.opp-card:hover {
+  border-color: var(--border-hover);
+  background: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
+  border-left-color: var(--border-strong);
+}
 .opp-card.selected {
   border-color: var(--orange);
+  border-left-color: var(--orange);
   background: var(--orange-light);
+  box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.12);
 }
 .opp-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
-.opp-name { font-weight: 500; font-size: 14px; flex: 1; color: var(--text); }
-.opp-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-tertiary); flex-wrap: wrap; }
+.opp-name { font-weight: 600; font-size: 14px; flex: 1; color: var(--text); }
+.opp-meta { display: flex; gap: 8px; font-size: 12px; color: var(--text-tertiary); flex-wrap: wrap; margin-bottom: 4px; }
+.opp-meta-value { color: var(--green-mid); font-weight: 600; }
+
+/* Next step preview line */
+.opp-next-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--orange-text);
+  overflow: hidden;
+  margin-bottom: 5px;
+  line-height: 1.35;
+}
+.opp-next-step span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* Activity / pending counters */
+.opp-counters {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.opp-counter {
+  font-size: 11px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 1px 8px;
+  color: var(--text-tertiary);
+}
+.opp-counter--pending {
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.2);
+  color: var(--orange-text);
+}
+
 
 /* ── Detail Panel ─────────────────────────────────────── */
+/* 2. Detail column — its own scroll context */
 .detail-col {
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
 }
+/* 2. Sticky detail header inside the scrollable column */
 .detail-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 18px;
-  padding-bottom: 16px;
+  padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg);
+  backdrop-filter: var(--glass);
+  -webkit-backdrop-filter: var(--glass);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
 }
 .detail-name { font-size: 17px; font-weight: 600; flex: 1; color: var(--text); letter-spacing: -0.3px; }
+
+/* Scrollable body inside detail col */
+.detail-body {
+  padding: 20px 24px;
+  flex: 1;
+  min-height: 0;
+}
 .detail-meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1430,11 +1579,24 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(0.5); curso
 /* ── Mobile & Tablet Responsiveness ─────────────────── */
 
 @media (max-width: 1024px) {
+  .pipeline-wrapper {
+    height: auto;
+    overflow: visible;
+  }
   .pipeline-split {
     grid-template-columns: 1fr;
+    overflow: visible;
+    flex: none;
   }
   .opp-list-col {
+    overflow-y: visible;
+    max-height: 50vh;
+    overflow-y: auto;
     margin-bottom: 1.5rem;
+  }
+  .detail-col {
+    overflow-y: visible;
+    height: auto;
   }
 }
 

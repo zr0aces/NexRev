@@ -2,7 +2,7 @@
 
 ## Core Principles
 1. **Local-First**: Data belongs to the user, stored in a local SQLite database file.
-2. **AI-Enhanced**: Uses local LLMs (Ollama) to reduce manual data entry and CRM reporting friction.
+2. **AI-Enhanced**: Uses a unified AI integration (Ollama, OpenRouter, or LiteLLM) to reduce manual data entry and CRM reporting friction.
 3. **Speed**: Lightweight stack (React + Fastify) with no heavy UI libraries for instant responsiveness.
 
 ---
@@ -14,7 +14,7 @@
 | **Frontend** | React 18, Vite | TypeScript, Vanilla CSS (GitHub-Dark inspired theme). |
 | **Backend** | Fastify 5 | TypeScript, JWT Auth, bcrypt hashing. |
 | **Storage** | SQLite | Uses `better-sqlite3`; primary file is `data/nexrev.sqlite3`. |
-| **AI** | Ollama | Integrates via REST API with `llama3.2` (default). |
+| **AI** | LiteLLM integration | Unified completion interface across Ollama, OpenRouter, and LiteLLM proxy. |
 | **Proxy** | Nginx | Reverse proxy for routing and service orchestration. |
 
 ---
@@ -78,7 +78,7 @@ Identifies the index of the last activity marked as `sf: true`. It then slices t
    - Frontend polls `/api/auth/telegram/poll-link` to confirm success.
    - The `telegram_chat_id` is persisted in the `users` table.
 2. **Daily Reminders**:
-   - A `node-cron` job runs daily at 8:30 AM.
+   - A `node-cron` job runs on weekdays (Mon-Fri) at 8:30 AM.
    - Filters opportunities for those due today or overdue.
    - Sends a formatted HTML "Daily Digest" message to all users with a linked `telegram_chat_id`.
 

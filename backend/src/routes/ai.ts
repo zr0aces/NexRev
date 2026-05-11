@@ -1,26 +1,41 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply } from 'fastify';
 import * as storage from '../storage.js';
-import { AiService, NoActivitiesError } from '../ai-service.js';
+import { AiService, NoActivitiesError, verifyAiProviderAvailability } from '../ai-service.js';
 import type { ActivityContext } from '../ai-service.js';
 
-const baseUrl = () => (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434').replace(/\/$/, '');
 const service = new AiService();
 
 export const aiRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.addHook('onRequest', async (_req, reply) => {
+  const ensureProviderReady = async (reply: FastifyReply): Promise<FastifyReply | null> => {
     try {
-      const res = await fetch(`${baseUrl()}/api/tags`, { signal: AbortSignal.timeout(3000) });
-      if (!res.ok) throw new Error(`status ${res.status}`);
-    } catch {
+      await verifyAiProviderAvailability();
+      return null;
+    } catch (err) {
       return reply.code(503).send({
-        error: `Ollama is not reachable at ${baseUrl()}. Ensure Ollama is running and OLLAMA_BASE_URL is correct.`,
+        error: err instanceof Error ? err.message : 'AI provider is not available.',
       });
     }
-  });
+  };
+
+  const handleError = (e: unknown, reply: FastifyReply, route: string) => {
+    console.error(`❌ Error in ${route}:`, e);
+    if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
+    if (e instanceof Error) {
+      if (e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
+      if (e.message.includes('rate limit exceeded')) return reply.code(429).send({ error: e.message });
+    }
+    return reply.code(500).send({ 
+      error: 'Internal server error', 
+      details: e instanceof Error ? e.message : String(e) 
+    });
+  };
 
   fastify.post<{ Body: { raw: string; id: string } }>(
     '/ai/summarize',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { raw, id } = req.body ?? ({} as { raw?: string; id?: string });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       if (!raw) return reply.code(400).send({ error: 'raw is required' });
@@ -29,16 +44,17 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         const summary = await service.summarize(raw, opp);
         return { summary };
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/summarize');
       }
     }
   );
 
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/sf-note',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       try {
@@ -46,16 +62,17 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         const note = await service.buildSfNote(opp, context);
         return { note };
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/sf-note');
       }
     }
   );
 
   fastify.post<{ Body: { id: string; context?: ActivityContext } }>(
     '/ai/extract-tasks',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
     async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
       const { id, context } = req.body ?? ({} as { id?: string; context?: ActivityContext });
       if (!id) return reply.code(400).send({ error: 'id is required' });
       try {
@@ -71,9 +88,7 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
         await storage.writeOpportunity(opp);
         return opp;
       } catch (e) {
-        if (e instanceof NoActivitiesError) return reply.code(422).send({ error: e.message });
-        if (e instanceof Error && e.message === 'Opportunity not found') return reply.code(404).send({ error: 'Not found' });
-        return reply.code(500).send({ error: 'Internal server error' });
+        return handleError(e, reply, '/ai/extract-tasks');
       }
     }
   );

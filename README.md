@@ -14,13 +14,13 @@ NexRev is designed for individual account executives and sales professionals who
 | **Today Dashboard** | A centralized view of pending follow-ups with smart urgency indicators and high-impact metrics. |
 | **Integrated Pipeline** | Manage your entire deal flow with instant search, stage filters, and streamlined navigation. |
 | **Per-Opportunity Kanban** | A dedicated board for every account (To Do → Follow-ups → Done) with drag-and-drop support. |
-| **AI Task Extraction** | **[NEW]** Instantly scan activity logs to extract and populate Kanban tasks automatically. |
-| **AI Activity Summary** | Generate concise summaries of meeting notes and activity logs using local LLMs. |
-| **SF Update Note** | Generate Salesforce-ready activity summaries reflecting developments since your last sync. |
-| **Telegram Integration** | **[NEW]** Daily reminders at 8:30 AM for due/overdue tasks. Link your account via `/start` in the Telegram bot. |
+| **AI Extract Tasks** | Instantly scan activity logs to extract and populate Kanban tasks automatically. |
+| **AI Summarize** | Generate concise summaries of meeting notes and activity logs using local or cloud LLMs. |
+| **AI SF Suggest Note** | Generate a concise one-line Salesforce next-step note from all activities since the last SF sync. |
+| **Telegram Integration** | **[NEW]** Weekday reminders at 8:30 AM for due/overdue tasks (weekends skipped). Link your account via `/start` in the Telegram bot. |
 | **Modern Iconography** | Fully integrated with **Lucide React** for a clean, professional, and consistent UI. |
 | **Local-First Privacy** | All data is stored in a local SQLite database on your machine. |
-| **AI Powered by Ollama** | Leverage local LLMs (like Llama 3.2) for private, on-device intelligence. |
+| **AI Provider Flexibility** | Run AI features with Ollama (local), OpenRouter (cloud), or LiteLLM proxy using a unified backend interface. |
 | **Manual Digest** | **[NEW]** Trigger the daily Telegram digest manually via CLI in production. |
 
 ---
@@ -32,7 +32,7 @@ NexRev is designed for individual account executives and sales professionals who
 - **Reverse Proxy**: Nginx (handling both frontend and backend).
 - **Storage**: SQLite (single local database file).
 - **Authentication**: JWT-based secure login with bcrypt hashing.
-- **AI Engine**: Ollama (Local LLM Integration).
+- **AI Engine**: LiteLLM-based unified integration (Ollama, OpenRouter, or LiteLLM proxy).
 - **Deployment**: Docker Compose.
 
 ## 🗄 Data Storage
@@ -61,12 +61,12 @@ Backup and restore:
 
 ### Prerequisites
 - Docker & Docker Compose.
-- [Ollama](https://ollama.com) installed and running locally.
+- One AI provider configured: Ollama, OpenRouter, or LiteLLM proxy.
 
 ### 1. Setup Environment
 ```bash
 cp .env.example .env
-# Edit .env to set TELEGRAM_BOT_TOKEN, OLLAMA_BASE_URL, etc.
+# Edit .env to set JWT_SECRET, TELEGRAM_BOT_TOKEN, and AI provider variables.
 ```
 
 ### 2. Pull AI Model
@@ -79,6 +79,11 @@ ollama pull llama3.2
 docker compose up -d --build
 ```
 Access the application at **http://localhost:8088**.
+
+Production notes:
+- Set a **strong** `JWT_SECRET` (32+ characters). The backend now refuses to start in production with missing or placeholder secrets.
+- Set `WEBAUTHN_RP_ID` and `WEBAUTHN_ORIGIN` for your real domain before enabling passkeys in production.
+- Set `CORS_ORIGIN` to the exact browser origin(s) that should reach the API.
 
 ### 4. Initial Credentials
 - **Username**: `admin`
@@ -93,7 +98,9 @@ Access the application at **http://localhost:8088**.
 - [**คู่มือการใช้งาน (Thai)**](frontend/public/docs/user_guide_th.html) - คู่มือการใช้งานฉบับสมบูรณ์ภาษาไทย.
 - [**Architecture**](docs/architecture.md) - Deep dive into system design and data models.
 - [**API Reference**](docs/api.md) - Documentation of available endpoints.
+- [**Configuration Guide**](docs/configuration.md) - Required and optional environment variables for local and production deployments.
 - [**Docker Compose (GHCR)**](docs/docker-compose.yml) - Sample for deploying with pre-built images.
+- [**Changelog**](CHANGELOG.md) - Release history and notable operational changes.
 
 ---
 
@@ -124,6 +131,7 @@ NexRev follows a standardized **YYYY.M.PATCH** versioning strategy (e.g., `2026.
    ```bash
    node scripts/release.mjs
    ```
+   The script updates `VERSION`, synchronizes package/environment versions, and verifies the sync before finishing.
 2. **Runtime Access**:
   - The **Backend** reads the `VERSION` file at startup (either from the image or a volume mount) and exposes it via the `/api/health` endpoint.
   - The **Frontend** fetches this version dynamically from the API and displays it on the Login page and Profile panel, ensuring consistency with the running backend.
@@ -143,8 +151,16 @@ npm install
 npm test
 ```
 
+Build both applications before release:
+```bash
+cd backend && npm run build
+cd ../frontend && npm install && npm run build
+```
+
 ## 🔒 Security Notes
 
-- **JWT_SECRET**: Must be set to a long random string in production via `.env`. The server logs a warning at startup if this is missing.
+- **JWT_SECRET**: Must be set to a long random string in production via `.env`. Placeholder or short secrets are rejected at startup.
 - **Default credentials**: On first run, a default `admin/admin` account is created. Change the password immediately via the Profile tab or `node backend/scripts/manage-users.mjs passwd admin <newpassword>`. The default account is automatically removed once any other user account is defined.
-- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints at 503 if Ollama is unreachable.
+- **Rate limiting**: Login is capped at 10 requests/minute. AI endpoints return `503` when the configured AI provider is unavailable or misconfigured, and `429` when the provider's rate limit is exceeded (common with free-tier cloud models).
+- **Passkeys / WebAuthn**: In production, `WEBAUTHN_ORIGIN` must be HTTPS and must match `WEBAUTHN_RP_ID`. Invalid production config now fails fast at startup.
+- **Docker deployment**: Compose samples now pin the nginx image and add service health checks so the reverse proxy waits for healthy backend/frontend services.

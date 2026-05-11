@@ -59,6 +59,8 @@ async function syncVersion() {
         // Skip if file doesn't exist
       }
     }
+
+    console.log('✅ Version sync completed successfully');
   } catch (err) {
     console.error(`Error reading version file:`, err.message);
     process.exit(1);

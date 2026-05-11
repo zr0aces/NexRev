@@ -1,6 +1,6 @@
 {
   "name": "nexrev-backend",
-  "version": "2026.5.15",
+  "version": "2026.5.18",
   "type": "module",
   "scripts": {
     "version:sync": "node ../scripts/sync-version.mjs",
@@ -24,6 +24,7 @@
     "gray-matter": "^4.0.3",
     "js-yaml": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
+    "litellm": "^0.12.0",
     "nanoid": "^5.1.11",
     "node-cron": "^4.2.1"
   },

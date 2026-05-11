@@ -398,7 +398,7 @@ export default function ProfilePanel({ version, aiEnabled }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 6 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-tertiary)' }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: aiEnabled ? 'var(--text-success)' : 'var(--text-error)' }} />
-            AI Service: {aiEnabled ? 'Active' : 'Not Configured (Ollama)'}
+            AI Service: {aiEnabled ? 'Active' : 'Not Configured'}
           </div>
         </div>
         <p className="text-tertiary" style={{ fontSize: 12 }}>

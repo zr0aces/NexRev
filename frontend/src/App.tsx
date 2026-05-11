@@ -36,7 +36,7 @@ export default function App() {
     setUnauthorizedHandler(() => setAuthenticated(false));
     api.auth.getHealth().then(data => {
       setVersion(data.version);
-      setAiEnabled(!!(data as any).aiEnabled);
+      setAiEnabled(data.aiEnabled ?? false);
     }).catch(() => {});
   }, []);
 

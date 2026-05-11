@@ -27,7 +27,7 @@ export const RP_NAME = process.env.WEBAUTHN_RP_NAME ?? 'NexRev';
  * Allowed origins for WebAuthn verification.
  * Supports comma-separated values, e.g. "https://app.example.com,https://www.example.com".
  */
-function getExpectedOrigin(): string | string[] {
+function parseExpectedOrigins(): string[] {
   const raw = process.env.WEBAUTHN_ORIGIN;
   if (!raw) {
     if (process.env.NODE_ENV === 'production') {
@@ -37,10 +37,50 @@ function getExpectedOrigin(): string | string[] {
       );
     }
     console.warn('⚠️  WEBAUTHN_ORIGIN env var not set — using http://localhost:5173 for development.');
-    return 'http://localhost:5173';
+    return ['http://localhost:5173'];
   }
-  const parts = raw.split(',').map((s) => s.trim()).filter(Boolean);
+  return raw.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function getExpectedOrigin(): string | string[] {
+  const parts = parseExpectedOrigins();
   return parts.length === 1 ? parts[0] : parts;
+}
+
+const VALID_TRANSPORTS = new Set<AuthenticatorTransportFuture>(['ble', 'cable', 'hybrid', 'internal', 'nfc', 'smart-card', 'usb']);
+
+function safeParseTransports(transports: string | null, passkeyId: string): AuthenticatorTransportFuture[] | undefined {
+  if (!transports) return undefined;
+  try {
+    const parsed = JSON.parse(transports) as unknown;
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter(
+      (value): value is AuthenticatorTransportFuture =>
+        typeof value === 'string' && VALID_TRANSPORTS.has(value as AuthenticatorTransportFuture)
+    );
+  } catch (err) {
+    console.warn(`⚠️ Invalid passkey transports JSON for ${passkeyId}:`, err);
+    return undefined;
+  }
+}
+
+export function validateWebAuthnConfig(): void {
+  if (process.env.NODE_ENV !== 'production') return;
+
+  if (RP_ID === 'localhost') {
+    throw new Error('WEBAUTHN_RP_ID must not be localhost in production.');
+  }
+
+  const origins = parseExpectedOrigins();
+  for (const origin of origins) {
+    const url = new URL(origin);
+    if (url.protocol !== 'https:') {
+      throw new Error(`WEBAUTHN_ORIGIN must use https in production: ${origin}`);
+    }
+    if (url.hostname !== RP_ID && !url.hostname.endsWith(`.${RP_ID}`)) {
+      throw new Error(`WEBAUTHN_ORIGIN hostname must match WEBAUTHN_RP_ID (${RP_ID}): ${origin}`);
+    }
+  }
 }
 
 // ── In-memory challenge store ────────────────────────────────────────────────
@@ -125,9 +165,7 @@ export async function generatePasskeyRegistrationOptions(
   const existingPasskeys = getPasskeysByUserId(userId);
   const excludeCredentials = existingPasskeys.map((pk) => ({
     id: pk.credential_id,
-    transports: (pk.transports
-      ? (JSON.parse(pk.transports) as AuthenticatorTransportFuture[])
-      : undefined),
+    transports: safeParseTransports(pk.transports, pk.id),
   }));
 
   const options = await generateRegistrationOptions({
@@ -219,9 +257,7 @@ export async function generatePasskeyAuthenticationOptions(
 
   const allowCredentials = existingPasskeys.map((pk) => ({
     id: pk.credential_id,
-    transports: (pk.transports
-      ? (JSON.parse(pk.transports) as AuthenticatorTransportFuture[])
-      : undefined),
+    transports: safeParseTransports(pk.transports, pk.id),
   }));
 
   const options = await generateAuthenticationOptions({
@@ -259,9 +295,7 @@ export async function verifyPasskeyAuthentication(
       id: passkey.credential_id,
       publicKey: publicKeyBytes,
       counter: passkey.counter,
-      transports: passkey.transports
-        ? (JSON.parse(passkey.transports) as AuthenticatorTransportFuture[])
-        : undefined,
+      transports: safeParseTransports(passkey.transports, passkey.id),
     },
     requireUserVerification: false,
   });

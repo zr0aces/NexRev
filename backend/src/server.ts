@@ -1,7 +1,6 @@
-import fs, { existsSync, readFileSync } from 'fs';
-import fsPromises from 'fs/promises';
+import { existsSync, readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
@@ -11,13 +10,15 @@ import { aiRoutes } from './routes/ai.js';
 import { authRoutes } from './routes/auth.js';
 import { initSecrets, verifyToken } from './auth.js';
 import { initNotifications, stopNotifications } from './notifications.js';
+import { isAiConfigured } from './ai-service.js';
+import { validateWebAuthnConfig } from './webauthn.js';
 
 // Simple .env loader to keep a single source of truth for Telegram/AI tokens
 if (!process.env.TELEGRAM_BOT_TOKEN) {
   try {
     const rootEnvPath = path.join(process.cwd(), '..', '.env');
-    if (fs.existsSync(rootEnvPath)) {
-      const envContent = fs.readFileSync(rootEnvPath, 'utf8');
+    if (existsSync(rootEnvPath)) {
+      const envContent = readFileSync(rootEnvPath, 'utf8');
       envContent.split('\n').forEach(line => {
         const trimmed = line.trim();
         if (!trimmed || trimmed.startsWith('#')) return;
@@ -38,12 +39,20 @@ if (!process.env.TELEGRAM_BOT_TOKEN) {
   }
 }
 
+const corsOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean)
+  : [];
+
 const server = Fastify({
-  logger: { level: process.env.NODE_ENV === 'production' ? 'warn' : 'info' },
+  logger: {
+    level: process.env.LOG_LEVEL ?? (process.env.NODE_ENV === 'production' ? 'warn' : 'info'),
+  },
 });
 
 await server.register(cors, {
-  origin: process.env.NODE_ENV !== 'production',
+  origin: process.env.NODE_ENV !== 'production'
+    ? true
+    : (corsOrigins.length > 0 ? corsOrigins : false),
 });
 
 // Global rate limiting — individual routes may override via config.rateLimit
@@ -94,7 +103,7 @@ try {
   
   for (const p of possiblePaths) {
     try {
-      appVersion = (await fsPromises.readFile(p, 'utf8')).trim();
+      appVersion = (await readFile(p, 'utf8')).trim();
       break;
     } catch {
       continue;
@@ -107,10 +116,11 @@ try {
 server.get('/api/health', async () => ({ 
   status: 'ok', 
   version: appVersion,
-  aiEnabled: !!process.env.OLLAMA_BASE_URL
+  aiEnabled: isAiConfigured()
 }));
 
 const dbInit = await initDatabase();
+validateWebAuthnConfig();
 server.log.info(
   {
     schemaVersion: dbInit.schemaVersion,

@@ -1,11 +1,16 @@
 import cron from 'node-cron';
 import { randomBytes } from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
 import { listOpportunities } from './storage.js';
 import { getTelegramUsers } from './auth.js';
 import { AiService } from './ai-service.js';
 
 
 const ai = new AiService();
+const DIGEST_CACHE_RETENTION_DAYS = 7;
+const DIGEST_CACHE_PATTERN = /^daily-digest-(\d{4}-\d{2}-\d{2})\.txt$/;
+const NON_RETRYABLE_TELEGRAM_STATUSES = new Set([400, 401, 403, 404]);
 
 // Token-to-ChatID mapping for automatic linking
 const pendingLinks = new Map<string, string>();
@@ -28,15 +33,13 @@ interface TelegramGetUpdatesResponse {
   result: TelegramUpdate[];
 }
 
+// Telegram HTML only requires &, <, > to be escaped.
+// Escaping " and ' is unnecessary and can corrupt Telegram entity parsing.
 function escapeHtml(text: string): string {
-  // IMPORTANT: '&' must be replaced first to prevent double-escaping
-  // (e.g. '&lt;' would otherwise become '&amp;lt;').
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#x27;');
+    .replace(/>/g, '&gt;');
 }
 
 export async function sendTelegramMessage(chatId: string, text: string, retryCount = 2) {
@@ -80,6 +83,10 @@ export async function sendTelegramMessage(chatId: string, text: string, retryCou
         console.log(`🔄 Retrying without HTML formatting for ${chatId}...`);
         const fallbackRes = await attempt(undefined);
         if (fallbackRes.ok) return;
+      }
+
+      if (NON_RETRYABLE_TELEGRAM_STATUSES.has(res.status)) {
+        throw new Error(`Telegram API rejected request with status ${res.status}: ${errorData}`);
       }
       
     } catch (err: any) {
@@ -150,6 +157,38 @@ export function getChatIdByToken(token: string): string | null {
   return chatId || null;
 }
 
+function getReminderTimezone(): string {
+  return process.env.REMINDER_TIMEZONE?.trim() || 'Asia/Bangkok';
+}
+
+function getCacheDir(): string {
+  return path.resolve(process.env.DATA_DIR ?? path.join(process.cwd(), '..', 'data'));
+}
+
+async function ensureDigestCacheDir(): Promise<void> {
+  await fs.mkdir(getCacheDir(), { recursive: true });
+}
+
+async function cleanupOldDigestCache(): Promise<void> {
+  try {
+    const entries = await fs.readdir(getCacheDir());
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - DIGEST_CACHE_RETENTION_DAYS);
+
+    await Promise.all(entries
+      .filter((entry) => DIGEST_CACHE_PATTERN.test(entry))
+      .map(async (entry) => {
+        const match = entry.match(DIGEST_CACHE_PATTERN);
+        if (!match) return;
+        const fileDate = new Date(`${match[1]}T00:00:00Z`);
+        if (Number.isNaN(fileDate.getTime()) || fileDate >= cutoff) return;
+        await fs.unlink(path.join(getCacheDir(), entry)).catch(() => undefined);
+      }));
+  } catch (err) {
+    console.warn('Failed to clean up digest cache:', err);
+  }
+}
+
 export async function sendDailyReminders() {
   console.log('🔔 Running daily Telegram reminders...');
   try {
@@ -161,10 +200,11 @@ export async function sendDailyReminders() {
       return;
     }
 
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const timezone = getReminderTimezone();
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: timezone });
     const next7Days = new Date();
     next7Days.setDate(next7Days.getDate() + 7);
-    const weekEnd = next7Days.toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' });
+    const weekEnd = next7Days.toLocaleDateString('en-CA', { timeZone: timezone });
 
     const dueToday = opps.filter(o => o.followup === today);
     const overdue = opps.filter(o => o.followup && o.followup < today && o.stage !== 'Closed Won' && o.stage !== 'Closed Lost');
@@ -176,10 +216,10 @@ export async function sendDailyReminders() {
     }
 
     let message = '';
-    const cacheFile = `${process.env.DATA_DIR || './data'}/daily-digest-${today}.txt`;
+    await ensureDigestCacheDir();
+    const cacheFile = path.join(getCacheDir(), `daily-digest-${today}.txt`);
     
     try {
-      const fs = await import('fs/promises');
       const cached = await fs.readFile(cacheFile, 'utf8').catch(() => null);
       if (cached) {
         console.log('📦 Reusing cached AI digest for today.');
@@ -241,15 +281,17 @@ export function initNotifications() {
     return;
   }
 
+  void ensureDigestCacheDir().then(cleanupOldDigestCache);
+
   // Start polling for /start commands (linking)
   pollTelegramUpdates();
 
-  // Schedule for 8:30 AM every day
-  cron.schedule('30 8 * * *', async () => {
+  // Schedule for 8:30 AM on weekdays (Mon-Fri; node-cron uses 1=Monday, 5=Friday)
+  cron.schedule('30 8 * * 1-5', async () => {
     await sendDailyReminders();
   }, {
-    timezone: "Asia/Bangkok"
+    timezone: getReminderTimezone()
   });
 
-  console.log('✅ Daily Telegram reminders scheduled for 08:30.');
+   console.log(`✅ Daily Telegram reminders scheduled for weekdays at 08:30 (${getReminderTimezone()}).`);
 }

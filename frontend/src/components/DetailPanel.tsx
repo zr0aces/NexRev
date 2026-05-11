@@ -235,7 +235,7 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             style={{ height: 34 }}
             onClick={logWithAI} 
             disabled={!aiEnabled || !logInput.trim()} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Start here to generate a concise summary of the logged note"}
+            title={!aiEnabled ? "AI Service is not configured" : "Start here to generate a concise summary of the logged note"}
           >
             <Sparkles size={14} /> AI summarize
           </button>
@@ -243,23 +243,23 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
             className="btn btn-sm btn-teal" 
             style={{ height: 34 }}
             onClick={extractTasks} 
-            disabled={!aiEnabled || (!logInput.trim() && (!aiOutput || aiOutput.type !== 'ai')) && (opp.activities?.length === 0)} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Identify and populate actionable items into the Kanban Board"}
+            disabled={!aiEnabled || !logInput.trim()} 
+            title={!aiEnabled ? "AI Service is not configured" : "Identify and populate actionable items into the Kanban Board"}
           >
-            <ClipboardList size={14} /> Extract tasks
+            <ClipboardList size={14} /> AI Extract Tasks
           </button>
           <button 
             className="btn btn-sm btn-blue" 
             style={{ height: 34 }}
             onClick={genSfNote} 
             disabled={!aiEnabled || (opp.activities?.length === 0)} 
-            title={!aiEnabled ? "AI Service (Ollama) not configured" : "Synchronize notes with Salesforce (SFDC)"}
+            title={!aiEnabled ? "AI Service is not configured" : "Synchronize notes with Salesforce (SFDC)"}
           >
-            <Cloud size={14} /> SF update note
+            <Cloud size={14} /> AI SF Suggest Note
           </button>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 8, fontStyle: 'italic' }}>
-          Recommended: Start with <b>AI Summarize</b>, then <b>Extract Tasks</b>, and finally <b>SF Update</b>.
+          Recommended: Start with <b>AI Summarize</b>, then <b>AI Extract Tasks</b>, and finally <b>AI SF Suggest Note</b>.
         </div>
         {aiLoading && (
           <div className="ai-box"><span className="spinner" />{aiLoading}</div>

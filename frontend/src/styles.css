@@ -126,6 +126,49 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
 
+/* ── Support Link (Integrated) ───────────────────────── */
+.nav-bmc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 18px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  letter-spacing: 0.2px;
+  line-height: 1;
+}
+
+.nav-bmc-btn span {
+  margin-top: 1px; /* Optical adjustment for vertical centering */
+}
+
+.nav-bmc-btn:hover {
+  background: rgba(249, 115, 22, 0.08);
+  color: var(--orange-mid);
+  border-color: rgba(249, 115, 22, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.nav-bmc-btn svg {
+  color: var(--orange-mid);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-bmc-btn:hover svg {
+  transform: scale(1.25) rotate(15deg);
+  filter: drop-shadow(0 0 5px rgba(249, 115, 22, 0.4));
+}
+
 /* ── Nav ──────────────────────────────────────────────── */
 .nav {
   display: flex;

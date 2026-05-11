@@ -10,7 +10,9 @@ import {
   Moon,
   ChevronDown,
   Settings,
-  User
+  User,
+  Coffee,
+  ChevronRight
 } from 'lucide-react';
 import type { Opportunity } from '../types';
 import { api } from '../api';
@@ -159,6 +161,17 @@ export default function Nav({ tab, onTabChange, onAddClick, opps, onImport, onLo
           <div className="nav-actions">
             <input ref={fileRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
             
+
+            <a 
+              href="https://buymeacoffee.com/zr0aces" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="nav-bmc-btn hide-mobile"
+            >
+              <Coffee size={18} />
+              <span>Support</span>
+            </a>
+
             <button className="btn btn-primary hide-mobile" onClick={onAddClick}>
               <Plus size={18} strokeWidth={2.5} />
               <span>Add Opportunity</span>

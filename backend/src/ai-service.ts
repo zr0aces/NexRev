@@ -25,6 +25,7 @@ interface AiConfig {
   provider: AiProvider;
   baseUrl: string;
   model: string;
+  fallbackModel?: string;
   apiKey?: string;
 }
 
@@ -52,6 +53,7 @@ function getAiConfig(): AiConfig {
       provider,
       baseUrl: normalizeBaseUrl(process.env.OPENROUTER_BASE_URL ?? 'https://openrouter.ai/api/v1'),
       model: modelRaw,
+      fallbackModel: (process.env.AI_FALLBACK_MODEL || '').trim(),
       apiKey: process.env.OPENROUTER_API_KEY,
     };
   }
@@ -63,6 +65,7 @@ function getAiConfig(): AiConfig {
       provider,
       baseUrl: normalizeBaseUrl(process.env.LITELLM_BASE_URL ?? 'http://localhost:4000'),
       model: modelRaw ? (prefix ? ensureModelPrefix(modelRaw, prefix) : modelRaw) : '',
+      fallbackModel: (process.env.AI_FALLBACK_MODEL || '').trim(),
       apiKey: process.env.LITELLM_API_KEY,
     };
   }
@@ -71,6 +74,7 @@ function getAiConfig(): AiConfig {
     provider: 'ollama',
     baseUrl: normalizeBaseUrl(process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'),
     model: ensureModelPrefix(model, 'ollama/'),
+    fallbackModel: (process.env.AI_FALLBACK_MODEL || '').trim(),
   };
 }
 
@@ -113,6 +117,19 @@ export async function verifyAiProviderAvailability(): Promise<void> {
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
   console.log(`🤖 AI Request [${config.provider}]: using model "${config.model}"`);
   if (config.provider === 'openrouter') {
+    const body: any = {
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user },
+      ],
+    };
+
+    if (config.fallbackModel) {
+      body.models = [config.model, config.fallbackModel];
+    } else {
+      body.model = config.model;
+    }
+
     const res = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -121,13 +138,7 @@ async function runCompletion(config: AiConfig, system: string, user: string): Pr
         'HTTP-Referer': 'https://nexrev.ai',
         'X-Title': 'NexRev',
       },
-      body: JSON.stringify({
-        model: config.model,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: user },
-        ],
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -162,14 +173,30 @@ async function chat(system: string, user: string): Promise<string> {
   const config = getAiConfig();
   const configError = getAiConfigError(config);
   if (configError) throw new Error(configError);
-  const message = await runWithTimeout(
-    runCompletion(config, system, user),
-    DEFAULT_TIMEOUT_MS,
-    `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
-  );
-  const content = message.content;
-  if (!content) throw new Error('Empty response from AI provider');
-  return content;
+
+  try {
+    const message = await runWithTimeout(
+      runCompletion(config, system, user),
+      DEFAULT_TIMEOUT_MS,
+      `AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
+    );
+    if (!message.content) throw new Error('Empty response from AI provider');
+    return message.content;
+  } catch (err) {
+    // If rate limited and fallback exists, try one more time
+    if (config.fallbackModel && (err as Error).message.includes('rate limit exceeded')) {
+      console.warn(`⚠️ Primary model rate limited. Falling back to "${config.fallbackModel}"...`);
+      const fallbackConfig = { ...config, model: config.fallbackModel };
+      const message = await runWithTimeout(
+        runCompletion(fallbackConfig, system, user),
+        DEFAULT_TIMEOUT_MS,
+        `Fallback AI request timed out after ${Math.floor(DEFAULT_TIMEOUT_MS / 1000)} seconds`,
+      );
+      if (!message.content) throw new Error('Empty response from fallback AI provider');
+      return message.content;
+    }
+    throw err;
+  }
 }
 
 function formatKanban(opp: Opportunity): string {

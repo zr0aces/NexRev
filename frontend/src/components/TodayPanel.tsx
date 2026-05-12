@@ -1,9 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Clock, Calendar, CheckCircle2, Inbox, LayoutDashboard, Search, User } from 'lucide-react';
+import { 
+  AlertCircle, 
+  Clock, 
+  Calendar, 
+  CheckCircle2, 
+  Inbox, 
+  LayoutDashboard, 
+  Search, 
+  User, 
+  Sun,
+  ArrowUpDown,
+  Filter,
+  TrendingUp,
+  DollarSign,
+  Snowflake
+} from 'lucide-react';
 import type { Opportunity } from '../types';
 import MetricsRow from './MetricsRow';
 import Badge from './Badge';
-import { todayStr, fmtDate, daysUntil } from '../utils';
+import { todayStr, fmtDate, daysUntil, daysSince } from '../utils';
 import { api } from '../api';
 
 interface Props {
@@ -85,44 +100,59 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
 
   return (
     <div className="today-panel">
-      <MetricsRow opps={opps} />
-
-      <div className="today-grid-wrapper">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
-          <div className="section-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <LayoutDashboard size={16} /> All Active Opportunities
+      {/* ── Page Header ── */}
+      <div className="log-header">
+        <div className="log-header-left">
+          <div className="log-header-icon" style={{ background: 'var(--orange-light)', border: '1px solid rgba(249, 115, 22, 0.2)', color: 'var(--orange)' }}>
+            <Sun size={20} />
           </div>
-          
-          <div className="today-legend" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)' }} /> Overdue
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--amber-mid)' }} /> Due Soon
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.4px' }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-tertiary)' }} /> Later
+          <div>
+            <div className="log-header-title">Today</div>
+            <div className="log-header-sub">
+              {pending.length} {pending.length === 1 ? 'opportunity' : 'opportunities'} requiring attention
             </div>
           </div>
         </div>
-
-        <div className="pipeline-toolbar" style={{ marginBottom: 16, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: '1 1 300px' }}>
-            <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)' }} />
-            <input
-              className="search-bar"
-              type="text"
-              placeholder="Search accounts or contacts..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: 38, width: '100%' }}
-            />
+        
+        {/* Legendary urgency indicators moved to a cleaner stat group */}
+        <div className="log-stats">
+          <div className="log-stat-chip">
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--red)' }} />
+            <span>Overdue</span>
           </div>
+          <div className="log-stat-chip">
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--amber-mid)' }} />
+            <span>Due Soon</span>
+          </div>
+          <div className="log-stat-chip">
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--text-tertiary)' }} />
+            <span>Later</span>
+          </div>
+        </div>
+      </div>
 
-          <div style={{ display: 'flex', gap: 8 }}>
+      <MetricsRow opps={opps} />
+
+      {/* ── Toolbar ── */}
+      <div className="pipeline-toolbar" style={{ marginTop: 24, marginBottom: 16 }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
+          <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+          <input
+            className="search-bar"
+            type="text"
+            placeholder="Search accounts or contacts…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ paddingLeft: 38 }}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+          <div style={{ position: 'relative' }}>
+            <Filter size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)' }} />
             <select 
-              className="search-bar" 
-              style={{ width: 'auto', padding: '0 12px', fontSize: '13px' }}
+              className="select-sm" 
+              style={{ paddingLeft: 30 }}
               value={userFilter}
               onChange={e => setUserFilter(e.target.value)}
             >
@@ -131,64 +161,112 @@ export default function TodayPanel({ opps, username, onSelect, onEdit }: Props) 
                 <option key={u} value={u}>{u === username ? 'Me' : u.toUpperCase()}</option>
               ))}
             </select>
+          </div>
 
+          <div style={{ position: 'relative' }}>
+            <ArrowUpDown size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--text-tertiary)' }} />
             <select 
-              className="search-bar" 
-              style={{ width: 'auto', padding: '0 12px', fontSize: '13px' }}
+              className="select-sm" 
+              style={{ paddingLeft: 30 }}
               value={sortMode}
               onChange={e => setSortMode(e.target.value as any)}
             >
-              <option value="urgency">Sort: Urgency</option>
-              <option value="updated">Sort: Last Updated</option>
+              <option value="urgency">Urgency</option>
+              <option value="updated">Last Updated</option>
             </select>
           </div>
         </div>
+        
+        <span className="pipeline-count">{pending.length} results</span>
+      </div>
 
-        {pending.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon"><Inbox size={48} /></div>
-            <div>{search ? 'No opportunities match your search' : 'No pending actions. Add opportunities to get started.'}</div>
-          </div>
-        ) : (
-          <div className="today-grid">
-            {pending.map(o => {
-              const { label, icon, dotColor } = urgencyInfo(o);
-              const lastUpdateStr = o.updatedAt ? new Date(o.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
-              
-              return (
-                <div
-                  key={o.id}
-                  className="today-card"
-                  onClick={() => onSelect(o.id)}
-                >
-                  <div className="today-card-top">
+      {/* ── Grid ── */}
+      {pending.length === 0 ? (
+        <div className="log-empty">
+          <div className="log-empty-icon"><Inbox size={48} /></div>
+          <div className="log-empty-title">{search ? 'No matches found' : 'Everything up to date'}</div>
+          <div className="log-empty-sub">{search ? 'Try a different search term or filter.' : 'No pending actions. Add opportunities to get started.'}</div>
+        </div>
+      ) : (
+        <div className="today-grid">
+          {pending.map(o => {
+            const { label, icon, dotColor } = urgencyInfo(o);
+            const lastUpdateStr = o.updatedAt ? new Date(o.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : null;
+            const pendingSteps = o.nextSteps?.filter(s => !s.done) || [];
+            const latestActivityDate = o.activities?.length 
+              ? o.activities[o.activities.length - 1].date 
+              : o.createdAt;
+            const coldDays = daysSince(latestActivityDate) ?? 0;
+            const isCold = coldDays >= 7;
+            
+            return (
+              <div
+                key={o.id}
+                className={`today-card${isCold ? ' cold' : ''}`}
+                onClick={() => onSelect(o.id)}
+              >
+                <div className="today-card-top">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div className="today-card-dot" style={{ background: dotColor }} />
+                    {isCold && (
+                      <div className="cold-badge" title={`${coldDays} days since last activity`}>
+                        <Snowflake size={10} strokeWidth={3} />
+                        COLD
+                      </div>
+                    )}
                     <Badge stage={o.stage} />
                   </div>
-                  <div className="today-card-body">
-                    <div className="today-card-name">{o.name}</div>
-                    {o.contact && <div className="today-card-contact">{o.contact}</div>}
-                    <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                      {label && (
-                        <div className="today-card-urgency" style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
-                          {icon} {label}
-                        </div>
-                      )}
-                      {o.updatedBy && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <User size={12} /> {o.updatedBy === username ? 'Me' : o.updatedBy.toUpperCase()} • {lastUpdateStr}
+                  {o.value != null && (
+                    <div className="opp-meta-value" style={{ fontSize: '13px' }}>
+                      ${Number(o.value).toLocaleString()}
+                    </div>
+                  )}
+                </div>
+
+                <div className="today-card-body">
+                  <div className="today-card-name">{o.name}</div>
+                  {o.contact && (
+                    <div className="today-card-contact" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                       <User size={12} style={{ opacity: 0.6 }} /> {o.contact}
+                    </div>
+                  )}
+                  
+                  {label && (
+                    <div className="today-card-urgency" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                      {icon} {label}
+                    </div>
+                  )}
+
+                  {pendingSteps.length > 0 && (
+                    <div className="today-card-footer">
+                      <div className="today-card-next">
+                        <CheckCircle2 size={12} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <span>{pendingSteps[0].text}</span>
+                      </div>
+                      {pendingSteps.length > 1 && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 4, marginLeft: 16 }}>
+                          + {pendingSteps.length - 1} more pending task{pendingSteps.length > 2 ? 's' : ''}
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  <div className="today-card-accent" />
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+
+                <div className="today-card-meta" style={{ marginTop: 'auto', paddingTop: 12, borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <User size={12} /> {o.updatedBy ? (o.updatedBy === username ? 'Me' : o.updatedBy.toUpperCase()) : 'System'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+                    {lastUpdateStr}
+                  </div>
+                </div>
+
+                <div className="today-card-accent" />
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

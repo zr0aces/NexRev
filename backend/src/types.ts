@@ -5,6 +5,7 @@ export type Stage =
 export type KanbanColumn = 'todo' | 'followup' | 'done';
 
 export interface NextStep {
+  id?: number;
   text: string;
   done: boolean;
   column: KanbanColumn;

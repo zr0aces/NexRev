@@ -19,6 +19,7 @@ interface OpportunityRow {
 }
 
 interface NextStepRow {
+  id: number;
   text: string;
   done: number;
   column_name: Opportunity['nextSteps'][number]['column'];
@@ -51,6 +52,7 @@ function buildOpportunity(
     followup: row.followup_date,
 
     nextSteps: steps.map((step) => ({
+      id: step.id,
       text: step.text,
       done: Boolean(step.done),
       column: step.column_name,
@@ -74,7 +76,7 @@ function hydrateOpportunity(row: OpportunityRow): Opportunity {
 
   const steps = db
     .prepare(`
-      SELECT text, done, column_name
+      SELECT id, text, done, column_name
       FROM next_steps
       WHERE opportunity_id = ?
       ORDER BY sort_order ASC
@@ -128,7 +130,7 @@ export async function listOpportunities(): Promise<Opportunity[]> {
 
     const steps = db
       .prepare(
-        `SELECT opportunity_id, text, done, column_name
+        `SELECT opportunity_id, id, text, done, column_name
          FROM next_steps
          WHERE opportunity_id IN (${ph})
          ORDER BY opportunity_id, sort_order ASC`
@@ -212,18 +214,38 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
       updated_by = excluded.updated_by
   `);
 
-  const deleteSteps = db.prepare('DELETE FROM next_steps WHERE opportunity_id = ?');
-  const insertStep = db.prepare(`
+  const deleteStepsExcept = db.prepare(`
+    DELETE FROM next_steps 
+    WHERE opportunity_id = ? 
+    AND id NOT IN (SELECT value FROM json_each(?))
+  `);
+  const upsertStep = db.prepare(`
     INSERT INTO next_steps (
-      opportunity_id, sort_order, text, column_name, done, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      id, opportunity_id, sort_order, text, column_name, done, created_at, updated_at
+    ) VALUES (@id, @oppId, @sort, @text, @column, @done, @createdAt, @updatedAt)
+    ON CONFLICT(id) DO UPDATE SET
+      sort_order = excluded.sort_order,
+      text = excluded.text,
+      column_name = excluded.column_name,
+      done = excluded.done,
+      updated_at = excluded.updated_at
   `);
 
-  const deleteActivities = db.prepare('DELETE FROM activities WHERE opportunity_id = ?');
-  const insertActivity = db.prepare(`
+  const deleteActivitiesExcept = db.prepare(`
+    DELETE FROM activities 
+    WHERE opportunity_id = ? 
+    AND id NOT IN (SELECT value FROM json_each(?))
+  `);
+  const upsertActivity = db.prepare(`
     INSERT INTO activities (
-      opportunity_id, activity_date, raw, summary, ai, sf, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      id, opportunity_id, activity_date, raw, summary, ai, sf, created_at
+    ) VALUES (@id, @oppId, @date, @raw, @summary, @ai, @sf, @createdAt)
+    ON CONFLICT(id) DO UPDATE SET
+      activity_date = excluded.activity_date,
+      raw = excluded.raw,
+      summary = excluded.summary,
+      ai = excluded.ai,
+      sf = excluded.sf
   `);
 
   const tx = db.transaction((value: Opportunity) => {
@@ -232,31 +254,36 @@ export async function writeOpportunity(opp: Opportunity): Promise<void> {
       updatedBy: value.updatedBy ?? null
     });
 
-    deleteSteps.run(value.id);
+    const stepIds = value.nextSteps.map(s => s.id).filter(Boolean);
+    deleteStepsExcept.run(value.id, JSON.stringify(stepIds));
+
     value.nextSteps.forEach((step, index) => {
-      const done = step.column === 'done' ? 1 : 0;
-      insertStep.run(
-        value.id,
-        index,
-        step.text,
-        step.column,
-        done,
-        value.createdAt,
-        value.updatedAt
-      );
+      upsertStep.run({
+        id: step.id ?? null,
+        oppId: value.id,
+        sort: index,
+        text: step.text,
+        column: step.column,
+        done: step.column === 'done' ? 1 : 0,
+        createdAt: value.createdAt,
+        updatedAt: value.updatedAt
+      });
     });
 
-    deleteActivities.run(value.id);
+    const activityIds = value.activities.map(a => a.id).filter(Boolean);
+    deleteActivitiesExcept.run(value.id, JSON.stringify(activityIds));
+
     value.activities.forEach((activity) => {
-      insertActivity.run(
-        value.id,
-        activity.date,
-        activity.raw,
-        activity.summary ?? null,
-        activity.ai ? 1 : 0,
-        activity.sf ? 1 : 0,
-        activity.date
-      );
+      upsertActivity.run({
+        id: activity.id ?? null,
+        oppId: value.id,
+        date: activity.date,
+        raw: activity.raw,
+        summary: activity.summary ?? null,
+        ai: activity.ai ? 1 : 0,
+        sf: activity.sf ? 1 : 0,
+        createdAt: activity.date
+      });
     });
   });
 

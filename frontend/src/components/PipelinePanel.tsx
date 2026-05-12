@@ -132,8 +132,8 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                 const latestActivityDate = o.activities?.length 
                   ? o.activities[o.activities.length - 1].date 
                   : o.createdAt;
-                const stagnantDays = daysSince(latestActivityDate) ?? 0;
-                const isStagnant = stagnantDays >= 7;
+                const coldDays = daysSince(latestActivityDate) ?? 0;
+                const isCold = coldDays >= 7;
 
                 return (
                   <div
@@ -142,7 +142,7 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                       if (el) cardRefs.current.set(o.id, el);
                       else cardRefs.current.delete(o.id);
                     }}
-                    className={`opp-card${selectedId === o.id ? ' selected' : ''}${isStagnant ? ' stagnant' : ''}`}
+                    className={`opp-card${selectedId === o.id ? ' selected' : ''}${isCold ? ' cold' : ''}`}
                     onClick={() => onSelect(o.id)}
                     tabIndex={-1}
                     role="button"
@@ -152,10 +152,10 @@ export default function PipelinePanel({ opps, selectedId, onSelect, onEdit, onUp
                     <div className="opp-header">
                       <span className="opp-name">{o.name}</span>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        {isStagnant && (
-                          <div className="stagnant-badge" title={`${stagnantDays} days since last activity`}>
+                        {isCold && (
+                          <div className="cold-badge" title={`${coldDays} days since last activity`}>
                             <Snowflake size={10} strokeWidth={3} />
-                            STAGNANT
+                            COLD
                           </div>
                         )}
                         <Badge stage={o.stage} />

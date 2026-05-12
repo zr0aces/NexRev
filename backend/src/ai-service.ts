@@ -111,6 +111,7 @@ export async function verifyAiProviderAvailability(): Promise<void> {
 // B1 fixed: removed useless try/catch wrapper — errors propagate naturally.
 // Q3 fixed: removed single-element candidates[] for-loop; call completion() directly.
 async function runCompletion(config: AiConfig, system: string, user: string): Promise<{ content?: string | null }> {
+  console.log(`🤖 AI Request [${config.provider}]: using model "${config.model}"`);
   if (config.provider === 'openrouter') {
     const res = await fetch(`${config.baseUrl}/chat/completions`, {
       method: 'POST',

@@ -71,20 +71,19 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
       const updatedOpp = await api.opportunities.update(opp.id, { followup: nextFollowup });
       onUpdate(updatedOpp);
 
-      // 2. Generate summary
-      const { summary } = await api.ai.summarize(raw, opp.id);
+      // 2. Process activity (Summary + Tasks in ONE call)
+      const { summary, opportunity: finalOpp } = await api.ai.processActivity(raw, opp.id);
 
-      // 3. Log activity with summary
+      // 3. Log activity with the returned summary
       const updatedWithActivity = await api.activities.add(opp.id, { raw, summary, ai: true });
+      
       setAiOutput({ type: 'ai', text: summary });
       setLogInput('');
-      onUpdate(updatedWithActivity);
+      
+      // 4. Update state with the final opportunity (contains new tasks and activity)
+      onUpdate({ ...finalOpp, activities: updatedWithActivity.activities });
 
-      // 4. Automatically extract tasks from the new activity (and recent history)
-      const finalOpp = await api.ai.extractTasks(opp.id);
-      onUpdate(finalOpp);
-
-      addToast('AI summary generated and tasks extracted successfully.', 'success');
+      addToast('AI summary generated and tasks extracted successfully in one step.', 'success');
     } catch (e) {
       addToast('AI process failed: ' + (e as Error).message, 'error');
       setAiOutput({ type: 'ai', text: (e as Error).message });
@@ -93,11 +92,28 @@ export default function DetailPanel({ opp, onEdit, onDeleted, onUpdate, aiEnable
     }
   };
 
+  // Optimization: Simple cache for SF Note to avoid redundant AI calls
+  const [lastSfContext, setLastSfContext] = useState<string | null>(null);
+  const [lastSfNote, setLastSfNote] = useState<string | null>(null);
+
   const genSfNote = async () => {
+    // Determine the context key (Account ID + Latest Activity Date)
+    const latestDate = opp.activities?.length ? opp.activities[opp.activities.length - 1].date : opp.createdAt;
+    const contextKey = `${opp.id}-${latestDate}`;
+
+    if (lastSfContext === contextKey && lastSfNote) {
+      setAiOutput({ type: 'sf', text: lastSfNote });
+      addToast('Retrieved Salesforce note from cache.', 'info');
+      return;
+    }
+
     setAiLoading('Generating Salesforce note…');
     try {
       const { note } = await api.ai.sfNote(opp.id);
       setAiOutput({ type: 'sf', text: note });
+      setLastSfContext(contextKey);
+      setLastSfNote(note);
+
       const updated = await api.activities.add(opp.id, { raw: note, summary: note, ai: true, sf: true });
       onUpdate(updated);
       addToast('Salesforce note generated.', 'success');

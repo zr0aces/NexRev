@@ -135,5 +135,10 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ id, context }),
       }),
+    processActivity: (raw: string, id: string) =>
+      request<{ summary: string; opportunity: Opportunity }>('/ai/process-activity', {
+        method: 'POST',
+        body: JSON.stringify({ raw, id }),
+      }),
   },
 };

@@ -92,4 +92,31 @@ export const aiRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   );
+
+  fastify.post<{ Body: { raw: string; id: string } }>(
+    '/ai/process-activity',
+    { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+    async (req, reply) => {
+      const providerError = await ensureProviderReady(reply);
+      if (providerError) return providerError;
+      const { raw, id } = req.body ?? ({} as { raw?: string; id?: string });
+      if (!id) return reply.code(400).send({ error: 'id is required' });
+      if (!raw) return reply.code(400).send({ error: 'raw is required' });
+      try {
+        const opp = await storage.readOpportunity(id);
+        const { summary, tasks } = await service.processActivity(raw, opp);
+        const existing = new Set(opp.nextSteps.map(s => s.text));
+        tasks.todo.filter(t => !existing.has(t)).forEach(t =>
+          opp.nextSteps.push({ text: t, done: false, column: 'todo' }));
+        tasks.followup.filter(t => !existing.has(t)).forEach(t =>
+          opp.nextSteps.push({ text: t, done: false, column: 'followup' }));
+        tasks.done.filter(t => !existing.has(t)).forEach(t =>
+          opp.nextSteps.push({ text: t, done: true, column: 'done' }));
+        await storage.writeOpportunity(opp);
+        return { summary, opportunity: opp };
+      } catch (e) {
+        return handleError(e, reply, '/ai/process-activity');
+      }
+    }
+  );
 };

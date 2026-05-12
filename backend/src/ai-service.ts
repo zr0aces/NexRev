@@ -246,6 +246,36 @@ If no tasks are found for a category, return an empty array. No other text.`;
     }
   }
 
+  async processActivity(raw: string, opp: Opportunity): Promise<{ summary: string; tasks: ExtractedTasks }> {
+    const kanbanSection = opp.nextSteps.length ? `\n\n---\n${formatKanban(opp)}` : '';
+    const prompt = `You are a sales assistant. Given raw meeting or call notes, perform two tasks:
+1) Produce a concise structured summary with key discussion points, decisions, and action items. Keep it under 150 words. Plain text.
+2) Extract a list of specific action items for a Kanban board (todo, followup, done).
+
+Return ONLY a JSON object in this exact format:
+{
+  "summary": "The summary text here...",
+  "tasks": {
+    "todo": ["task 1", "task 2"],
+    "followup": ["task 3"],
+    "done": ["task 4"]
+  }
+}
+If no tasks are found for a category, return an empty array. No other text.`;
+
+    const result = await chat(prompt, raw + kanbanSection);
+    try {
+      const match = result.match(/\{[\s\S]*\}/);
+      const parsed = JSON.parse(match ? match[0] : result);
+      return {
+        summary: parsed.summary || "",
+        tasks: parsed.tasks || { todo: [], followup: [], done: [] }
+      };
+    } catch (e) {
+      throw new Error('Failed to parse AI combined result: ' + (e as Error).message);
+    }
+  }
+
   async generateDailyDigest(data: {
     dueToday: Opportunity[];
     overdue: Opportunity[];

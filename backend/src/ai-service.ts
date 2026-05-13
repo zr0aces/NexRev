@@ -333,19 +333,18 @@ If no tasks are found for a category, return an empty array. No other text.`;
 
     const context = sections.join('\n\n');
     const prompt = `You are a sales operations assistant. Create a professional, encouraging daily digest for a sales team.
-The digest should be formatted in HTML for Telegram (using <b>, <i> tags).
+The digest should use basic HTML for formatting (<b> for bold headings, <i> for emphasis).
 Include:
-1) A brief greeting (e.g. 🌅 NexRev Daily Digest).
-2) A clear summary of "Activities for Today" (including overdue items).
-3) An overview of "Planned for the Week".
+1) A brief greeting with emojis (e.g. <b>🌅 NexRev Daily Digest</b>).
+2) An inspiring "Quote of the Day" in italics (<i>...</i>).
+3) A clear summary of "Activities for Today" (including overdue items).
+4) An overview of "Planned for the Week".
 
-Keep it concise, actionable, and visually organized with emojis. Use <b> for headings.
-Use bullet points for items.
+IMPORTANT: Do NOT include any "Key features" or promotional text about the platform. Focus ONLY on the provided account data and the motivational quote. Keep it concise, visually organized with emojis, and professional. Use dashes (-) for bullet points.
 
 Data:
 ${context}`;
 
-    // B3 fixed: removed stray console.log debug calls.
-    return chat(prompt, "Please generate the Telegram message.");
+    return chat(prompt, "Please generate the Telegram message with basic HTML (b, i tags).");
   }
 }

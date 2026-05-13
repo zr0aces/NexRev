@@ -33,8 +33,8 @@ interface TelegramGetUpdatesResponse {
   result: TelegramUpdate[];
 }
 
+
 // Telegram HTML only requires &, <, > to be escaped.
-// Escaping " and ' is unnecessary and can corrupt Telegram entity parsing.
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -125,7 +125,7 @@ async function pollTelegramUpdates() {
         if (linkToken && pendingLinks.has(linkToken)) {
           console.log(`🔗 Linked Telegram Chat ID ${msg.chat.id} to token ${linkToken}`);
           pendingLinks.set(linkToken, String(msg.chat.id));
-          await sendTelegramMessage(String(msg.chat.id), '✅ <b>Success!</b> Your Telegram account has been linked to NexRev.');
+          await sendTelegramMessage(String(msg.chat.id), '✅ Success! Your Telegram account has been linked to NexRev.');
         }
       }
     }
@@ -232,12 +232,12 @@ export async function sendDailyReminders() {
     } catch (err) {
       console.error('AI digest generation failed, falling back to manual summary:', err);
       message = `<b>🌅 NexRev Daily Digest</b>\n\n`;
+      message += `<i>✨ "Consistency is what transforms average into excellence."</i>\n\n`;
       
       if (dueToday.length > 0) {
         message += `<b>📅 Due Today:</b>\n`;
         dueToday.forEach(o => {
           message += `• ${escapeHtml(o.name)} (${escapeHtml(o.stage)})\n`;
-
         });
         message += `\n`;
       }
